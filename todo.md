@@ -1,0 +1,4 @@
+- unicode bold
+- unicode italics
+- unicode bullets
+- unicode emojis
