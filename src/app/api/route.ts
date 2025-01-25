@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/hello:
+ * /api:
  *   get:
  *     description: Returns the hello world
  *     responses:
