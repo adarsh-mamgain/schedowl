@@ -1,16 +1,13 @@
-import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
+import bcrypt from "bcryptjs";
 
-export const hashPassword = (password: string) => {
-  const salt = randomBytes(16).toString("hex");
-  const hashedPassword = scryptSync(password, salt, 32).toString("hex");
-  return `${salt}:${hashedPassword}`;
-};
+export function getHash(password: string): string {
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
+}
 
-export const verifyPassword = (
+export function verifyPassword(
   inputPassword: string,
   storedPassword: string
-) => {
-  const [salt, hashedPassword] = storedPassword.split(":");
-  const inputHash = scryptSync(inputPassword, salt, 32).toString("hex");
-  return timingSafeEqual(Buffer.from(inputHash), Buffer.from(hashedPassword));
-};
+): boolean {
+  return bcrypt.compareSync(inputPassword, storedPassword);
+}
