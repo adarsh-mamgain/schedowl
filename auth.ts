@@ -16,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorize: async (credentials) => {
         const { email, password } = credentials;
 
-        // Fetch the user from Supabase
+        // Fetch user from Supabase
         const { data: user, error } = await supabase
           .from("users")
           .select("*")
@@ -24,10 +24,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .single();
 
         if (error || !user) {
-          throw new Error("Invalid credentials");
+          throw new Error("No user found with this email");
         }
 
-        const isValidPassword = await verifyPassword(
+        // Verify the password
+        const isValidPassword = verifyPassword(
           password as string,
           user.password
         );
@@ -35,10 +36,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Invalid credentials");
         }
 
+        // Return user object to NextAuth
         return { id: user.id, name: user.name, email: user.email };
       },
     }),
   ],
+  callbacks: {
+    async signIn({ user }) {
+      const { email, name, image } = user;
+
+      // Check if user exists in Supabase
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (fetchError) {
+        console.error("Error fetching user:", fetchError);
+      }
+
+      // If user does not exist, insert them
+      if (!existingUser) {
+        const { error: insertError } = await supabase.from("users").insert([
+          {
+            email,
+            name,
+            image,
+          },
+        ]);
+
+        if (insertError) {
+          console.error("Error inserting user:", insertError);
+          return false; // Prevent login
+        }
+      }
+
+      return true; // Allow login
+    },
+    async session({ session }) {
+      // Fetch user ID from Supabase and include it in the session
+      const { email } = session.user;
+      const { data: user } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", email)
+        .single();
+
+      if (user) {
+        session.user.id = user.id;
+      }
+
+      return session;
+    },
+  },
+  secret: process.env.AUTH_SECRET, // Use a strong secret for session encryption
   pages: {
     signIn: "/signin",
   },

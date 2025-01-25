@@ -1,13 +1,16 @@
-import { scryptSync, randomBytes } from "crypto";
+import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 
-const salt = randomBytes(16).toString("hex");
+export const hashPassword = (password: string) => {
+  const salt = randomBytes(16).toString("hex");
+  const hashedPassword = scryptSync(password, salt, 32).toString("hex");
+  return `${salt}:${hashedPassword}`;
+};
 
-export const getHash = (payload: string) =>
-  scryptSync(payload, salt, 32).toString("hex");
-
-export const verifyPassword = async (
+export const verifyPassword = (
   inputPassword: string,
   storedPassword: string
 ) => {
-  return getHash(inputPassword) === storedPassword;
+  const [salt, hashedPassword] = storedPassword.split(":");
+  const inputHash = scryptSync(inputPassword, salt, 32).toString("hex");
+  return timingSafeEqual(Buffer.from(inputHash), Buffer.from(hashedPassword));
 };
