@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn } from "@/auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -8,11 +8,37 @@ import { useState } from "react";
 export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
 
   interface HandleSubmitEvent extends React.FormEvent<HTMLFormElement> {}
 
+  const validatePassword = (password: string): boolean => {
+    const newErrors: string[] = [];
+    if (password.length < 8) {
+      newErrors.push("Password must be at least 8 characters long.");
+    }
+    if (!/[A-Z]/.test(password)) {
+      newErrors.push("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(password)) {
+      newErrors.push("Password must contain at least one lowercase letter.");
+    }
+    if (!/[0-9]/.test(password)) {
+      newErrors.push("Password must contain at least one number.");
+    }
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
+
   const handleSubmit = async (e: HandleSubmitEvent): Promise<void> => {
     e.preventDefault();
+    if (!email) {
+      setErrors(["Email is required."]);
+      return;
+    }
+    if (!validatePassword(password)) {
+      return;
+    }
     try {
       const result = await signIn("credentials", {
         redirect: false,
@@ -73,6 +99,11 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
               />
+              <ul className="text-red-500 text-sm">
+                {errors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
             </div>
             <button
               type="submit"
