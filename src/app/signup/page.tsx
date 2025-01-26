@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-export default function SignIn() {
+export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -18,7 +18,7 @@ export default function SignIn() {
         redirect: false,
         email,
         password,
-        mode: "signin",
+        mode: "signup",
       });
       if (!result?.error) {
         console.log("Success:", result);
@@ -83,7 +83,7 @@ export default function SignIn() {
                   "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
               }}
             >
-              Sign In
+              Get started
             </button>
           </form>
           <div className="flex items-center">
@@ -113,14 +113,15 @@ export default function SignIn() {
               Continue with Google
             </button>
           </form>
+
           <div className="flex justify-center text-[#344054]">
             <p>
-              Don't have an account?{" "}
+              Already have an account?{" "}
               <Link
-                href="/signup"
+                href="/signin"
                 className="font-semibold underline hover:text-[#475467] hover:no-underline"
               >
-                Sign up
+                Sign in
               </Link>
             </p>
           </div>
