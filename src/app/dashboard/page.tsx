@@ -21,12 +21,12 @@ const TODOS = [
 export default function DashboardPage() {
   return (
     <div className="w-screen h-screen grid grid-cols-12">
-      <aside className="h-full col-span-2 border-r border-[#EAECF0] p-4 fixed top-0">
+      <aside className="h-full col-span-2 border-r border-[#EAECF0] p-4">
         <div>
           <span>Company</span>
         </div>
       </aside>
-      <main className="col-span-10 h-full p-6 ml-[16.6667%]">
+      <main className="col-span-10 h-full p-6">
         <section className="flex justify-between items-center mb-6">
           <div>
             <h1 className="font-semibold text-[#101828]">Your Dashboard</h1>
@@ -47,7 +47,7 @@ export default function DashboardPage() {
             </button>
           </div>
         </section>
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm">
+        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
           {TODOS.map((todo, index) => (
             <div key={todo.title} className="flex gap-6 items-center relative">
               <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
@@ -81,107 +81,7 @@ export default function DashboardPage() {
           </button>
         </section>
 
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm">
-          {TODOS.map((todo, index) => (
-            <div key={todo.title} className="flex gap-6 items-center relative">
-              <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
-                O
-              </div>
-              {index < TODOS.length - 1 && (
-                <div className="absolute left-5 top-11 h-2 border-l-2 border-[#EAECF0]"></div>
-              )}
-              <div className="flex flex-col">
-                <h2
-                  className={`font-semibold ${
-                    todo.done ? "text-[#101828]" : "text-[#475467]"
-                  }`}
-                >
-                  {todo.title}
-                </h2>
-                <p className="text-[#475467]">{todo.description}</p>
-              </div>
-            </div>
-          ))}
-          <button
-            className="w-max bg-white text-[#344054] py-2 px-3 font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-            style={{
-              border: "2px solid",
-              borderImageSource:
-                "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-            }}
-            type="submit"
-          >
-            Get Started
-          </button>
-        </section>
-
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm">
-          {TODOS.map((todo, index) => (
-            <div key={todo.title} className="flex gap-6 items-center relative">
-              <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
-                O
-              </div>
-              {index < TODOS.length - 1 && (
-                <div className="absolute left-5 top-11 h-2 border-l-2 border-[#EAECF0]"></div>
-              )}
-              <div className="flex flex-col">
-                <h2
-                  className={`font-semibold ${
-                    todo.done ? "text-[#101828]" : "text-[#475467]"
-                  }`}
-                >
-                  {todo.title}
-                </h2>
-                <p className="text-[#475467]">{todo.description}</p>
-              </div>
-            </div>
-          ))}
-          <button
-            className="w-max bg-white text-[#344054] py-2 px-3 font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-            style={{
-              border: "2px solid",
-              borderImageSource:
-                "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-            }}
-            type="submit"
-          >
-            Get Started
-          </button>
-        </section>
-
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm">
-          {TODOS.map((todo, index) => (
-            <div key={todo.title} className="flex gap-6 items-center relative">
-              <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
-                O
-              </div>
-              {index < TODOS.length - 1 && (
-                <div className="absolute left-5 top-11 h-2 border-l-2 border-[#EAECF0]"></div>
-              )}
-              <div className="flex flex-col">
-                <h2
-                  className={`font-semibold ${
-                    todo.done ? "text-[#101828]" : "text-[#475467]"
-                  }`}
-                >
-                  {todo.title}
-                </h2>
-                <p className="text-[#475467]">{todo.description}</p>
-              </div>
-            </div>
-          ))}
-          <button
-            className="w-max bg-white text-[#344054] py-2 px-3 font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-            style={{
-              border: "2px solid",
-              borderImageSource:
-                "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-            }}
-            type="submit"
-          >
-            Get Started
-          </button>
-        </section>
+        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm"></section>
       </main>
     </div>
   );
