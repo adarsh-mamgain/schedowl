@@ -3,28 +3,35 @@ import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/supabase";
 import { getHash, verifyPassword } from "@/src/util/common";
+import LinkedIn from "next-auth/providers/linkedin";
+import { IntegrationType } from "./src/enums/integrations";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       async profile(profile) {
-        console.log("First");
-        // Upsert Google user in Supabase
-        // const { data, error } = await supabase
-        //   .from("users")
-        //   .upsert({
-        //     email: profile.email,
-        //     auth_method: "google",
-        //   })
-        //   .select()
-        //   .single();
+        const { error } = await supabase
+          .from("users")
+          .upsert({
+            id: profile.sub,
+            email: profile.email,
+            firstName: profile.given_name,
+            lastName: profile.family_name,
+            avatar_url: profile.picture,
+            auth_method: "google",
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
 
         return {
-          id: "profile.sub",
-          email: "profile.email",
-          supabaseId: "data?.id",
+          id: profile.sub,
+          email: profile.email,
+          name: profile.name,
+          image: profile.picture,
         };
       },
     }),
@@ -35,7 +42,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials, request) => {
+      authorize: async (credentials) => {
         if (!credentials) return null;
 
         const { mode, email, password } = credentials as {
@@ -50,7 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         // Check if the user exists in the database
-        const { data: user, error } = await supabase
+        const { data: user } = await supabase
           .from("users")
           .select("*")
           .eq("email", email)
@@ -93,53 +100,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user }) {
-      console.log("Second");
-      //   const { email, name, image } = user;
-
-      //   // Check if user exists in Supabase
-      //   const { data: existingUser, error: fetchError } = await supabase
-      //     .from("users")
-      //     .select("*")
-      //     .eq("email", email)
-      //     .single();
-
-      //   if (fetchError) {
-      //     console.error("Error fetching user:", fetchError);
-      //   }
-
-      //   // If user does not exist, insert them
-      //   if (!existingUser) {
-      //     const { error: insertError } = await supabase.from("users").insert([
-      //       {
-      //         email,
-      //         name,
-      //         image,
-      //       },
-      //     ]);
-
-      //     if (insertError) {
-      //       throw new Error("Could not create user. Please try again.");
-      //       return false; // Prevent login
-      //     }
-      //   }
-
-      return false; // Allow login
-      // },
-      // async session({ session }) {
-      //   // Fetch user ID from Supabase and include it in the session
-      //   const { email } = session.user;
-      //   const { data: user } = await supabase
-      //     .from("users")
-      //     .select("id")
-      //     .eq("email", email)
-      //     .single();
-
-      //   if (user) {
-      //     session.user.id = user.id;
-      //   }
-
-      //   return session;
+    async session({ session, token }) {
+      if (session?.user) {
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
     },
   },
   secret: process.env.AUTH_SECRET, // Use a strong secret for session encryption
