@@ -3,8 +3,6 @@ import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { supabase } from "@/supabase";
 import { getHash, verifyPassword } from "@/src/util/common";
-import LinkedIn from "next-auth/providers/linkedin";
-import { IntegrationType } from "./src/enums/integrations";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [

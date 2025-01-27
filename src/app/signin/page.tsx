@@ -93,7 +93,10 @@ export default function SignIn() {
           </div>
           <form
             className="flex flex-col gap-4"
-            onClick={() => signIn("google")}
+            onSubmit={(e) => {
+              e.preventDefault();
+              signIn("google");
+            }}
           >
             <button
               className="bg-white text-[#344054] w-full h-full font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center gap-3"
