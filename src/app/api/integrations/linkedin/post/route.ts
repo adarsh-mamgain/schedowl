@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       throw new Error("User ID is not a string");
     }
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to post to LinkedIn" },
       { status: 500 }

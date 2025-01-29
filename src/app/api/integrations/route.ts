@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       connected: !!integration,
       integration,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch integration" },
       { status: 500 }

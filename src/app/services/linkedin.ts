@@ -118,7 +118,7 @@ export class LinkedInService {
       }
 
       return response.data;
-    } catch (error) {
+    } catch {
       throw new Error("Failed to post to LinkedIn");
     }
   }

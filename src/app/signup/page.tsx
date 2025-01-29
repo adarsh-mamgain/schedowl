@@ -10,8 +10,6 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
 
-  interface HandleSubmitEvent extends React.FormEvent<HTMLFormElement> {}
-
   const validatePassword = (password: string): boolean => {
     const newErrors: string[] = [];
     if (password.length < 8) {
@@ -30,7 +28,9 @@ export default function SignUp() {
     return newErrors.length === 0;
   };
 
-  const handleSubmit = async (e: HandleSubmitEvent): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
     if (!email) {
       setErrors(["Email is required."]);
@@ -52,8 +52,12 @@ export default function SignUp() {
       } else {
         console.error("Error One:", result.error);
       }
-    } catch (error: any) {
-      console.error("Error:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
     }
   };
   return (

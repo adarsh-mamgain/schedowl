@@ -45,7 +45,7 @@ export default function DashboardPage() {
           );
           console.log("connected", response);
           setLinkedInConnected(response.data.connected);
-        } catch (error) {
+        } catch {
           console.error("Failed to check LinkedIn integration");
         }
       }
@@ -114,7 +114,7 @@ export default function DashboardPage() {
           </div>
         </section>
         <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
-          {TODOS.map((todo, index) => (
+          {TODOS.map((todo) => (
             <div key={todo.title} className="flex gap-3 items-center">
               <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
                 {React.createElement(

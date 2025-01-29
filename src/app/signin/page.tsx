@@ -9,9 +9,9 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  interface HandleSubmitEvent extends React.FormEvent<HTMLFormElement> {}
-
-  const handleSubmit = async (e: HandleSubmitEvent): Promise<void> => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
     try {
       const result = await signIn("credentials", {
@@ -26,8 +26,12 @@ export default function SignIn() {
       } else {
         console.error("Error One:", result.error);
       }
-    } catch (error: any) {
-      console.error("Error:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error:", error.message);
+      } else {
+        console.error("Unexpected error:", error);
+      }
     }
   };
   return (
@@ -118,7 +122,7 @@ export default function SignIn() {
           </form>
           <div className="flex justify-center text-[#344054]">
             <p>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
                 className="font-semibold underline hover:text-[#475467] hover:no-underline"

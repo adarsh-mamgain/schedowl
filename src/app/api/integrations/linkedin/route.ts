@@ -21,7 +21,7 @@ export async function GET() {
     const authUrl = await LinkedInService.getAuthUrl(userId);
     console.log("authUrl", authUrl);
     return NextResponse.json({ url: authUrl });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to generate auth URL" },
       { status: 500 }
