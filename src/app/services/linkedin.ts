@@ -1,5 +1,5 @@
 import { IntegrationType } from "@/src/enums/integrations";
-import { decrypt, encrypt } from "@/src/util/common";
+// import { decrypt, encrypt } from "@/src/util/common";
 import { supabase } from "@/supabase";
 import axios from "axios";
 
@@ -27,18 +27,17 @@ export class LinkedInService {
     // Exchange code for tokens
     const tokenResponse = await axios.post(
       "https://www.linkedin.com/oauth/v2/accessToken",
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
+        client_id: process.env.LINKEDIN_CLIENT_ID!,
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
+      }),
       {
-        method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code,
-          client_id: process.env.LINKEDIN_CLIENT_ID!,
-          client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
-          redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
-        }),
       }
     );
     console.log("tokenResponse", tokenResponse);
@@ -84,18 +83,14 @@ export class LinkedInService {
       }
 
       // Check if token is expired and refresh if needed
-      if (new Date(integration.expires_at) < new Date()) {
-        await this.refreshToken(userId, integration.refresh_token);
-      }
+      // if (new Date(integration.expires_at) < new Date()) {
+      //   await this.refreshToken(userId, integration.refresh_token);
+      // }
 
       // Post to LinkedIn
-      const response = await axios.post(`${LINKEDIN_API_URL}/ugcPosts`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${integration.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const response = await axios.post(
+        `${LINKEDIN_API_URL}/ugcPosts`,
+        {
           author: `urn:li:person:${userId}`,
           lifecycleState: "PUBLISHED",
           specificContent: {
@@ -109,8 +104,14 @@ export class LinkedInService {
           visibility: {
             "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
           },
-        }),
-      });
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${integration.access_token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status !== 201) {
         throw new Error("Failed to post to LinkedIn");
@@ -122,7 +123,7 @@ export class LinkedInService {
     }
   }
 
-  private static async refreshToken(userId: string, refreshToken: string) {
-    // Implement token refresh logic here
-  }
+  // private static async refreshToken(userId: string, refreshToken: string) {
+  //   // Implement token refresh logic here
+  // }
 }
