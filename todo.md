@@ -1,10 +1,32 @@
 ### Todo
 
-- [x] make the login ui
-- [ ] build the whole available UI
 - [ ] create the database schema for org and user
-- [ ] integrate the Google and Credentials login
-- [ ] integrate linkedin and start testing and creating post
+- [x] make the login ui
+  - [ ] create an organisation and super admin (type: 1)
+  - [ ] superadmin can add other admins (type: 2)
+  - [ ] admins can add members (type: 3)
+  - [ ] integrate the Google and Credentials login
+- [ ] create DEV, STAGE and PRODUCTION environments
+  - [ ] create proper pipelines for each
+- [ ] move this todo as a project to Notion Docs
+- [ ] protect all the api routes and pages
+  - [ ] jwt/session token
+  - [ ] csrf token
+- [x] integrate linkedin (type: 1)
+  - [ ] match the state for oauth integration
+- [ ] handle refresh tokens for the account
+- [ ] use prisma instead of supabase-js
+  - [ ] has types to use in whole app
+  - [ ] allows for proper migrations changes to be created
+  - [ ] can migrate db to some other infrastructure
+  - [ ] handle all db requests as transactions
+- [ ] allow posting from the account
+- [ ] allow scheduling the posts (cronjob)
+  - add backups to check if the posts are in the queue
+  - add exponential retries
+  - add error/failure handling through emails
+  - store logs for each posts (retries of jsonb)
+- [ ] build the whole available UI
 
 ### Research
 
