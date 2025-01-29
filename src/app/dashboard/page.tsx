@@ -3,25 +3,30 @@
 import { IntegrationType } from "@/src/enums/integrations";
 import axios from "axios";
 import { useSession } from "next-auth/react";
+import React from "react";
 import { useEffect, useState } from "react";
 import PostForm from "@/src/app/components/PostForm";
+import { Link, FileText, Gift } from "lucide-react";
 
 const TODOS = [
   {
     title: "Connect your LinkedIn account",
     description: "Connect your LinkedIn account to start using the app",
+    icon: "Link",
     done: true,
   },
   {
     title: "Publish your first post",
     description:
       "Use the magic of AI and your imagination to create and publish your first post.",
+    icon: "FileText",
     done: false,
   },
   {
     title: "Unlock your gift",
     description:
       "We have something special for you. complete the above steps and claim your special gift.",
+    icon: "Gift",
     done: false,
   },
 ];
@@ -105,18 +110,25 @@ export default function DashboardPage() {
             >
               Write Post
             </button>
-            {showPostForm && <PostForm />}
+            {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
           </div>
         </section>
         <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
           {TODOS.map((todo, index) => (
-            <div key={todo.title} className="flex gap-6 items-center relative">
+            <div key={todo.title} className="flex gap-3 items-center">
               <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
-                O
+                {React.createElement(
+                  todo.icon === "Link"
+                    ? Link
+                    : todo.icon === "FileText"
+                    ? FileText
+                    : Gift,
+                  { size: 16, color: "#344054" }
+                )}
               </div>
-              {index < TODOS.length - 1 && (
-                <div className="absolute left-5 top-11 h-2 border-l-2 border-[#EAECF0]"></div>
-              )}
+              {/* {index < TODOS.length - 1 && (
+                <div className="h-2 border-l-2 border-[#EAECF0] ml-5 mt-2"></div>
+              )} */}
               <div className="flex flex-col">
                 <h2
                   className={`font-semibold ${
