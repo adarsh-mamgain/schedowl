@@ -1,13 +1,13 @@
 import { IntegrationType } from "@/src/enums/integrations";
+import prisma from "@/src/lib/prisma";
 // import { decrypt, encrypt } from "@/src/util/common";
-import { supabase } from "@/supabase";
 import axios from "axios";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
 
 export class LinkedInService {
-  static async getAuthUrl(userId: string) {
-    const state = userId; // You might want to encrypt this
+  static async getAuthUrl(organisationId: string) {
+    const state = organisationId; // You might want to encrypt this
     const scope = "openid profile email w_member_social";
 
     return (
@@ -40,8 +40,6 @@ export class LinkedInService {
         },
       }
     );
-    console.log("tokenResponse", tokenResponse);
-    console.log("Token response received");
 
     const tokens = tokenResponse.data;
     console.log("Tokens parsed", tokens);
@@ -51,34 +49,54 @@ export class LinkedInService {
     //   throw new Error("State does not match user ID");
     // }
 
-    // Store tokens in Supabase
-    const { error } = await supabase.from("integrations").upsert({
-      user_id: state,
-      type: IntegrationType.LinkedIn,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
-      expires_at: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
+    console.log("Storing tokens in Supabase", {
+      organisationId: state,
+      provider: IntegrationType.LINKEDIN,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
     });
-    console.log("Tokens stored in Supabase");
 
-    if (error) {
-      console.error("Error storing tokens in Supabase", error);
-      throw error;
+    try {
+      const integrationData = {
+        organisationId: state,
+        provider: IntegrationType.LINKEDIN,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token ?? "",
+        expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
+      };
+
+      console.log("Integration data to be stored:", integrationData);
+
+      const integration = await prisma.integration.create({
+        data: integrationData,
+      });
+
+      console.log("Tokens stored in Supabase", integration);
+
+      if (!integration) {
+        console.error("Error storing tokens in Supabase");
+        throw new Error("Error storing tokens in Supabase");
+      }
+    } catch (error) {
+      console.error("Error during prisma.integration.create:", error);
+      throw new Error("Error storing tokens in Supabase");
     }
+
     console.log("handleCallback completed successfully");
     return tokens;
   }
 
-  static async post(userId: string, text: string) {
+  static async post(integrationId: string, text: string) {
     try {
-      const { data: integration, error } = await supabase
-        .from("integrations")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("type", IntegrationType.LinkedIn)
-        .single();
+      const integration = await prisma.integration.findFirst({
+        where: {
+          id: integrationId,
+          provider: IntegrationType.LINKEDIN,
+        },
+      });
 
-      if (error || !integration) {
+      if (!integration) {
         throw new Error("LinkedIn integration not found");
       }
 
@@ -87,11 +105,11 @@ export class LinkedInService {
       //   await this.refreshToken(userId, integration.refresh_token);
       // }
 
-      // Post to LinkedIn
+      //! Post to LinkedIn
       const response = await axios.post(
         `${LINKEDIN_API_URL}/ugcPosts`,
         {
-          author: `urn:li:person:${userId}`,
+          author: `urn:li:person:${8675309}`,
           lifecycleState: "PUBLISHED",
           specificContent: {
             "com.linkedin.ugc.ShareContent": {
@@ -107,7 +125,7 @@ export class LinkedInService {
         },
         {
           headers: {
-            Authorization: `Bearer ${integration.access_token}`,
+            Authorization: `Bearer ${integration.accessToken}`,
             "Content-Type": "application/json",
           },
         }

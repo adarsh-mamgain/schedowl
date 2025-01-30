@@ -1,28 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/supabase";
+import prisma from "@/src/lib/prisma";
+import { auth } from "@/auth";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get("userId");
-  const type = searchParams.get("type");
+  const provider = searchParams.get("provider");
 
-  if (!userId || !type) {
+  const session = await auth();
+
+  console.log("checkin integration through type", session);
+
+  if (!userId || !provider) {
     return NextResponse.json(
-      { error: "User ID and type are required" },
+      { error: "User ID and provider are required" },
       { status: 400 }
     );
   }
 
   try {
-    const { data: integration, error } = await supabase
-      .from("integrations")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("type", type)
-      .single();
+    const integration = await prisma.integration.findFirst({
+      where: {
+        organisationId: userId,
+        provider: provider,
+      },
+    });
 
-    if (error) {
-      throw NextResponse.json(
+    if (!integration) {
+      return NextResponse.json(
         { error: "Failed to fetch integration" },
         { status: 500 }
       );
