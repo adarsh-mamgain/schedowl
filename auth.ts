@@ -1,10 +1,8 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import prisma from "@/src/lib/prisma";
 import { getHash, verifyPassword } from "@/src/util/common";
-
-const prisma = new PrismaClient();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -20,7 +18,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const organisation = await prisma.organisation.create({
             data: {
               name: `${profile.given_name}'s Organisation`,
-              status: 1,
             },
           });
 
@@ -30,7 +27,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               firstName: profile.given_name,
               lastName: profile.family_name,
               password: "", // No password for Google auth
-              status: 1,
               authMethod: "google",
               organisationId: organisation.id,
             },
@@ -38,9 +34,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`,
+          userId: user.id,
           organisationId: user.organisationId,
         };
       },
@@ -72,7 +66,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const organisation = await prisma.organisation.create({
             data: {
               name: `${email.split("@")[0]}'s Organisation`,
-              status: 1,
             },
           });
 
@@ -82,7 +75,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               firstName: "", // To be filled later
               lastName: "",
               password: getHash(password),
-              status: 1,
               authMethod: "credentials",
               organisationId: organisation.id,
             },
@@ -97,9 +89,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: `${user.firstName} ${user.lastName}`,
+          userId: user.id,
           organisationId: user.organisationId,
         };
       },
@@ -121,7 +111,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
   },
-
   pages: {
     signIn: "/signin",
   },

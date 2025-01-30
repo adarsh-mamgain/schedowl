@@ -16,13 +16,26 @@ enum AccessType {
   GUEST
 }
 
+// Enum to define status types
+enum Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// Enum to define integration providers
+enum IntegrationProvider {
+  LINKEDIN
+}
+
 model Organisation {
-  id        String   @id @default(uuid())
-  name      String
-  status    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
+  id           String        @id @default(uuid())
+  name         String
+  status       Status        @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  users        User[]
+  integrations Integration[]
 
   @@index([id])
 }
@@ -33,7 +46,7 @@ model User {
   firstName      String
   lastName       String
   password       String
-  status         Int
+  status         Status       @default(ACTIVE)
   sessionId      String?
   authMethod     String
   organisationId String
@@ -41,6 +54,21 @@ model User {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organisation   Organisation @relation(fields: [organisationId], references: [id])
+
+  @@index([organisationId])
+  @@index([id])
+}
+
+model Integration {
+  id             String       @id @default(uuid())
+  organisationId String
+  provider       String
+  accessToken    String
+  refreshToken   String?
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  org            Organisation @relation(fields: [organisationId], references: [id])
 
   @@index([organisationId])
   @@index([id])
