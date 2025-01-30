@@ -1,8 +1,10 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { supabase } from "@/supabase";
+import { PrismaClient } from "@prisma/client";
 import { getHash, verifyPassword } from "@/src/util/common";
+
+const prisma = new PrismaClient();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -10,26 +12,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       async profile(profile) {
-        const { error } = await supabase
-          .from("users")
-          .upsert({
-            id: profile.sub,
-            email: profile.email,
-            firstName: profile.given_name,
-            lastName: profile.family_name,
-            avatar_url: profile.picture,
-            auth_method: "google",
-          })
-          .select()
-          .single();
+        let user = await prisma.user.findUnique({
+          where: { email: profile.email },
+        });
 
-        if (error) throw error;
+        if (!user) {
+          const organisation = await prisma.organisation.create({
+            data: {
+              name: `${profile.given_name}'s Organisation`,
+              status: 1,
+            },
+          });
+
+          user = await prisma.user.create({
+            data: {
+              email: profile.email,
+              firstName: profile.given_name,
+              lastName: profile.family_name,
+              password: "", // No password for Google auth
+              status: 1,
+              authMethod: "google",
+              organisationId: organisation.id,
+            },
+          });
+        }
 
         return {
-          id: profile.sub,
-          email: profile.email,
-          name: profile.name,
-          image: profile.picture,
+          id: user.id,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          organisationId: user.organisationId,
         };
       },
     }),
@@ -40,81 +52,78 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      async authorize(credentials) {
         if (!credentials) return null;
-
         const { mode, email, password } = credentials as {
           mode: string;
           email: string;
           password: string;
         };
 
-        // Common check: Ensure email and password are provided
         if (!email || !password) {
           throw new Error("Email and password are required");
         }
 
-        // Check if the user exists in the database
-        const { data: user } = await supabase
-          .from("users")
-          .select("*")
-          .eq("email", email)
-          .single();
+        let user = await prisma.user.findUnique({ where: { email } });
 
         if (mode === "signup") {
-          if (user) {
-            throw new Error("User already exists");
-          }
+          if (user) throw new Error("User already exists");
 
-          // Hash the password and create the user
-          const hashedPassword = getHash(password);
-          const { error: insertError } = await supabase
-            .from("users")
-            .insert([{ email, password: hashedPassword }]);
+          const organisation = await prisma.organisation.create({
+            data: {
+              name: `${email.split("@")[0]}'s Organisation`,
+              status: 1,
+            },
+          });
 
-          if (insertError) {
-            throw new Error("Could not create user. Please try again.");
-          }
-
-          return { id: null, email }; // Return basic user info after signup
-        }
-
-        if (mode === "signin") {
-          if (!user) {
-            throw new Error("User not found");
-          }
-
-          // Verify password
-          const isValidPassword = verifyPassword(password, user.password);
-          if (!isValidPassword) {
+          user = await prisma.user.create({
+            data: {
+              email,
+              firstName: "", // To be filled later
+              lastName: "",
+              password: getHash(password),
+              status: 1,
+              authMethod: "credentials",
+              organisationId: organisation.id,
+            },
+          });
+        } else if (mode === "signin") {
+          if (!user) throw new Error("User not found");
+          if (!verifyPassword(password, user.password)) {
             throw new Error("Invalid credentials");
           }
-
-          return { id: user.id, email: user.email };
+        } else {
+          throw new Error("Invalid mode");
         }
 
-        throw new Error("Invalid mode");
+        return {
+          id: user.id,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          organisationId: user.organisationId,
+        };
       },
     }),
   ],
   callbacks: {
     async session({ session, token }) {
       if (session?.user) {
-        if (token.sub) {
-          session.user.id = token.sub;
-        }
+        session.user.id = token.sub as string;
+        session.user.organisationId = token.organisationId as string;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
+        token.organisationId = user.organisationId;
       }
       return token;
     },
   },
-  secret: process.env.AUTH_SECRET, // Use a strong secret for session encryption
+
   pages: {
     signIn: "/signin",
   },
+  secret: process.env.AUTH_SECRET,
 });

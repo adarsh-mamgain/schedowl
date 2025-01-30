@@ -1,16 +1,19 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enum to define user access types
+enum AccessType {
+  SUPER_ADMIN
+  ADMIN
+  MEMBER
+  GUEST
 }
 
 model Organisation {
@@ -27,13 +30,14 @@ model Organisation {
 model User {
   id             String       @id @default(uuid())
   email          String       @unique
-  firstName      String?
-  lastName       String?
+  firstName      String
+  lastName       String
   password       String
   status         Int
-  sessionId      String
+  sessionId      String?
   authMethod     String
   organisationId String
+  accessType     AccessType   @default(SUPER_ADMIN)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organisation   Organisation @relation(fields: [organisationId], references: [id])
