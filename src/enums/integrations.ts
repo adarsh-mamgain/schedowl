@@ -1,3 +1,3 @@
 export enum IntegrationType {
-  LinkedIn = 1,
+  LINKEDIN = "LINKEDIN",
 }
