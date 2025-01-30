@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Enum to define user access types
+// Enum for user roles
 enum AccessType {
   SUPER_ADMIN
   ADMIN
@@ -16,18 +16,19 @@ enum AccessType {
   GUEST
 }
 
-// Enum to define status types
+// Enum for account status
 enum Status {
   ACTIVE
   INACTIVE
   SUSPENDED
 }
 
-// Enum to define integration providers
+// Enum for integration providers
 enum IntegrationProvider {
   LINKEDIN
 }
 
+// Organisation model
 model Organisation {
   id           String        @id @default(uuid())
   name         String
@@ -40,6 +41,7 @@ model Organisation {
   @@index([id])
 }
 
+// User model
 model User {
   id             String       @id @default(uuid())
   email          String       @unique
@@ -47,10 +49,10 @@ model User {
   lastName       String
   password       String
   status         Status       @default(ACTIVE)
-  sessionId      String?
+  // sessionId      String?
   authMethod     String
   organisationId String
-  accessType     AccessType   @default(SUPER_ADMIN)
+  accessType     AccessType   @default(SUPER_ADMIN) // ! change it
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organisation   Organisation @relation(fields: [organisationId], references: [id])
@@ -59,16 +61,17 @@ model User {
   @@index([id])
 }
 
+// Integration model
 model Integration {
-  id             String       @id @default(uuid())
+  id             String              @id @default(uuid())
   organisationId String
-  provider       String
-  accessToken    String
-  refreshToken   String?
+  provider       IntegrationProvider
+  accessToken    String              @db.Text // Supports long tokens
+  refreshToken   String?             @db.Text @default("") // Optional and supports long tokens
   expiresAt      DateTime
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  org            Organisation @relation(fields: [organisationId], references: [id])
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  organisation   Organisation        @relation(fields: [organisationId], references: [id])
 
   @@index([organisationId])
   @@index([id])

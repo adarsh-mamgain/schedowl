@@ -11,14 +11,14 @@ export async function GET() {
   }
 
   try {
-    const userId = session.user.id;
-    if (!userId) {
+    const organisationId = session.user.organisationId;
+    if (!organisationId) {
       return NextResponse.json(
         { error: "User ID is undefined" },
         { status: 400 }
       );
     }
-    const authUrl = await LinkedInService.getAuthUrl(userId);
+    const authUrl = await LinkedInService.getAuthUrl(organisationId);
     console.log("authUrl", authUrl);
     return NextResponse.json({ url: authUrl });
   } catch {

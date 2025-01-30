@@ -41,7 +41,7 @@ export default function DashboardPage() {
       if (session?.user) {
         try {
           const response = await axios.get(
-            `/api/integrations?userId=${session.user.id}&type=${IntegrationType.LinkedIn}`
+            `/api/integrations?organisationId=${session.user.organisationId}&type=${IntegrationType.LINKEDIN}`
           );
           console.log("connected", response);
           setLinkedInConnected(response.data.connected);
