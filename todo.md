@@ -27,6 +27,7 @@
   - add error/failure handling through emails
   - store logs for each posts (retries of jsonb)
 - [ ] build the whole available UI
+- [ ] uses Amazon SES for marketing emails
 
 ### Research
 
