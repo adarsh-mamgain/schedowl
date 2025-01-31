@@ -5,7 +5,8 @@
   - [ ] create an organisation and super admin (type: 1)
   - [ ] superadmin can add other admins (type: 2)
   - [ ] admins can add members (type: 3)
-  - [ ] integrate the Google and Credentials login
+  - [ ] integrate the Google login
+  - [x] integrate the Credentials login
 - [ ] create DEV, STAGE and PRODUCTION environments
   - [ ] create proper pipelines for each
 - [x] move this todo as a project to Notion Docs

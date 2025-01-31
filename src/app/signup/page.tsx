@@ -3,9 +3,11 @@
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SignUp() {
+  const router = useRouter(); // ✅ Get the router instance
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -28,10 +30,9 @@ export default function SignUp() {
     return newErrors.length === 0;
   };
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!email) {
       setErrors(["Email is required."]);
       return;
@@ -39,27 +40,21 @@ export default function SignUp() {
     if (!validatePassword(password)) {
       return;
     }
-    try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-        mode: "signup",
-      });
-      if (!result?.error) {
-        console.log("Success:", result);
-        //
-      } else {
-        console.error("Error One:", result.error);
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error:", error.message);
-      } else {
-        console.error("Unexpected error:", error);
-      }
+
+    const result = await signIn("credentials", {
+      redirect: false, // ❌ Prevent default redirect
+      email,
+      password,
+      mode: "signup",
+    });
+    if (!result?.error) {
+      console.log("Sign-up successful");
+      router.push("/dashboard"); // ✅ Redirect manually after success
+    } else {
+      console.error("Error:", result.error);
     }
   };
+
   return (
     <div className="grid items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main>
@@ -128,7 +123,10 @@ export default function SignUp() {
           </div>
           <form
             className="flex flex-col gap-4"
-            onClick={() => signIn("google")}
+            onSubmit={(e) => {
+              e.preventDefault();
+              signIn("google");
+            }}
           >
             <button
               className="bg-white text-[#344054] w-full h-full font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center gap-3"

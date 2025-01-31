@@ -3,37 +3,32 @@
 import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SignIn() {
+  const router = useRouter(); // ✅ Get the router instance
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-        mode: "signin",
-      });
-      if (!result?.error) {
-        console.log("Success:", result);
-        //
-      } else {
-        console.error("Error One:", result.error);
-      }
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error:", error.message);
-      } else {
-        console.error("Unexpected error:", error);
-      }
+
+    const result = await signIn("credentials", {
+      redirect: false, // ❌ Prevent default redirect
+      email,
+      password,
+      mode: "signin",
+    });
+
+    if (!result?.error) {
+      console.log("Sign-in successful");
+      router.push("/dashboard"); // ✅ Redirect manually after success
+    } else {
+      console.error("Error:", result.error);
     }
   };
+
   return (
     <div className="grid items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main>
