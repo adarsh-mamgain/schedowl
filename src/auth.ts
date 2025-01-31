@@ -110,6 +110,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return token;
     },
+    async redirect({ url, baseUrl }) {
+      return url === "/signin" ? `${baseUrl}/dashboard` : url;
+    },
   },
   pages: {
     signIn: "/signin",
