@@ -1,6 +1,13 @@
-import Image from "next/image";
-import { FC, ReactNode, ButtonHTMLAttributes } from "react";
 import { LoaderCircle } from "lucide-react";
+import Image from "next/image";
+import {
+  FC,
+  ReactNode,
+  ButtonHTMLAttributes,
+  useRef,
+  useEffect,
+  useState,
+} from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   type?: "button" | "submit" | "reset";
@@ -15,8 +22,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button: FC<ButtonProps> = ({
   type = "button",
-  variant = "primary", // 'primary', 'secondary', 'outline'
-  size = "medium", // 'small', 'medium', 'large'
+  variant = "primary",
+  size = "medium",
   onClick,
   children,
   icon,
@@ -24,25 +31,24 @@ const Button: FC<ButtonProps> = ({
   loading = false,
   ...props
 }) => {
-  // Define base button styles
   const baseStyles =
-    "font-semibold border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center gap-3 transition-all duration-300 ease-in-out";
-
-  // Variant styles for different types of buttons
+    "font-semibold border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center gap-3 transition-all duration-200";
   const variants = {
-    primary: "bg-[#1570EF] text-white",
-    secondary: "bg-white text-[#344054]",
-    outline: "bg-transparent text-[#344054] border-[#344054]",
+    primary: `bg-[#1570EF] text-white ${
+      loading ? "opacity-90" : "hover:bg-[#1256c4] active:bg-[#0e3e9a]"
+    }`,
+    secondary: `bg-white text-[#344054] ${
+      loading ? "opacity-90" : "hover:bg-[#f0f0f0] active:bg-[#e0e0e0]"
+    }`,
+    outline: `bg-transparent text-[#344054] border-[#344054] ${
+      loading ? "opacity-90" : "hover:bg-[#f0f0f0] active:bg-[#e0e0e0]"
+    }`,
   };
-
-  // Size styles
   const sizes = {
     small: "text-sm py-2 px-3",
     medium: "text-base py-2.5 px-3",
     large: "text-base py-3 px-4",
   };
-
-  // Additional styles (border gradient and others)
   const styles = {
     primary: {
       border: "2px solid",
@@ -57,37 +63,39 @@ const Button: FC<ButtonProps> = ({
     outline: {},
   };
 
-  // Hover, Active, and Disabled States
-  const hoverStyles = {
-    primary: "hover:bg-[#0D4DFF] active:bg-[#0A3F99]",
-    secondary: "hover:bg-[#F1F5F9] active:bg-[#E2E8F0]",
-    outline: "hover:bg-[#F1F5F9] active:bg-[#E2E8F0]",
-  };
-
-  // Select styles for each variant, size, and state
   const variantStyle = variants[variant] || variants.primary;
   const sizeStyle = sizes[size] || sizes.medium;
   const style = styles[variant] || styles.primary;
-  const hoverStyle = hoverStyles[variant] || hoverStyles.primary;
+
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (buttonRef.current) {
+      setButtonWidth(buttonRef.current.offsetWidth);
+    }
+  }, [loading]);
 
   return (
     <button
+      ref={buttonRef}
       type={type}
-      className={`${variantStyle} ${sizeStyle} ${baseStyles} ${hoverStyle} ${className} ${
-        loading ? "cursor-wait opacity-50" : ""
-      }`}
+      className={`${variantStyle} ${sizeStyle} ${baseStyles} ${className}`}
       onClick={onClick}
-      style={style}
-      disabled={loading} // Disable button while loading
+      style={{ ...style, width: loading ? buttonWidth : undefined }}
+      disabled={loading}
       {...props}
     >
-      {loading ? (
-        <LoaderCircle className="animate-spin" width={20} height={20} />
-      ) : (
-        <>
-          {icon && <Image src={icon} alt="icon" width={20} height={20} />}
-          {children}
-        </>
+      <div style={{ visibility: loading ? "hidden" : "visible" }}>
+        {icon && <Image src={icon} alt="icon" width={20} height={20} />}
+        {children}
+      </div>
+      {loading && (
+        <LoaderCircle
+          size={20}
+          className="absolute cursor-wait animate-spin"
+          color={variant === "primary" ? "#fff" : "#344054"}
+        />
       )}
     </button>
   );
