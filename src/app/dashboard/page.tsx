@@ -7,6 +7,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import PostForm from "@/src/app/components/PostForm";
 import { Link, FileText, Gift } from "lucide-react";
+import Button from "@/src/app/components/Button";
 
 const TODOS = [
   {
@@ -103,17 +104,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <div>
-            <button
+            <Button
+              size="small"
               onClick={() => setShowPostForm((prev) => !prev)}
-              className="bg-[#1570EF] text-sm text-white font-semibold py-2 px-3 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-              style={{
-                border: "2px solid",
-                borderImageSource:
-                  "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-              }}
             >
               Write Post
-            </button>
+            </Button>
             {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
           </div>
         </section>
@@ -146,18 +142,15 @@ export default function DashboardPage() {
             </div>
           ))}
           {!linkedInConnected && (
-            <button
-              onClick={handleGetStarted}
-              className="w-max bg-white text-[#344054] py-2 px-3 font-semibold py-2.5 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-              style={{
-                border: "2px solid",
-                borderImageSource:
-                  "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-              }}
-              type="submit"
-            >
-              Get Started
-            </button>
+            <div>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={handleGetStarted}
+              >
+                Get Started
+              </Button>
+            </div>
           )}
         </section>
 

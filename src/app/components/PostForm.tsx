@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { z } from "zod";
+import Button from "@/src/app/components/Button";
 
 interface PostFormProps {
   setShowPostForm: (value: boolean) => void;
@@ -79,30 +80,18 @@ export default function PostForm({ setShowPostForm }: PostFormProps) {
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <button
+            <Button
               type="button"
-              className="bg-white text-sm text-[#344054] font-semibold py-2 px-3 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-              style={{
-                border: "2px solid",
-                borderImageSource:
-                  "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-              }}
+              variant="secondary"
+              size="small"
               onClick={() => setShowPostForm(false)}
             >
               Cancel
-            </button>
+            </Button>
 
-            <button
-              type="submit"
-              className="bg-[#1570EF] text-sm text-white font-semibold py-2 px-3 border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset]"
-              style={{
-                border: "2px solid",
-                borderImageSource:
-                  "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
-              }}
-            >
+            <Button type="submit" size="small">
               Schedule
-            </button>
+            </Button>
           </div>
         </form>
       </div>
