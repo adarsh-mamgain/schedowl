@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth } from "@/src/auth";
 import { LinkedInService } from "@/src/app/services/linkedin";
 import { NextResponse } from "next/server";
 

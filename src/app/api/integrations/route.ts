@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import { auth } from "@/auth";
+import { IntegrationType } from "@/src/enums/integrations";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get("userId");
   const provider = searchParams.get("provider");
-
-  const session = await auth();
-
-  console.log("checkin integration through type", session);
 
   if (!userId || !provider) {
     return NextResponse.json(
@@ -22,7 +18,7 @@ export async function GET(request: NextRequest) {
     const integration = await prisma.integration.findFirst({
       where: {
         organisationId: userId,
-        provider: provider,
+        provider: provider as IntegrationType,
       },
     });
 

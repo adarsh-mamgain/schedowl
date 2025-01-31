@@ -43,7 +43,6 @@ export default function DashboardPage() {
           const response = await axios.get(
             `/api/integrations?organisationId=${session.user.organisationId}&type=${IntegrationType.LINKEDIN}`
           );
-          console.log("connected", response);
           setLinkedInConnected(response.data.connected);
         } catch {
           console.error("Failed to check LinkedIn integration");
@@ -83,7 +82,12 @@ export default function DashboardPage() {
   //   }
   // };
 
-  return (
+  return !session ? (
+    <div className="w-screen h-screen flex flex-col items-center justify-center">
+      <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
+      <div className="text-[#101828]">Redirecting...</div>
+    </div>
+  ) : (
     <div className="w-screen h-screen grid grid-cols-12">
       <aside className="h-full col-span-2 border-r border-[#EAECF0] p-4">
         <div>
