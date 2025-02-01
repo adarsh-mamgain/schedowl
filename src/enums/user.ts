@@ -1,4 +1,3 @@
-// Enum to define user access types
 export enum UserAccessType {
   SUPER_ADMIN = "SUPER_ADMIN",
   ADMIN = "ADMIN",

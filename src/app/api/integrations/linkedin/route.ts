@@ -1,5 +1,5 @@
 import { auth } from "@/src/auth";
-import { LinkedInService } from "@/src/app/services/linkedin";
+import { LinkedInService } from "@/src/services/linkedin";
 import { NextResponse } from "next/server";
 
 export async function GET() {

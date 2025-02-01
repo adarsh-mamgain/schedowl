@@ -1,4 +1,4 @@
-import { LinkedInService } from "@/src/app/services/linkedin";
+import { LinkedInService } from "@/src/services/linkedin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
