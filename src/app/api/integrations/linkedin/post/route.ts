@@ -11,8 +11,7 @@ export async function POST(request: Request) {
   try {
     const { text } = await request.json();
     if (typeof session.user.id === "string") {
-      const result = await LinkedInService.post(session.user.id, text);
-      console.log("result", result);
+      await LinkedInService.post(session.user.id, text);
     } else {
       throw new Error("User ID is not a string");
     }

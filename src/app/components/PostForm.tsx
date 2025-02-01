@@ -30,7 +30,6 @@ export default function PostForm({ setShowPostForm }: PostFormProps) {
               return;
             }
 
-            console.log("Form data is valid:", result.data);
             // await postToLinkedIn(result.data);
             setShowPostForm(false);
           }}

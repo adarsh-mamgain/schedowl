@@ -23,7 +23,6 @@ export default function SignIn() {
     });
 
     if (!result?.error) {
-      console.log("Sign-in successful");
       router.push("/dashboard"); // ✅ Redirect manually after success
     } else {
       console.error("Error:", result.error);

@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const session = await auth();
 
-  console.log("session", session);
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -19,7 +18,6 @@ export async function GET() {
       );
     }
     const authUrl = await LinkedInService.getAuthUrl(organisationId);
-    console.log("authUrl", authUrl);
     return NextResponse.json({ url: authUrl });
   } catch {
     return NextResponse.json(

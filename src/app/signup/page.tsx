@@ -49,7 +49,6 @@ export default function SignUp() {
       mode: "signup",
     });
     if (!result?.error) {
-      console.log("Sign-up successful");
       router.push("/dashboard"); // ✅ Redirect manually after success
     } else {
       console.error("Error:", result.error);
