@@ -42,7 +42,7 @@ export default function DashboardPage() {
       if (session?.user) {
         try {
           const response = await axios.get(
-            `/api/integrations?organisationId=${session.user.organisationId}&type=${IntegrationType.LINKEDIN}`
+            `/api/integrations?organisationId=${session.user.organisationId}&provider=${IntegrationType.LINKEDIN}`
           );
           setLinkedInConnected(response.data.connected);
         } catch {

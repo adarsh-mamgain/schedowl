@@ -23,7 +23,6 @@ export class LinkedInService {
   }
 
   static async handleCallback(code: string, state: string) {
-    console.log("Starting handleCallback");
     // Exchange code for tokens
     const tokenResponse = await axios.post(
       "https://www.linkedin.com/oauth/v2/accessToken",
@@ -42,20 +41,11 @@ export class LinkedInService {
     );
 
     const tokens = tokenResponse.data;
-    console.log("Tokens parsed", tokens);
 
     // const decryptedState = decrypt(state);
     // if (userId !== decryptedState) {
     //   throw new Error("State does not match user ID");
     // }
-
-    console.log("Storing tokens in Supabase", {
-      organisationId: state,
-      provider: IntegrationType.LINKEDIN,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
-    });
 
     try {
       const integrationData = {
@@ -66,13 +56,9 @@ export class LinkedInService {
         expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
       };
 
-      console.log("Integration data to be stored:", integrationData);
-
       const integration = await prisma.integration.create({
         data: integrationData,
       });
-
-      console.log("Tokens stored in Supabase", integration);
 
       if (!integration) {
         console.error("Error storing tokens in Supabase");
@@ -83,7 +69,6 @@ export class LinkedInService {
       throw new Error("Error storing tokens in Supabase");
     }
 
-    console.log("handleCallback completed successfully");
     return tokens;
   }
 

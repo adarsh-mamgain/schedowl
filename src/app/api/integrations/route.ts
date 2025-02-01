@@ -4,12 +4,12 @@ import { IntegrationType } from "@/src/enums/integrations";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const userId = searchParams.get("userId");
+  const organisationId = searchParams.get("organisationId");
   const provider = searchParams.get("provider");
 
-  if (!userId || !provider) {
+  if (!organisationId || !provider) {
     return NextResponse.json(
-      { error: "User ID and provider are required" },
+      { error: "Organisation ID and provider are required" },
       { status: 400 }
     );
   }
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const integration = await prisma.integration.findFirst({
       where: {
-        organisationId: userId,
+        organisationId: organisationId,
         provider: provider as IntegrationType,
       },
     });
@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       connected: !!integration,
-      integration,
     });
   } catch {
     return NextResponse.json(
