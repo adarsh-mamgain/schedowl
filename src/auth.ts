@@ -96,19 +96,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      if (session?.user) {
-        session.user.id = token.sub as string;
-        session.user.organisationId = token.organisationId as string;
-      }
-      return session;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
+        token.userId = user.userId;
         token.organisationId = user.organisationId;
       }
       return token;
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.userId = token.userId as string;
+        session.user.organisationId = token.organisationId as string;
+      }
+      return session;
     },
     async redirect({ url, baseUrl }) {
       return url === "/signin" ? `${baseUrl}/dashboard` : url;
