@@ -1,15 +1,14 @@
-import bcrypt from "bcrypt";
+import argon2 from "argon2";
 
 export async function getHash(password: string): Promise<string> {
-  const salt = bcrypt.genSaltSync(10);
-  return bcrypt.hashSync(password, salt);
+  return await argon2.hash(password);
 }
 
 export async function verifyPassword(
   inputPassword: string,
   storedPassword: string
 ): Promise<boolean> {
-  return bcrypt.compareSync(inputPassword, storedPassword);
+  return await argon2.verify(storedPassword, inputPassword);
 }
 
 const algorithm = "AES-CBC";
