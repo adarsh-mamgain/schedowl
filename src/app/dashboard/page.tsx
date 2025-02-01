@@ -2,11 +2,11 @@
 
 import { IntegrationType } from "@/src/enums/integrations";
 import axios from "axios";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import React from "react";
 import { useEffect, useState } from "react";
 import PostForm from "@/src/app/components/PostForm";
-import { Link, FileText, Gift } from "lucide-react";
+import { Link, FileText, Gift, ChevronDown, ChevronUp } from "lucide-react";
 import Button from "@/src/app/components/Button";
 
 const TODOS = [
@@ -62,6 +62,12 @@ export default function DashboardPage() {
     }
   };
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleSignOut = () => {
+    signOut();
+  };
+
   // Add this function to your DashboardPage component
   // const postToLinkedIn = async (text: string) => {
   //   try {
@@ -91,10 +97,28 @@ export default function DashboardPage() {
   ) : (
     <div className="w-screen h-screen grid grid-cols-12">
       <aside className="h-full col-span-2 border-r border-[#EAECF0] p-4">
-        <div>
-          <span>Company</span>
+        <div className="relative">
+          <button
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            className="w-full flex items-center justify-between"
+          >
+            <span>Company</span>
+            {dropdownOpen ? (
+              <ChevronUp color="#344054" />
+            ) : (
+              <ChevronDown color="#344054" />
+            )}
+          </button>
+          {dropdownOpen && (
+            <div className="w-full flex flex-col p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
+              <Button variant="secondary" size="small" onClick={handleSignOut}>
+                Sign out
+              </Button>
+            </div>
+          )}
         </div>
       </aside>
+
       <main className="col-span-10 h-full p-6">
         <section className="flex justify-between items-center mb-6">
           <div>

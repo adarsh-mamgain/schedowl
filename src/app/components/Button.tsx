@@ -32,7 +32,7 @@ const Button: FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    "font-semibold border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center gap-3 transition-all duration-200";
+    "font-semibold border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center transition-all duration-200";
   const variants = {
     primary: `bg-[#1570EF] text-white ${
       loading ? "opacity-90" : "hover:bg-[#1256c4] active:bg-[#0e3e9a]"
@@ -86,7 +86,10 @@ const Button: FC<ButtonProps> = ({
       disabled={loading}
       {...props}
     >
-      <div style={{ visibility: loading ? "hidden" : "visible" }}>
+      <div
+        className="flex items-center justify-center gap-3"
+        style={{ visibility: loading ? "hidden" : "visible" }}
+      >
         {icon && <Image src={icon} alt="icon" width={20} height={20} />}
         {children}
       </div>
