@@ -1,34 +1,52 @@
-import bcrypt from "bcryptjs";
-// import crypto from "crypto";
+import bcrypt from "bcrypt";
 
-export function getHash(password: string): string {
+export async function getHash(password: string): Promise<string> {
   const salt = bcrypt.genSaltSync(10);
   return bcrypt.hashSync(password, salt);
 }
 
-export function verifyPassword(
+export async function verifyPassword(
   inputPassword: string,
   storedPassword: string
-): boolean {
+): Promise<boolean> {
   return bcrypt.compareSync(inputPassword, storedPassword);
 }
 
-// const algorithm = "aes-256-cbc";
-// const key = crypto.randomBytes(32);
-// const iv = crypto.randomBytes(16);
+const algorithm = "AES-CBC";
 
-// export function encrypt(text: string): string {
-//   const cipher = crypto.createCipheriv(algorithm, key, iv);
-//   let encrypted = cipher.update(text, "utf8", "hex");
-//   encrypted += cipher.final("hex");
-//   return `${iv.toString("hex")}:${encrypted}`;
-// }
+async function generateKey() {
+  return crypto.subtle.generateKey({ name: algorithm, length: 256 }, true, [
+    "encrypt",
+    "decrypt",
+  ]);
+}
 
-// export function decrypt(encryptedText: string): string {
-//   const [ivHex, encrypted] = encryptedText.split(":");
-//   const ivBuffer = Buffer.from(ivHex, "hex");
-//   const decipher = crypto.createDecipheriv(algorithm, key, ivBuffer);
-//   let decrypted = decipher.update(encrypted, "hex", "utf8");
-//   decrypted += decipher.final("utf8");
-//   return decrypted;
-// }
+export async function encrypt(text: string): Promise<string> {
+  const key = await generateKey(); // Generate the key inside function
+  const iv = crypto.getRandomValues(new Uint8Array(16));
+  const encodedText = new TextEncoder().encode(text);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: algorithm, iv },
+    key,
+    encodedText
+  );
+
+  return `${Buffer.from(iv).toString("hex")}:${Buffer.from(encrypted).toString(
+    "hex"
+  )}`;
+}
+
+export async function decrypt(encryptedText: string): Promise<string> {
+  const key = await generateKey(); // Generate the key inside function
+  const [ivHex, encrypted] = encryptedText.split(":");
+  const iv = new Uint8Array(Buffer.from(ivHex, "hex"));
+  const encryptedBuffer = Buffer.from(encrypted, "hex");
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: algorithm, iv },
+    key,
+    encryptedBuffer
+  );
+
+  return new TextDecoder().decode(decrypted);
+}

@@ -51,6 +51,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.2.0
+      '@types/bcrypt':
+        specifier: ^5.0.2
+        version: 5.0.2
       '@types/node':
         specifier: ^20
         version: 20.17.16
@@ -561,6 +564,9 @@ packages:
     peerDependenciesMeta:
       tree-sitter:
         optional: true
+
+  '@types/bcrypt@5.0.2':
+    resolution: {integrity: sha512-6atioO8Y75fNcbmj0G7UjI9lXN2pQ/IGJ2FWT4a/btd0Lk9lQalHLKhkgKVZ3r+spnmWUKfbMi1GEe9wyHQfNQ==}
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -3332,6 +3338,10 @@ snapshots:
     optionalDependencies:
       tree-sitter: 0.22.1
     optional: true
+
+  '@types/bcrypt@5.0.2':
+    dependencies:
+      '@types/node': 20.17.16
 
   '@types/cookie@0.6.0': {}
 
