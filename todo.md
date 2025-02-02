@@ -11,9 +11,6 @@
   - [ ] integrate the Google login
   - [x] integrate the Credentials login
 - [x] move this todo as a project to Notion Docs
-- [ ] protect all the api routes and pages
-  - [ ] jwt/session token
-  - [ ] csrf token
 - [x] integrate linkedin (type: 1)
   - [ ] match the state for oauth integration
 - [ ] handle refresh tokens for the account
@@ -30,6 +27,9 @@
   - store logs for each posts (retries of jsonb)
 - [ ] build the whole available UI
 - [ ] uses Amazon SES for marketing emails
+- [ ] protect all the api routes and pages
+  - [ ] jwt/session token
+  - [ ] csrf token
 
 ### Research
 
