@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { z } from "zod";
-import Button from "@/src/app/components/Button";
+import Button from "@/src/components/Button";
 
 interface PostFormProps {
   setShowPostForm: (value: boolean) => void;

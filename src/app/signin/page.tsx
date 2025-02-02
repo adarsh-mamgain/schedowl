@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Button from "@/src/app/components/Button";
+import Button from "@/src/components/Button";
 import { authClient } from "@/src/lib/auth-client";
 
 export default function SignIn() {

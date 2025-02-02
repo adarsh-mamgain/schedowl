@@ -1,7 +1,8 @@
 ### Todo
 
+- [ ] add a toaster to showcase errors and success messages
 - [x] create DEV, STAGE and PRODUCTION environments
-  - [x] create proper pipelines for each
+  - [ ] create proper pipelines for each
   - [ ] create todo for every release
 - [x] create the database schema for org and user
 - [x] make the login ui
@@ -11,8 +12,12 @@
   - [ ] integrate the Google login
   - [x] integrate the Credentials login
 - [x] move this todo as a project to Notion Docs
+- [ ] protect all the api routes and pages
+  - [ ] jwt/session token
+  - [ ] csrf token
 - [x] integrate linkedin (type: 1)
   - [ ] match the state for oauth integration
+  - [ ] if error is thrown then handle it to return back to dashboard
 - [ ] handle refresh tokens for the account
 - [x] use prisma instead of supabase-js
   - [x] has types to use in whole app

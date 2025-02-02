@@ -3,7 +3,7 @@
 import { IntegrationType } from "@/src/enums/integrations";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import PostForm from "@/src/app/components/PostForm";
+import PostForm from "@/src/components/PostForm";
 import {
   Link,
   FileText,
@@ -13,9 +13,10 @@ import {
   ChartArea,
   Calendar,
 } from "lucide-react";
-import Button from "@/src/app/components/Button";
+import Button from "@/src/components/Button";
 import { authClient } from "@/src/lib/auth-client";
 import { useRouter } from "next/navigation";
+import CalendarView from "@/src/components/CalendarView";
 
 const TODOS = [
   {
@@ -236,6 +237,14 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </div>
+            {/* <div className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6"> */}
+            <CalendarView
+            // setShowPostForm={false}
+            // setSelectedDateTime={() => {
+            //   new Date(datetime);
+            // }}
+            />
+            {/* </div> */}
           </section>
         )}
         {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
