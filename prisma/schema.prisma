@@ -8,71 +8,62 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Enum for user roles
-enum AccessType {
-  SUPER_ADMIN
-  ADMIN
-  MEMBER
-  GUEST
-}
-
-// Enum for account status
-enum Status {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
-// Enum for integration providers
-enum IntegrationProvider {
-  LINKEDIN
-}
-
-// Organisation model
-model Organisation {
-  id           String        @id @default(uuid())
-  name         String
-  status       Status        @default(ACTIVE)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  users        User[]
-  integrations Integration[]
-
-  @@index([id])
-}
-
-// User model
 model User {
-  id             String       @id @default(uuid())
-  email          String       @unique
-  firstName      String
-  lastName       String
-  password       String
-  status         Status       @default(ACTIVE)
-  // sessionId      String?
-  authMethod     String
-  organisationId String
-  accessType     AccessType   @default(SUPER_ADMIN) // ! change it
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  id            String    @id @default(cuid())
+  name          String
+  email         String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
 
-  @@index([organisationId])
-  @@index([id])
+  @@unique([email])
+  @@map("user")
 }
 
-// Integration model
-model Integration {
-  id             String              @id @default(uuid())
-  organisationId String
-  provider       IntegrationProvider
-  accessToken    String              @db.Text // Supports long tokens
-  refreshToken   String?             @db.Text @default("") // Optional and supports long tokens
-  expiresAt      DateTime
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  organisation   Organisation        @relation(fields: [organisationId], references: [id])
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([organisationId])
-  @@index([id])
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
 }

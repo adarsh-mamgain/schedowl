@@ -1,11 +1,11 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/app/components/Button";
+import { authClient } from "@/src/lib/auth-client";
 
 export default function SignUp() {
   const router = useRouter(); // ✅ Get the router instance
@@ -31,7 +31,7 @@ export default function SignUp() {
     return newErrors.length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!email) {
@@ -42,17 +42,21 @@ export default function SignUp() {
       return;
     }
 
-    const result = await signIn("credentials", {
-      redirect: false, // ❌ Prevent default redirect
-      email,
-      password,
-      mode: "signup",
-    });
-    if (!result?.error) {
-      router.push("/dashboard"); // ✅ Redirect manually after success
-    } else {
-      console.error("Error:", result.error);
-    }
+    await authClient.signUp.email(
+      {
+        name: "",
+        email,
+        password,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard"); // ✅ Redirect manually after success
+        },
+        onError: (ctx) => {
+          console.error(ctx.error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -72,7 +76,7 @@ export default function SignUp() {
           <h2 className="text-[#475467] mb-2">Start your 30-day free trial.</h2>
         </div>
         <div className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={signUp} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-[#344054] font-medium">
                 Email
@@ -117,7 +121,7 @@ export default function SignUp() {
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              signIn("google");
+              // signIn("google");
             }}
           >
             <Button type="submit" variant="secondary" icon="google-icon.svg">

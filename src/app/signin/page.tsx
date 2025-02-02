@@ -1,32 +1,34 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/app/components/Button";
+import { authClient } from "@/src/lib/auth-client";
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const result = await signIn("credentials", {
-      redirect: false, // ❌ Prevent default redirect
-      email,
-      password,
-      mode: "signin",
-    });
-
-    if (!result?.error) {
-      router.push("/dashboard"); // ✅ Redirect manually after success
-    } else {
-      console.error("Error:", result.error);
-    }
+    await authClient.signIn.email(
+      {
+        email,
+        password,
+      },
+      {
+        onSuccess: () => {
+          router.push("/dashboard"); // ✅ Redirect manually after success
+        },
+        onError: (ctx) => {
+          console.error(ctx.error.message);
+        },
+      }
+    );
   };
 
   return (
@@ -46,7 +48,7 @@ export default function SignIn() {
           <h2 className="text-[#475467] mb-2">Start your 30-day free trial.</h2>
         </div>
         <div className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={signIn} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-[#344054] font-medium">
                 Email
@@ -86,7 +88,7 @@ export default function SignIn() {
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              signIn("google");
+              // signIn("google");
             }}
           >
             <Button type="submit" variant="secondary" icon="google-icon.svg">

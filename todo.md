@@ -1,5 +1,8 @@
 ### Todo
 
+- [x] create DEV, STAGE and PRODUCTION environments
+  - [x] create proper pipelines for each
+  - [ ] create todo for every release
 - [x] create the database schema for org and user
 - [x] make the login ui
   - [ ] create an organisation and super admin (type: 1)
@@ -7,8 +10,6 @@
   - [ ] admins can add members (type: 3)
   - [ ] integrate the Google login
   - [x] integrate the Credentials login
-- [ ] create DEV, STAGE and PRODUCTION environments
-  - [ ] create proper pipelines for each
 - [x] move this todo as a project to Notion Docs
 - [ ] protect all the api routes and pages
   - [ ] jwt/session token

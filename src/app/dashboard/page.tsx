@@ -2,12 +2,13 @@
 
 import { IntegrationType } from "@/src/enums/integrations";
 import axios from "axios";
-import { signOut, useSession } from "next-auth/react";
 import React from "react";
 import { useEffect, useState } from "react";
 import PostForm from "@/src/app/components/PostForm";
 import { Link, FileText, Gift, ChevronDown, ChevronUp } from "lucide-react";
 import Button from "@/src/app/components/Button";
+import { authClient } from "@/src/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const TODOS = [
   {
@@ -33,7 +34,8 @@ const TODOS = [
 ];
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
+  const router = useRouter(); // ✅ Get the router instance
+  const { data: session } = authClient.useSession();
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
 
@@ -42,7 +44,7 @@ export default function DashboardPage() {
       if (session?.user) {
         try {
           const response = await axios.get(
-            `/api/integrations?organisationId=${session.user.organisationId}&provider=${IntegrationType.LINKEDIN}`
+            `/api/integrations?organisationId=${session.user.id}&provider=${IntegrationType.LINKEDIN}`
           );
           setLinkedInConnected(response.data.connected);
         } catch {
@@ -64,8 +66,14 @@ export default function DashboardPage() {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleSignOut = () => {
-    signOut();
+  const signOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/signin"); // redirect to login page
+        },
+      },
+    });
   };
 
   // Add this function to your DashboardPage component
@@ -111,7 +119,7 @@ export default function DashboardPage() {
           </button>
           {dropdownOpen && (
             <div className="w-full flex flex-col p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
-              <Button variant="secondary" size="small" onClick={handleSignOut}>
+              <Button variant="secondary" size="small" onClick={signOut}>
                 Sign out
               </Button>
             </div>
