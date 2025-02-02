@@ -2,10 +2,17 @@
 
 import { IntegrationType } from "@/src/enums/integrations";
 import axios from "axios";
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import PostForm from "@/src/app/components/PostForm";
-import { Link, FileText, Gift, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Link,
+  FileText,
+  Gift,
+  ChevronDown,
+  ChevronUp,
+  ChartArea,
+  Calendar,
+} from "lucide-react";
 import Button from "@/src/app/components/Button";
 import { authClient } from "@/src/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -33,11 +40,18 @@ const TODOS = [
   },
 ];
 
+const TABS = [
+  { title: "Dashboard", icon: "ChartArea" },
+  { title: "Calendar", icon: "Calendar" },
+];
+
 export default function DashboardPage() {
-  const router = useRouter(); // ✅ Get the router instance
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("Dashboard");
 
   useEffect(() => {
     const checkLinkedInIntegration = async () => {
@@ -63,8 +77,6 @@ export default function DashboardPage() {
       console.error("Failed to connect LinkedIn:", error);
     }
   };
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const signOut = async () => {
     await authClient.signOut({
@@ -104,7 +116,7 @@ export default function DashboardPage() {
     </div>
   ) : (
     <div className="w-screen h-screen grid grid-cols-12">
-      <aside className="h-full col-span-2 border-r border-[#EAECF0] p-4">
+      <aside className="h-full col-span-2 border-r border-[#EAECF0] pt-6 p-4">
         <div className="relative">
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
@@ -125,68 +137,108 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+        <div className="mt-4">
+          {TABS.map((tab, index) => (
+            <button
+              key={index}
+              className={`w-full text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
+                activeTab === tab.title
+                  ? "bg-gray-200 text-[#182230]"
+                  : "text-[#344054]"
+              }`}
+              onClick={() => setActiveTab(tab.title)}
+            >
+              <div className="flex items-center gap-3">
+                {React.createElement(
+                  tab.icon === "Calendar" ? Calendar : ChartArea,
+                  { size: 16, color: "#344054" }
+                )}
+                {tab.title}
+              </div>
+            </button>
+          ))}
+        </div>
       </aside>
 
       <main className="col-span-10 h-full p-6">
-        <section className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="font-semibold text-[#101828]">Your Dashboard</h1>
-            <p className="text-sm text-[#475467]">
-              Manage your team members and their account permissions here.
-            </p>
-          </div>
-          <div>
-            <Button
-              size="small"
-              onClick={() => setShowPostForm((prev) => !prev)}
-            >
-              Write Post
-            </Button>
-            {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
-          </div>
-        </section>
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
-          {TODOS.map((todo) => (
-            <div key={todo.title} className="flex gap-3 items-center">
-              <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
-                {React.createElement(
-                  todo.icon === "Link"
-                    ? Link
-                    : todo.icon === "FileText"
-                    ? FileText
-                    : Gift,
-                  { size: 16, color: "#344054" }
-                )}
+        {activeTab === "Dashboard" && (
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="font-semibold text-[#101828]">Your Dashboard</h1>
+                <p className="text-sm text-[#475467]">
+                  Manage your team members and their account permissions here.
+                </p>
               </div>
-              {/* {index < TODOS.length - 1 && (
-                <div className="h-2 border-l-2 border-[#EAECF0] ml-5 mt-2"></div>
-              )} */}
-              <div className="flex flex-col">
-                <h2
-                  className={`font-semibold ${
-                    todo.done ? "text-[#101828]" : "text-[#475467]"
-                  }`}
+              <div>
+                <Button
+                  size="small"
+                  onClick={() => setShowPostForm((prev) => !prev)}
                 >
-                  {todo.title}
-                </h2>
-                <p className="text-[#475467]">{todo.description}</p>
+                  Write Post
+                </Button>
               </div>
             </div>
-          ))}
-          {!linkedInConnected && (
-            <div>
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={handleGetStarted}
-              >
-                Get Started
-              </Button>
+            <div className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
+              {TODOS.map((todo) => (
+                <div key={todo.title} className="flex gap-3 items-center">
+                  <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow">
+                    {React.createElement(
+                      todo.icon === "Link"
+                        ? Link
+                        : todo.icon === "FileText"
+                        ? FileText
+                        : Gift,
+                      { size: 16, color: "#344054" }
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <h2
+                      className={`font-semibold ${
+                        todo.done ? "text-[#101828]" : "text-[#475467]"
+                      }`}
+                    >
+                      {todo.title}
+                    </h2>
+                    <p className="text-[#475467]">{todo.description}</p>
+                  </div>
+                </div>
+              ))}
+              {!linkedInConnected && (
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={handleGetStarted}
+                  >
+                    Get Started
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-        </section>
-
-        <section className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm"></section>
+          </section>
+        )}
+        {activeTab === "Calendar" && (
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h1 className="font-semibold text-[#101828]">Calendar</h1>
+                <p className="text-sm text-[#475467]">
+                  Manage your content calendar from here.
+                </p>
+              </div>
+              <div>
+                <Button
+                  size="small"
+                  onClick={() => setShowPostForm((prev) => !prev)}
+                >
+                  Write Post
+                </Button>
+              </div>
+            </div>
+          </section>
+        )}
+        {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
       </main>
     </div>
   );

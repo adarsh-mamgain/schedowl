@@ -30,9 +30,9 @@ export default async function authMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/signin", request.url));
     }
 
-    if (isAuthRoute || isPasswordRoute) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+    // if (isAuthRoute || isPasswordRoute) {
+    //   return NextResponse.redirect(new URL("/dashboard", request.url));
+    // }
 
     // if (isAdminRoute && session.user.role !== "admin") {
     //   return NextResponse.redirect(new URL("/", request.url));
