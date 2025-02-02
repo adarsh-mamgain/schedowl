@@ -49,7 +49,14 @@ export default function SignUp() {
         password,
       },
       {
-        onSuccess: () => {
+        onSuccess: async (data) => {
+          console.log("Adarsh", data);
+          const result = await authClient.organization.create({
+            name: "Workspace 1",
+            slug: "workspace-1",
+            logo: "",
+          });
+          console.log("organisation", result);
           router.push("/dashboard"); // ✅ Redirect manually after success
         },
         onError: (ctx) => {
