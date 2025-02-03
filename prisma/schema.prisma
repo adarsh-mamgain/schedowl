@@ -9,74 +9,139 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(uuid())
+  id            String    @id @default(uuid())
   name          String?
-  email         String      @unique
+  email         String    @unique
   password      String
   emailVerified DateTime?
   image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relations
-  memberships   Membership[]  // Organisations user is part of
-  ownedOrgs     Organisation[] // Organisations user owns
-  sessions      Session[]
+  memberships Member[] // Organisations user is part of
+  sessions    Session[]
 
   @@map("user")
 }
 
 model Organisation {
-  id            String      @id @default(uuid())
-  name          String
-  slug          String      @unique
-  image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  ownerId       String
-  members       Membership[]
-  sessions      Session[]
+  members        Member[]
+  sessions       Session[]
+  socialAccounts SocialAccount[]
 
   @@map("organisation")
 }
 
-model Membership {
-  id            String      @id @default(uuid())
-  role          Role        @default(MEMBER)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+model Member {
+  id        String   @id @default(uuid())
+  role      Role     @default(MEMBER)
+  isOwner   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
-  organisation  Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
+  scheduledPosts ScheduledPost[]
+
   @@unique([userId, organisationId]) // User can only have one role per organisation
-  @@map("membership")
+  @@map("member")
 }
 
 model Session {
-  id            String      @id @default(uuid())
-  sessionToken  String      @unique
-  expiresAt     DateTime
-  createdAt     DateTime    @default(now())
-  
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
   // Relations
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
-  organisation  Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
   organisationId String?
 
   @@index([userId])
   @@map("session")
 }
 
+model SocialAccount {
+  id           String         @id @default(uuid())
+  platform     SocialPlatform
+  accountName  String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  isActive     Boolean        @default(true)
+
+  // Relations
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  posts ScheduledPost[]
+
+  @@unique([organisationId, platform, accountName])
+  @@map("social_account")
+}
+
+model ScheduledPost {
+  id           String     @id @default(uuid())
+  content      String
+  scheduledFor DateTime
+  status       PostStatus @default(DRAFT)
+  publishedAt  DateTime?
+  errorMessage String?
+
+  // Relations
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  socialAccountId String
+
+  // Optional relation to track which user created the post
+  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  // attachments   PostAttachment[]
+
+  @@map("scheduled_post")
+}
+
+// model PostAttachment {
+//   id            String          @id @default(uuid())
+//   type          String          // e.g., 'image', 'video'
+//   url           String
+//   originalName  String?
+
+//   // Relations
+//   scheduledPost ScheduledPost   @relation(fields: [scheduledPostId], references: [id], onDelete: Cascade)
+//   scheduledPostId String
+
+//   @@map("post_attachment")
+// }
+
 enum Role {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum SocialPlatform {
+  LINKEDIN
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
 }

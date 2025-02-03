@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { hashPassword, createSession } from "@/src/lib/auth";
 import { z } from "zod";
+import { generateUniqueSlug } from "@/src/lib/common";
 
 const signupSchema = z.object({
   email: z.string().email(),
@@ -41,10 +42,23 @@ export async function POST(request: Request) {
       },
     });
 
+    const organisation = await prisma.organisation.create({
+      data: {
+        name: "Workspace 1",
+        slug: generateUniqueSlug("Workspace 1"),
+        members: {
+          create: {
+            userId: user.id,
+            role: "OWNER",
+            isOwner: true,
+          },
+        },
+      },
+    });
+
     console.log("user", user);
 
-    // Create session without organisation
-    const session = await createSession(user.id);
+    const session = await createSession(user.id, organisation.id);
 
     console.log("session", session);
 

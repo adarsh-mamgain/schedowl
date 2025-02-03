@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/components/Button";
 import axios from "axios";
+import { toast } from "react-toastify";
+import Toaster from "@/src/components/ui/Toaster";
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
@@ -14,16 +16,27 @@ export default function SignIn() {
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const res = await axios.post(
-      "/api/auth/signin",
-      { email, password },
-      { headers: { "Content-Type": "application/json" } }
-    );
-    if (res.status !== 200) {
-      const error = await res.data;
-      throw new Error(error.message);
+    try {
+      const res = await axios.post(
+        "/api/auth/signin",
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      if (res.status !== 200) {
+        const error = await res.data;
+        throw new Error(error.message);
+      }
+      toast.success("Signin successful!");
+      router.push("/dashboard"); // ✅ Redirect manually after success
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("API error response:", error.response?.data);
+        toast.error(error.response?.data?.error || "Signup failed.");
+      } else {
+        console.error("Unexpected error:", error);
+        toast.error("An unexpected error occurred.");
+      }
     }
-    router.push("/dashboard"); // ✅ Redirect manually after success
   };
 
   return (
@@ -103,6 +116,7 @@ export default function SignIn() {
           </div>
         </div>
       </main>
+      <Toaster />
     </div>
   );
 }
