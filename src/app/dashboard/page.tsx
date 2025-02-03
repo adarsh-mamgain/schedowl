@@ -1,6 +1,6 @@
 "use client";
 
-import { IntegrationType } from "@/src/enums/integrations";
+import { SocialPlatform } from "@/src/enums/social-platoform";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import PostForm from "@/src/components/PostForm";
@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import CalendarView from "@/src/components/CalendarView";
+import { toast } from "react-toastify";
+import { Organisation, User } from "@prisma/client";
 
 const TODOS = [
   {
@@ -44,30 +46,55 @@ const TABS = [
   { title: "Calendar", icon: "Calendar" },
 ];
 
+type UserMe = {
+  user: User;
+  organisation: Organisation;
+};
+
 export default function DashboardPage() {
-  const session = {
-    user: { id: "11" },
-  };
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [me, setMe] = useState<UserMe>();
 
   useEffect(() => {
     const checkLinkedInIntegration = async () => {
-      if (session?.user) {
-        try {
-          const response = await axios.get(
-            `/api/integrations?organisationId=${session.user.id}&provider=${IntegrationType.LINKEDIN}`
-          );
-          setLinkedInConnected(response.data.connected);
-        } catch {
-          console.error("Failed to check LinkedIn integration");
+      try {
+        const response = await axios.get(
+          `/api/integrations?provider=${SocialPlatform.LINKEDIN}`
+        );
+        setLinkedInConnected(response.data.connected);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("API error response:", error.response?.data);
+          toast.error(error.response?.data?.error || "Signup failed.");
+        } else {
+          console.error("Unexpected error:", error);
+          toast.error("An unexpected error occurred.");
         }
       }
     };
     checkLinkedInIntegration();
-  }, [session]);
+
+    const getUserAndOrgDetails = async () => {
+      try {
+        const response = await axios.get("/api/user");
+        console.log("response.data", response.data);
+        setMe(response.data);
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("API error response:", error.response?.data);
+          toast.error(error.response?.data?.error || "Signup failed.");
+        } else {
+          console.error("Unexpected error:", error);
+          toast.error("An unexpected error occurred.");
+        }
+      }
+    };
+    getUserAndOrgDetails();
+    console.log("ME: ", me);
+  }, []);
 
   const handleGetStarted = async () => {
     try {
@@ -79,7 +106,7 @@ export default function DashboardPage() {
   };
 
   const signOut = async () => {
-    await axios.get("/api/auth/logout");
+    await axios.post("/api/auth/logout");
   };
 
   // Add this function to your DashboardPage component
@@ -103,12 +130,13 @@ export default function DashboardPage() {
   //   }
   // };
 
-  return !session ? (
-    <div className="w-screen h-screen flex flex-col items-center justify-center">
-      <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
-      <div className="text-[#101828]">Redirecting...</div>
-    </div>
-  ) : (
+  // !session ? (
+  //   <div className="w-screen h-screen flex flex-col items-center justify-center">
+  //     <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
+  //     <div className="text-[#101828]">Redirecting...</div>
+  //   </div>
+  // ) :
+  return (
     <div className="w-screen h-screen grid grid-cols-12">
       <aside className="h-full col-span-2 border-r border-[#EAECF0] pt-6 p-4">
         <div className="relative">
@@ -116,7 +144,7 @@ export default function DashboardPage() {
             onClick={() => setDropdownOpen((prev) => !prev)}
             className="w-full flex items-center justify-between"
           >
-            <span>Company</span>
+            <span>{me?.organisation.name}</span>
             {dropdownOpen ? (
               <ChevronUp color="#344054" />
             ) : (

@@ -75,7 +75,6 @@ export async function createSession(userId: string, organisationId?: string) {
 
     return session;
   } catch (error) {
-    console.error("Session creation error:", error);
     throw error;
   }
 }
@@ -112,13 +111,11 @@ export async function validateSession() {
     //   cookieStore.delete("auth-token");
     //   return null;
     // }
-    console.log("payload");
 
     return payload;
   } catch (error) {
-    console.error("Session validation error:", error);
     cookieStore.delete("auth-token");
-    return null;
+    throw error;
   }
 }
 
@@ -126,7 +123,7 @@ export async function destroySession() {
   const cookieStore = await cookies();
   try {
     const token = cookieStore.get("auth-token")?.value;
-    if (!token) return;
+    if (!token) return false;
 
     const { payload } = await jwtVerify(token, SECRET_KEY);
     await prisma.session.delete({
@@ -135,7 +132,7 @@ export async function destroySession() {
 
     cookieStore.delete("auth-token");
   } catch (error) {
-    console.error("Session destruction error:", error);
     cookieStore.delete("auth-token");
+    throw error;
   }
 }

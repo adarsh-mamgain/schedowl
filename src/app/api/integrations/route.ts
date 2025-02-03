@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import { IntegrationType } from "@/src/enums/integrations";
+import { SocialPlatform } from "@/src/enums/social-platoform";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const organisationId = searchParams.get("organisationId");
-  const provider = searchParams.get("provider");
+  const platform = searchParams.get("platform");
 
-  if (!organisationId || !provider) {
+  const requestHeaders = new Headers(request.headers);
+  const organisationId = requestHeaders.get("x-organisation-id");
+
+  console.log("organisationId", organisationId);
+
+  if (!organisationId || !platform) {
     return NextResponse.json(
-      { error: "Organisation ID and provider are required" },
+      { error: "Organisation ID and platform are required" },
       { status: 400 }
     );
   }
 
   try {
-    const integration = await prisma.integration.findFirst({
+    const integration = await prisma.socialAccount.findFirst({
       where: {
         organisationId: organisationId,
-        provider: provider as IntegrationType,
+        platform: platform as SocialPlatform,
       },
     });
 
     if (!integration) {
       return NextResponse.json(
-        { error: "Failed to fetch integration" },
-        { status: 500 }
+        { error: "No integration exists" },
+        { status: 404 }
       );
     }
 
