@@ -14,8 +14,6 @@ import {
   Calendar,
 } from "lucide-react";
 import Button from "@/src/components/Button";
-import { authClient } from "@/src/lib/auth-client";
-import { useRouter } from "next/navigation";
 import CalendarView from "@/src/components/CalendarView";
 
 const TODOS = [
@@ -47,8 +45,9 @@ const TABS = [
 ];
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { data: session } = authClient.useSession();
+  const session = {
+    user: { id: "11" },
+  };
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -80,13 +79,7 @@ export default function DashboardPage() {
   };
 
   const signOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/signin"); // redirect to login page
-        },
-      },
-    });
+    await axios.get("/api/auth/logout");
   };
 
   // Add this function to your DashboardPage component

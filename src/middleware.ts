@@ -1,52 +1,43 @@
-import axios from "axios";
-import { NextResponse, type NextRequest } from "next/server";
+// middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { validateSession } from "@/src/lib/auth";
 
-const authRoutes = ["/signin", "/signup"];
-const passwordRoutes = ["/reset-password", "/forgot-password"];
-// const adminRoutes = ["/dashboard"];
+export async function middleware(request: NextRequest) {
+  // Exclude auth routes from middleware
+  if (request.nextUrl.pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
 
-export default async function authMiddleware(request: NextRequest) {
-  const pathName = request.nextUrl.pathname;
-  const isAuthRoute = authRoutes.includes(pathName);
-  const isPasswordRoute = passwordRoutes.includes(pathName);
-  // const isAdminRoute = adminRoutes.includes(pathName);
+  const session = await validateSession();
+  console.log("session", session);
 
-  try {
-    const response = await axios.get(
-      `${process.env.BETTER_AUTH_URL}/api/auth/get-session`,
-      {
-        headers: {
-          cookie: request.headers.get("cookie") || "",
-        },
-      }
-    );
-
-    const session = response.data;
-
+  // Handle API routes
+  if (request.nextUrl.pathname.startsWith("/api")) {
     if (!session) {
-      if (isAuthRoute || isPasswordRoute) {
-        return NextResponse.next();
-      }
-      return NextResponse.redirect(new URL("/signin", request.url));
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // if (isAuthRoute || isPasswordRoute) {
-    //   return NextResponse.redirect(new URL("/dashboard", request.url));
-    // }
+    // Add user info to request headers
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", session.userId);
+    if (session.organisationId) {
+      requestHeaders.set("x-organisation-id", session.organisationId);
+    }
 
-    // if (isAdminRoute && session.user.role !== "admin") {
-    //   return NextResponse.redirect(new URL("/", request.url));
-    // }
+    return NextResponse.next({
+      headers: requestHeaders,
+    });
+  }
 
-    return NextResponse.next();
-  } catch (error) {
-    console.error("Error fetching session:", error);
-
-    // Redirect to signin if there's an error
+  // Handle page routes
+  if (!session) {
     return NextResponse.redirect(new URL("/signin", request.url));
   }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+  matcher: ["/api/:path*", "/dashboard/:path*"],
 };

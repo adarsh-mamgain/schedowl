@@ -9,108 +9,74 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String
-  emailVerified Boolean
+  id            String      @id @default(uuid())
+  name          String?
+  email         String      @unique
+  password      String
+  emailVerified DateTime?
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  memberships   Membership[]  // Organisations user is part of
+  ownedOrgs     Organisation[] // Organisations user owns
   sessions      Session[]
-  accounts      Account[]
 
-  members     Member[]
-  invitations Invitation[]
-
-  @@unique([email])
   @@map("user")
 }
 
+model Organisation {
+  id            String      @id @default(uuid())
+  name          String
+  slug          String      @unique
+  image         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  owner         User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId       String
+  members       Membership[]
+  sessions      Session[]
+
+  @@map("organisation")
+}
+
+model Membership {
+  id            String      @id @default(uuid())
+  role          Role        @default(MEMBER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  organisation  Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  @@unique([userId, organisationId]) // User can only have one role per organisation
+  @@map("membership")
+}
+
 model Session {
-  id        String   @id @default(uuid())
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String      @id @default(uuid())
+  sessionToken  String      @unique
+  expiresAt     DateTime
+  createdAt     DateTime    @default(now())
+  
+  // Relations
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  organisation  Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
+  organisationId String?
 
-  activeOrganizationId String?
-
-  @@unique([token])
+  @@index([userId])
   @@map("session")
 }
 
-model Account {
-  id                    String    @id @default(uuid())
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@map("account")
-}
-
-model Verification {
-  id         String   @id @default(uuid())
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@map("verification")
-}
-
-model Organization {
-  id          String       @id @default(uuid())
-  name        String
-  slug        String?
-  logo        String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  metadata    String?
-  members     Member[]
-  invitations Invitation[]
-
-  @@unique([slug])
-  @@map("organization")
-}
-
-model Member {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  @@map("member")
-}
-
-model Invitation {
-  id             String       @id @default(uuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  email          String
-  role           String?
-  status         String
-  expiresAt      DateTime
-  inviterId      String
-  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
-
-  @@map("invitation")
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
 }

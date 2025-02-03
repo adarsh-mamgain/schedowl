@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/components/Button";
-import { authClient } from "@/src/lib/auth-client";
+import axios from "axios";
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
@@ -14,21 +14,16 @@ export default function SignIn() {
 
   const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    await authClient.signIn.email(
-      {
-        email,
-        password,
-      },
-      {
-        onSuccess: () => {
-          router.push("/dashboard"); // ✅ Redirect manually after success
-        },
-        onError: (ctx) => {
-          console.error(ctx.error.message);
-        },
-      }
+    const res = await axios.post(
+      "/api/auth/signin",
+      { email, password },
+      { headers: { "Content-Type": "application/json" } }
     );
+    if (res.status !== 200) {
+      const error = await res.data;
+      throw new Error(error.message);
+    }
+    router.push("/dashboard"); // ✅ Redirect manually after success
   };
 
   return (

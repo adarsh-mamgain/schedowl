@@ -23,6 +23,9 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      jose:
+        specifier: ^5.9.6
+        version: 5.9.6
       lucide-react:
         specifier: ^0.474.0
         version: 0.474.0(react@19.0.0)

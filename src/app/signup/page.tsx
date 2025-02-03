@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/components/Button";
-import { authClient } from "@/src/lib/auth-client";
+import axios from "axios";
 
 export default function SignUp() {
   const router = useRouter(); // ✅ Get the router instance
@@ -33,7 +33,6 @@ export default function SignUp() {
 
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (!email) {
       setErrors(["Email is required."]);
       return;
@@ -41,29 +40,16 @@ export default function SignUp() {
     if (!validatePassword(password)) {
       return;
     }
-
-    await authClient.signUp.email(
-      {
-        name: "",
-        email,
-        password,
-      },
-      {
-        onSuccess: async (data) => {
-          console.log("Adarsh", data);
-          const result = await authClient.organization.create({
-            name: "Workspace 1",
-            slug: "workspace-1",
-            logo: "",
-          });
-          console.log("organisation", result);
-          router.push("/dashboard"); // ✅ Redirect manually after success
-        },
-        onError: (ctx) => {
-          console.error(ctx.error.message);
-        },
-      }
+    const res = await axios.post(
+      "/api/auth/signup",
+      { email, password, name: email.split("@")[0] },
+      { headers: { "Content-Type": "application/json" } }
     );
+    if (res.status !== 200) {
+      const error = await res.data;
+      throw new Error(error.message);
+    }
+    router.push("/dashboard"); // ✅ Redirect manually after success
   };
 
   return (
