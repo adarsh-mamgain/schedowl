@@ -10,7 +10,6 @@ export async function middleware(request: NextRequest) {
   }
 
   const session = await validateSession();
-  console.log("session", session);
 
   // Handle API routes
   if (request.nextUrl.pathname.startsWith("/api")) {

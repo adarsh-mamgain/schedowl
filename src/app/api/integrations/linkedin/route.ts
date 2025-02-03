@@ -1,19 +1,14 @@
-import { auth } from "@/src/auth";
 import { LinkedInService } from "@/src/services/linkedin";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
-  const session = await auth();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  const organisationId = requestHeaders.get("x-organisation-id");
 
   try {
-    const organisationId = session.user.organisationId;
     if (!organisationId) {
       return NextResponse.json(
-        { error: "User ID is undefined" },
+        { error: "Organisation ID is undefined" },
         { status: 400 }
       );
     }

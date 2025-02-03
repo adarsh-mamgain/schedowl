@@ -1,6 +1,5 @@
-import { IntegrationType } from "@/src/enums/integrations";
+import { SocialPlatform } from "@/src/enums/social-platoform";
 import prisma from "@/src/lib/prisma";
-// import { decrypt, encrypt } from "@/src/util/common";
 import axios from "axios";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
@@ -23,7 +22,7 @@ export class LinkedInService {
   }
 
   static async handleCallback(code: string, state: string) {
-    // Exchange code for tokens
+    console.log("state", state);
     const tokenResponse = await axios.post(
       "https://www.linkedin.com/oauth/v2/accessToken",
       new URLSearchParams({
@@ -42,31 +41,19 @@ export class LinkedInService {
 
     const tokens = tokenResponse.data;
 
-    // const decryptedState = decrypt(state);
-    // if (userId !== decryptedState) {
-    //   throw new Error("State does not match user ID");
-    // }
-
     try {
-      const integrationData = {
-        organisationId: state,
-        provider: IntegrationType.LINKEDIN,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token ?? "",
-        expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
-      };
-
-      const integration = await prisma.integration.create({
-        data: integrationData,
+      await prisma.socialAccount.create({
+        data: {
+          organisationId: state,
+          platform: SocialPlatform.LINKEDIN,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
+        },
       });
-
-      if (!integration) {
-        console.error("Error storing tokens in Supabase");
-        throw new Error("Error storing tokens in Supabase");
-      }
     } catch (error) {
       console.error("Error during prisma.integration.create:", error);
-      throw new Error("Error storing tokens in Supabase");
+      throw error;
     }
 
     return tokens;
@@ -74,10 +61,10 @@ export class LinkedInService {
 
   static async post(integrationId: string, text: string) {
     try {
-      const integration = await prisma.integration.findFirst({
+      const integration = await prisma.socialAccount.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationType.LINKEDIN,
+          platform: SocialPlatform.LINKEDIN,
         },
       });
 

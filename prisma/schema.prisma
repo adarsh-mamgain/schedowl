@@ -79,7 +79,6 @@ model Session {
 model SocialAccount {
   id           String         @id @default(uuid())
   platform     SocialPlatform
-  accountName  String
   accessToken  String
   refreshToken String?
   expiresAt    DateTime?
@@ -91,7 +90,7 @@ model SocialAccount {
 
   posts ScheduledPost[]
 
-  @@unique([organisationId, platform, accountName])
+  @@unique([organisationId, platform])
   @@map("social_account")
 }
 

@@ -62,7 +62,7 @@ export default function DashboardPage() {
     const checkLinkedInIntegration = async () => {
       try {
         const response = await axios.get(
-          `/api/integrations?provider=${SocialPlatform.LINKEDIN}`
+          `/api/integrations?platform=${SocialPlatform.LINKEDIN}`
         );
         setLinkedInConnected(response.data.connected);
       } catch (error) {
