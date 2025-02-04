@@ -12,21 +12,21 @@ const TODOS = [
   {
     title: "Connect your LinkedIn account",
     description: "Connect your LinkedIn account to start using the app",
-    icon: "Link",
+    icon: Link,
     done: true,
   },
   {
     title: "Publish your first post",
     description:
       "Use the magic of AI and your imagination to create and publish your first post.",
-    icon: "FileText",
+    icon: FileText,
     done: false,
   },
   {
     title: "Unlock your gift",
     description:
       "We have something special for you. complete the above steps and claim your special gift.",
-    icon: "Gift",
+    icon: Gift,
     done: false,
   },
 ];
@@ -110,14 +110,7 @@ export default function DashboardPage() {
         {TODOS.map((todo) => (
           <div key={todo.title} className="flex gap-3 items-center">
             <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow">
-              {React.createElement(
-                todo.icon === "Link"
-                  ? Link
-                  : todo.icon === "FileText"
-                  ? FileText
-                  : Gift,
-                { size: 16, color: "#344054" }
-              )}
+              <todo.icon size={16} color={"#344054"} />
             </div>
             <div className="flex flex-col">
               <h2
