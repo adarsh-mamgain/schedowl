@@ -3,10 +3,10 @@
 import { SocialPlatform } from "@/src/enums/social-platoform";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import PostForm from "@/src/components/PostForm";
-import { Link, FileText, Gift } from "lucide-react";
+import { Link, FileText, Gift, Tablet, Monitor } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
+import LexicalEditor from "@/src/components/LexicalEditor";
 
 const TODOS = [
   {
@@ -85,12 +85,6 @@ export default function DashboardPage() {
   //   }
   // };
 
-  // !session ? (
-  //   <div className="w-screen h-screen flex flex-col items-center justify-center">
-  //     <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
-  //     <div className="text-[#101828]">Redirecting...</div>
-  //   </div>
-  // ) :
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
@@ -132,7 +126,33 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-      {showPostForm && <PostForm setShowPostForm={setShowPostForm} />}
+      {showPostForm && (
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-7">
+            <LexicalEditor />
+          </div>
+
+          <div className="col-span-5 border border-[#EAECF0] rounded-lg">
+            <div className="flex justify-end p-1 border-b border-[#EAECF0]">
+              <button className="p-2">
+                <Tablet size={16} color="#475467" />
+              </button>
+              <button className="p-2">
+                <Monitor size={16} color="#475467" />
+              </button>
+            </div>
+
+            <div className="h-full flex justify-center items-center bg-[#FCFCFD]">
+              <div className="w-96 h-96 bg-white shadow-[0px_2px_4px_-3px_#1018280D,0px_4px_8px_-2px_#1018280D] rounded-lg">
+                Lorem Ipsum is simply dummy text of the printing and typesetting
+                industry. Lorem Ipsum has been the industry&apos;s standard
+                dummy text ever since the 1500s, when an unknown printer took a
+                galley of type and scrambled it
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
