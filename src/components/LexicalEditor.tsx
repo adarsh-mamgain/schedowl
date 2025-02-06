@@ -66,13 +66,13 @@ function UnicodeToolbarPlugin() {
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
         className={`p-2 ${isBold ? "text-blue-500" : "text-[#98A2B3]"}`}
       >
-        <Bold size={14} strokeWidth={4} />
+        <Bold size={16} strokeWidth={4} />
       </button>
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
         className={`p-2 ${isItalic ? "text-blue-500" : "text-[#98A2B3]"}`}
       >
-        <Italic size={14} strokeWidth={4} />
+        <Italic size={16} strokeWidth={4} />
       </button>
       <button
         onClick={() =>
@@ -80,12 +80,12 @@ function UnicodeToolbarPlugin() {
         }
         className="text-[#98A2B3] p-2"
       >
-        <List size={14} strokeWidth={4} />
+        <List size={16} strokeWidth={4} />
       </button>
       <div className="relative">
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="text-sm text-[#98A2B3] p-2"
+          className="text-xs text-[#98A2B3] p-2"
         >
           😀
         </button>
