@@ -9,22 +9,16 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  ShoppingCart,
-  Users,
+  Settings,
 } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
-const MAIN_TABS = [
+const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
   { title: "Calendar", path: "/calendar", icon: Calendar },
-];
-
-const SETTINGS_TABS = [
-  { title: "Members", path: "/settings/members", icon: Users },
-  { title: "Billing", path: "/settings/billing", icon: ShoppingCart },
+  { title: "Settings", path: "/settings", icon: Settings },
 ];
 
 type UserMe = {
@@ -67,10 +61,6 @@ export default function GlobalLayout({
     router.push("/signin");
   };
 
-  // Determine which tabs to show based on route
-  const isSettings = pathname.startsWith("/settings");
-  const TABS = isSettings ? SETTINGS_TABS : MAIN_TABS;
-
   return (
     <div className="w-screen h-screen grid grid-cols-12">
       <aside className="h-full col-span-2 border-r border-[#EAECF0] pt-6 p-4">
@@ -88,12 +78,6 @@ export default function GlobalLayout({
           </button>
           {dropdownOpen && (
             <div className="w-full flex flex-col gap-1 p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
-              <Link
-                href={"/settings"}
-                className="text-sm py-2 px-3 rounded-lg hover:bg-gray-100 cursor-pointer"
-              >
-                Settings
-              </Link>
               <Button variant="secondary" size="small" onClick={signOut}>
                 Sign out
               </Button>
