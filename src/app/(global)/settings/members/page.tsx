@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -10,7 +10,10 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { Trash2, UserPlus } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import axios from "axios";
+import Button from "@/src/components/Button";
+import Image from "next/image";
 
 const roles = ["OWNER", "ADMIN", "MEMBER"] as const;
 
@@ -19,40 +22,48 @@ const schema = z.object({
   role: z.enum(roles),
 });
 
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  role: "OWNER" | "ADMIN" | "MEMBER";
-  isOwner: boolean;
-};
-
-const mockMembers: Member[] = [
+const mockMembers = [
   {
     id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    role: "ADMIN",
-    isOwner: false,
+    name: "Olivia Rhye",
+    username: "@olivia",
+    email: "olivia@untitledui.com",
+    status: "Active",
+    role: "Admin",
+    avatar: "/avatars/olivia.jpg",
   },
   {
     id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "MEMBER",
-    isOwner: false,
+    name: "Phoenix Baker",
+    username: "@phoenix",
+    email: "phoenix@untitledui.com",
+    status: "Active",
+    role: "Member",
+    avatar: "/avatars/phoenix.jpg",
   },
   {
     id: "3",
-    name: "Alice Johnson",
-    email: "alice@example.com",
-    role: "OWNER",
-    isOwner: true,
+    name: "Lana Steiner",
+    username: "@lana",
+    email: "lana@untitledui.com",
+    status: "Offline",
+    role: "Member",
+    avatar: "/avatars/lana.jpg",
   },
 ];
 
+const statusColors = {
+  Active: "bg-green-500",
+  Offline: "bg-gray-400",
+};
+
+const MemberColors = {
+  Admin: "bg-red-500",
+  Member: "bg-gray-400",
+};
+
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>(mockMembers);
+  const [members, setMembers] = useState(mockMembers);
   const {
     register,
     handleSubmit,
@@ -61,6 +72,15 @@ export default function MembersPage() {
   } = useForm({
     resolver: zodResolver(schema),
   });
+
+  useEffect(() => {
+    const getMembers = async () => {
+      const result = await axios.get("/api/members");
+      console.log("result", result.data);
+    };
+
+    getMembers();
+  }, []);
 
   const inviteMember = (data: z.infer<typeof schema>) => {
     setMembers([
@@ -83,46 +103,81 @@ export default function MembersPage() {
     setMembers(members.filter((m) => m.id !== id));
   };
 
-  const columns: ColumnDef<Member>[] = [
-    { accessorKey: "name", header: "Name" },
-    { accessorKey: "email", header: "Email" },
+  const columns: ColumnDef<(typeof members)[number]>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Image
+            src="/globe.svg"
+            alt={row.original.name}
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+          <div>
+            <p className="text-sm font-medium text-[#101828]">
+              {row.original.name}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email address",
+    },
+    // {
+    //   accessorKey: "status",
+    //   header: "Status",
+    //   cell: ({ row }) => (
+    //     <div className="flex">
+    //       <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
+    //         <span
+    //           className={`w-[8px] h-[8px] rounded-full ${
+    //             statusColors[row.original.status]
+    //           }`}
+    //         ></span>
+    //         <span>{row.original.status}</span>
+    //       </div>
+    //     </div>
+    //   ),
+    // },
     {
       accessorKey: "role",
       header: "Role",
       cell: ({ row }) => (
-        <select
-          className="border p-1 rounded text-sm"
-          value={row.original.role}
-          onChange={(e) =>
-            updateRole(
-              row.original.id,
-              e.target.value as "OWNER" | "ADMIN" | "MEMBER"
-            )
-          }
-          disabled={row.original.isOwner}
-        >
-          {roles.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
+        <div className="flex">
+          <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
+            <span
+              className={`w-[8px] h-[8px] rounded-full ${
+                MemberColors[row.original.role]
+              }`}
+            ></span>
+            <span>{row.original.role}</span>
+          </div>
+        </div>
       ),
     },
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) =>
-        row.original.isOwner ? (
-          <span className="text-gray-400 text-sm">Owner</span>
-        ) : (
+      cell: ({ row }) => (
+        <div className="flex items-center gap-5">
+          <button className="text-gray-500 text-[#475467] hover:text-blue-600">
+            <Pencil size={16} />
+          </button>
           <button
-            onClick={() => deleteMember(row.original.id)}
-            className="text-red-500 hover:text-red-700"
+            onClick={() =>
+              setData(data.filter((m) => m.id !== row.original.id))
+            }
+            className="text-[#475467] hover:text-red-700"
           >
             <Trash2 size={16} />
           </button>
-        ),
+        </div>
+      ),
     },
   ];
 
@@ -133,10 +188,27 @@ export default function MembersPage() {
   });
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
-      <h2 className="text-lg font-semibold mb-4">Manage Members</h2>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-[#101828] text-sm font-semibold">
+              Team Members
+            </h2>
+            <span className="bg-white text-[#344054] text-xs font-medium rounded px-1.5 py-0.5 border">
+              48 users
+            </span>
+          </div>
+          <p className="text-sm text-[#475467]">
+            Manage your team members and their account permissions here.
+          </p>
+        </div>
+        <div>
+          <Button size="small">Add user</Button>
+        </div>
+      </div>
 
-      {/* Invite Form */}
+      {/* Invite Form
       <form
         onSubmit={handleSubmit(inviteMember)}
         className="flex items-center gap-2 mb-6"
@@ -163,50 +235,47 @@ export default function MembersPage() {
       </form>
       {errors.email && (
         <p className="text-red-500 text-xs">{errors.email.message}</p>
-      )}
+      )} */}
 
       {/* Members Table */}
-      <table className="w-full border-collapse">
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="text-left p-2 text-sm font-semibold"
-                >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.length ? (
-            table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b">
+      <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+        <table className="w-full text-sm text-left">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr
+                key={headerGroup.id}
+                className="border-b border-b-[#E4E7EC] text-xs"
+              >
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="px-6 py-3 font-medium text-[#475467]"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+              >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-2 text-sm">
+                  <td key={cell.id} className="px-6 py-3 text-[#344054]">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="text-center text-gray-500 p-4 text-sm"
-              >
-                No members found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
