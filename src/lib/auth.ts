@@ -1,18 +1,11 @@
 "use server";
 
 import { compare, hash } from "bcryptjs";
-import { SignJWT, jwtVerify } from "jose";
+import { JWTPayload, JWTVerifyResult, SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import prisma from "@/src/lib/prisma";
 
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET_KEY);
-
-export type UserSession = {
-  sessionId: string;
-  userId: string;
-  organisationId: string;
-  exp: string;
-};
 
 export async function hashPassword(password: string) {
   return await hash(password, 12);
@@ -59,10 +52,7 @@ export async function createSession(userId: string, organisationId?: string) {
       organisationId: session.organisationId,
     };
 
-    const token = await new SignJWT(tokenPayload)
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("7d")
-      .sign(SECRET_KEY);
+    const token = await generateJWT(tokenPayload);
 
     // Set cookie using server action
     cookieStore.set("auth-token", token, {
@@ -88,10 +78,7 @@ export async function validateSession() {
       return null;
     }
 
-    const { payload }: { payload: UserSession } = await jwtVerify(
-      token,
-      SECRET_KEY
-    );
+    const { payload } = await verifyJWT(token);
 
     // const session = await prisma.session.findUnique({
     //   where: { id: payload.sessionId as string },
@@ -125,7 +112,7 @@ export async function destroySession() {
     const token = cookieStore.get("auth-token")?.value;
     if (!token) return false;
 
-    const { payload } = await jwtVerify(token, SECRET_KEY);
+    const { payload } = await verifyJWT(token);
     await prisma.session.delete({
       where: { id: payload.sessionId as string },
     });
@@ -135,4 +122,17 @@ export async function destroySession() {
     cookieStore.delete("auth-token");
     throw error;
   }
+}
+
+export async function generateJWT(tokenPayload: JWTPayload) {
+  return await new SignJWT(tokenPayload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("7d")
+    .sign(SECRET_KEY);
+}
+
+export async function verifyJWT(
+  token: string
+): Promise<JWTVerifyResult<JWTPayload>> {
+  return await jwtVerify(token, SECRET_KEY);
 }

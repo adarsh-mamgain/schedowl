@@ -19,7 +19,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  memberships Member[] // Organisations user is part of
+  memberships Member[]
   sessions    Session[]
 
   @@map("user")
@@ -42,14 +42,17 @@ model Organisation {
 }
 
 model Member {
-  id        String   @id @default(uuid())
-  role      Role     @default(MEMBER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String       @id @default(uuid())
+  role      Role         @default(MEMBER)
+  status    InviteStatus @default(PENDING) // Pending until accepted
+  token     String?      @unique // Invitation token
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   // Relations
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
@@ -142,4 +145,9 @@ enum PostStatus {
   SCHEDULED
   PUBLISHED
   FAILED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
 }
