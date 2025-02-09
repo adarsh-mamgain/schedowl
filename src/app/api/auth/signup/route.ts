@@ -16,7 +16,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password, name } = signupSchema.parse(body);
 
-    console.log("adarsh", email, password, name);
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -38,8 +37,6 @@ export async function POST(request: Request) {
         name,
       },
     });
-
-    console.log("user", user);
 
     const organisation = await prisma.organisation.create({
       data: {
