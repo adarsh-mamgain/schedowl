@@ -1,17 +1,12 @@
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { comparePasswords, createSession } from "@/src/lib/auth";
-import { z } from "zod";
-
-const signinSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
+import { SignInSchema } from "@/src/schema";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password } = signinSchema.parse(body);
+    const { email, password } = SignInSchema.parse(body);
 
     // Find user
     const user = await prisma.user.findUnique({

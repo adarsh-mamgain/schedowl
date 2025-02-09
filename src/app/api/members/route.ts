@@ -1,8 +1,8 @@
 import { generateJWT } from "@/src/lib/auth";
 import { sendEmail } from "@/src/lib/mailer";
 import prisma from "@/src/lib/prisma";
+import { InviteSchema } from "@/src/schema";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 
 export async function GET(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
@@ -20,15 +20,10 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(members);
 }
 
-const inviteSchema = z.object({
-  email: z.string().email(),
-  role: z.enum(["ADMIN", "MEMBER"]),
-});
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, role } = inviteSchema.parse(body);
+    const { email, role } = InviteSchema.parse(body);
 
     const organisationId = request.headers.get("x-organisation-id");
     if (!organisationId) {

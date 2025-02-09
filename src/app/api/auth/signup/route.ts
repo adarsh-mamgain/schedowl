@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { hashPassword, createSession, verifyJWT } from "@/src/lib/auth";
-import { z } from "zod";
 import { generateUniqueSlug } from "@/src/lib/common";
 import { sendEmail } from "@/src/lib/mailer";
 import type { Prisma } from "@prisma/client";
-
-const signupSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
-  token: z.string().optional(),
-});
+import { SignUpSchema } from "@/src/schema";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, name, token } = signupSchema.parse(body);
+    const { email, password, name, token } = SignUpSchema.parse(body);
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       let user = await tx.user.findUnique({ where: { email } });
