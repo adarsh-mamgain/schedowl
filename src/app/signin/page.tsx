@@ -8,24 +8,30 @@ import Button from "@/src/components/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Toaster from "@/src/components/ui/Toaster";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SignInSchema } from "@/src/schema";
+import { z } from "zod";
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
 
-  const signIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(SignInSchema),
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
+    setIsLoading(true);
     try {
-      const res = await axios.post(
-        "/api/auth/signin",
-        { email, password },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      if (res.status !== 200) {
-        const error = await res.data;
-        throw new Error(error.message);
-      }
+      await axios.post("/api/auth/signin", data, {
+        headers: { "Content-Type": "application/json" },
+      });
       toast.success("Signin successful!");
       router.push("/dashboard"); // ✅ Redirect manually after success
     } catch (error) {
@@ -34,6 +40,8 @@ export default function SignIn() {
       } else {
         toast.error("An unexpected error occurred.");
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,34 +62,39 @@ export default function SignIn() {
           <h2 className="text-[#475467] mb-2">Start your 30-day free trial.</h2>
         </div>
         <div className="flex flex-col gap-4">
-          <form onSubmit={signIn} className="flex flex-col gap-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+          >
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-[#344054] font-medium">
                 Email
               </label>
               <input
+                {...register("email")}
                 type="email"
-                name="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
+              )}
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="password" className="text-[#344054] font-medium">
                 Password
               </label>
               <input
+                {...register("password")}
                 type="password"
-                name="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
               />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
-            <Button type="submit" variant="primary">
+            <Button type="submit" variant="primary" loading={isLoading}>
               Sign In
             </Button>
           </form>
