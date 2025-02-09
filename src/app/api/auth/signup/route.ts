@@ -1,14 +1,14 @@
-// app/api/auth/signup/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { hashPassword, createSession } from "@/src/lib/auth";
 import { z } from "zod";
 import { generateUniqueSlug } from "@/src/lib/common";
+import { sendEmail } from "@/src/lib/mailer";
 
 const signupSchema = z.object({
+  name: z.string(),
   email: z.string().email(),
   password: z.string().min(8),
-  name: z.string().min(2),
 });
 
 export async function POST(request: Request) {
@@ -16,14 +16,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password, name } = signupSchema.parse(body);
 
-    console.log("first", email, password, name);
-
+    console.log("adarsh", email, password, name);
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
-
-    console.log("existingUser", existingUser);
 
     if (existingUser) {
       return NextResponse.json(
@@ -42,6 +39,8 @@ export async function POST(request: Request) {
       },
     });
 
+    console.log("user", user);
+
     const organisation = await prisma.organisation.create({
       data: {
         name: "Workspace 1",
@@ -56,11 +55,13 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("user", user);
-
     const session = await createSession(user.id, organisation.id);
 
-    console.log("session", session);
+    sendEmail(
+      user.email,
+      "Welcome to SchedOwl",
+      `<p>Hey ${user.name}</p> <p>We are very happy to have you onboard at SchedOwl :)</p>`
+    );
 
     return NextResponse.json({
       user: {
@@ -70,8 +71,7 @@ export async function POST(request: Request) {
       },
       organisation: session.organisation,
     });
-  } catch (error) {
-    console.error("Signup error:", error);
+  } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }

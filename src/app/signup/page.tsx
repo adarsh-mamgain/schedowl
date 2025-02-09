@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+// import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/src/components/Button";
@@ -11,6 +11,7 @@ import Toaster from "@/src/components/ui/Toaster";
 
 export default function SignUp() {
   const router = useRouter(); // ✅ Get the router instance
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -35,6 +36,10 @@ export default function SignUp() {
 
   const signUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!name) {
+      setErrors(["Name is required."]);
+      return;
+    }
     if (!email) {
       setErrors(["Email is required."]);
       return;
@@ -45,17 +50,15 @@ export default function SignUp() {
     try {
       await axios.post(
         "/api/auth/signup",
-        { email, password, name: email.split("@")[0] },
+        { email, password, name },
         { headers: { "Content-Type": "application/json" } }
       );
       toast.success("Signup successful!");
       router.push("/dashboard"); // ✅ Redirect manually after success
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("API error response:", error.response?.data);
         toast.error(error.response?.data?.error || "Signup failed.");
       } else {
-        console.error("Unexpected error:", error);
         toast.error("An unexpected error occurred.");
       }
     }
@@ -79,6 +82,19 @@ export default function SignUp() {
         </div>
         <div className="flex flex-col gap-4">
           <form onSubmit={signUp} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="name" className="text-[#344054] font-medium">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+              />
+            </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-[#344054] font-medium">
                 Email
@@ -114,7 +130,7 @@ export default function SignUp() {
               Get started
             </Button>
           </form>
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <hr className="flex-grow border-t border-gray-300" />
             <span className="mx-4 text-[#E4E7EC">OR</span>
             <hr className="flex-grow border-t border-gray-300" />
@@ -141,7 +157,7 @@ export default function SignUp() {
                 Sign in
               </Link>
             </p>
-          </div>
+          </div> */}
         </div>
       </main>
       <Toaster />
