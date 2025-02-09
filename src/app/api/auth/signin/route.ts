@@ -1,4 +1,3 @@
-// app/api/auth/signin/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { comparePasswords, createSession } from "@/src/lib/auth";
@@ -55,8 +54,7 @@ export async function POST(request: Request) {
       },
       organisation: session.organisation,
     });
-  } catch (error) {
-    console.error("Signin error:", error);
+  } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }

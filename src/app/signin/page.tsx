@@ -87,7 +87,7 @@ export default function SignIn() {
               Sign In
             </Button>
           </form>
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <hr className="flex-grow border-t border-gray-300" />
             <span className="mx-4 text-[#E4E7EC">OR</span>
             <hr className="flex-grow border-t border-gray-300" />
@@ -102,7 +102,7 @@ export default function SignIn() {
             <Button type="submit" variant="secondary" icon="google-icon.svg">
               Continue with Google
             </Button>
-          </form>
+          </form> */}
           <div className="flex justify-center text-[#344054]">
             <p>
               Don&apos;t have an account?{" "}

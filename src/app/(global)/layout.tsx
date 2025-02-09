@@ -102,8 +102,10 @@ export default function GlobalLayout({
         </div>
       </aside>
 
-      <main className="col-span-10 h-full p-6">{children}</main>
-      <Toaster />
+      <main className="col-span-10 h-full p-6">
+        {children}
+        <Toaster />
+      </main>
     </div>
   );
 }

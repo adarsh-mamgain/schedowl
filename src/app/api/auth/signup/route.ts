@@ -46,7 +46,6 @@ export async function POST(request: Request) {
           create: {
             userId: user.id,
             role: "OWNER",
-            isOwner: true,
           },
         },
       },

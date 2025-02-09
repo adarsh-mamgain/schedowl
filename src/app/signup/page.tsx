@@ -8,6 +8,7 @@ import Button from "@/src/components/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Toaster from "@/src/components/ui/Toaster";
+import Link from "next/link";
 
 export default function SignUp() {
   const router = useRouter(); // ✅ Get the router instance
@@ -145,7 +146,7 @@ export default function SignUp() {
             <Button type="submit" variant="secondary" icon="google-icon.svg">
               Continue with Google
             </Button>
-          </form>
+          </form> */}
 
           <div className="flex justify-center text-[#344054]">
             <p>
@@ -157,7 +158,7 @@ export default function SignUp() {
                 Sign in
               </Link>
             </p>
-          </div> */}
+          </div>
         </div>
       </main>
       <Toaster />
