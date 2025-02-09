@@ -30,10 +30,8 @@ export default function SignIn() {
       router.push("/dashboard"); // ✅ Redirect manually after success
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error("API error response:", error.response?.data);
         toast.error(error.response?.data?.error || "Signup failed.");
       } else {
-        console.error("Unexpected error:", error);
         toast.error("An unexpected error occurred.");
       }
     }

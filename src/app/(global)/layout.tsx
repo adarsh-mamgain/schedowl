@@ -40,20 +40,16 @@ export default function GlobalLayout({
     const getUserAndOrgDetails = async () => {
       try {
         const response = await axios.get("/api/user");
-        console.log("response.data", response.data);
         setMe(response.data);
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          console.error("API error response:", error.response?.data);
           toast.error(error.response?.data?.error || "Signup failed.");
         } else {
-          console.error("Unexpected error:", error);
           toast.error("An unexpected error occurred.");
         }
       }
     };
     getUserAndOrgDetails();
-    console.log("ME: ", me);
   }, []);
 
   const signOut = async () => {

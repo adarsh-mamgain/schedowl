@@ -7,10 +7,10 @@ export async function GET(request: NextRequest) {
   const organisationId = requestHeaders.get("x-organisation-id");
 
   if (!userId || !organisationId) {
-    return NextResponse.json({ error: "Not authorised" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const me = await prisma.member.findFirst({
+  const user = await prisma.member.findFirst({
     where: {
       userId: userId as string,
       organisationId: organisationId,
@@ -19,11 +19,24 @@ export async function GET(request: NextRequest) {
       user: {
         omit: {
           password: true,
+          createdAt: true,
+          updatedAt: true,
         },
       },
-      organisation: true,
+      organisation: {
+        omit: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+    omit: {
+      userId: true,
+      organisationId: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 
-  return NextResponse.json({ user: me?.user, organisation: me?.organisation });
+  return NextResponse.json(user);
 }
