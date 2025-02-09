@@ -10,60 +10,49 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, UserPlus, X } from "lucide-react";
 import axios from "axios";
 import Button from "@/src/components/Button";
-import Image from "next/image";
+import { toast } from "react-toastify";
 
-const roles = ["OWNER", "ADMIN", "MEMBER"] as const;
+const roles = ["MEMBER", "ADMIN"] as const;
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
   role: z.enum(roles),
 });
 
-const mockMembers = [
-  {
-    id: "1",
-    name: "Olivia Rhye",
-    username: "@olivia",
-    email: "olivia@untitledui.com",
-    status: "Active",
-    role: "Admin",
-    avatar: "/avatars/olivia.jpg",
-  },
-  {
-    id: "2",
-    name: "Phoenix Baker",
-    username: "@phoenix",
-    email: "phoenix@untitledui.com",
-    status: "Active",
-    role: "Member",
-    avatar: "/avatars/phoenix.jpg",
-  },
-  {
-    id: "3",
-    name: "Lana Steiner",
-    username: "@lana",
-    email: "lana@untitledui.com",
-    status: "Offline",
-    role: "Member",
-    avatar: "/avatars/lana.jpg",
-  },
-];
-
-const statusColors = {
-  Active: "bg-green-500",
-  Offline: "bg-gray-400",
+const MemberColors = {
+  OWNER: "bg-amber-500",
+  ADMIN: "bg-green-500",
+  MEMBER: "bg-gray-400",
 };
 
-const MemberColors = {
-  Admin: "bg-red-500",
-  Member: "bg-gray-400",
+type Member = {
+  row: {
+    original: {
+      id: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+      userId: string;
+      organisationId: string;
+      user: {
+        id: string;
+        name: string;
+        email: string;
+        emailVerified: boolean;
+        image: boolean;
+        createdAt: string;
+        updatedAt: string;
+      };
+    };
+  };
 };
 
 export default function MembersPage() {
-  const [members, setMembers] = useState(mockMembers);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [members, setMembers] = useState([]);
   const {
     register,
     handleSubmit,
@@ -75,50 +64,49 @@ export default function MembersPage() {
 
   useEffect(() => {
     const getMembers = async () => {
-      const result = await axios.get("/api/members");
-      console.log("result", result.data);
+      try {
+        const result = await axios.get("/api/members");
+        setMembers(result.data);
+      } catch {
+        toast.error("Error fetching members");
+      }
     };
 
     getMembers();
   }, []);
 
-  const inviteMember = (data: z.infer<typeof schema>) => {
-    setMembers([
-      ...members,
-      {
-        id: crypto.randomUUID(),
-        name: data.email.split("@")[0],
-        ...data,
-        isOwner: false,
-      },
-    ]);
-    reset();
+  const inviteMember = async (data: z.infer<typeof schema>) => {
+    try {
+      await axios.post("/api/members", data);
+      toast.success("Member invited successfully!");
+      reset();
+      setShowInviteForm(false);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to invite member");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
   };
 
-  const updateRole = (id: string, newRole: "OWNER" | "ADMIN" | "MEMBER") => {
-    setMembers(members.map((m) => (m.id === id ? { ...m, role: newRole } : m)));
-  };
+  // const updateRole = (id: string, newRole: "OWNER" | "ADMIN" | "MEMBER") => {
+  //   setMembers(members.map((m) => (m.id === id ? { ...m, role: newRole } : m)));
+  // };
 
-  const deleteMember = (id: string) => {
-    setMembers(members.filter((m) => m.id !== id));
-  };
+  // const deleteMember = (id: string) => {
+  //   setMembers(members.filter((m) => m.id !== id));
+  // };
 
   const columns: ColumnDef<(typeof members)[number]>[] = [
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }) => (
+      cell: ({ row }: Member) => (
         <div className="flex items-center gap-3">
-          <Image
-            src="/globe.svg"
-            alt={row.original.name}
-            width={32}
-            height={32}
-            className="rounded-full"
-          />
           <div>
             <p className="text-sm font-medium text-[#101828]">
-              {row.original.name}
+              {row.original.user.name}
             </p>
           </div>
         </div>
@@ -127,31 +115,24 @@ export default function MembersPage() {
     {
       accessorKey: "email",
       header: "Email address",
+      cell: ({ row }: Member) => (
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="text-sm font-medium text-[#101828]">
+              {row.original.user.email}
+            </p>
+          </div>
+        </div>
+      ),
     },
-    // {
-    //   accessorKey: "status",
-    //   header: "Status",
-    //   cell: ({ row }) => (
-    //     <div className="flex">
-    //       <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
-    //         <span
-    //           className={`w-[8px] h-[8px] rounded-full ${
-    //             statusColors[row.original.status]
-    //           }`}
-    //         ></span>
-    //         <span>{row.original.status}</span>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
     {
       accessorKey: "role",
       header: "Role",
-      cell: ({ row }) => (
+      cell: ({ row }: Member) => (
         <div className="flex">
           <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
             <span
-              className={`w-[8px] h-[8px] rounded-full ${
+              className={`w-2 h-2 rounded-full ${
                 MemberColors[row.original.role]
               }`}
             ></span>
@@ -163,15 +144,15 @@ export default function MembersPage() {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
+      cell: () => (
         <div className="flex items-center gap-5">
           <button className="text-gray-500 text-[#475467] hover:text-blue-600">
             <Pencil size={16} />
           </button>
           <button
-            onClick={() =>
-              setData(data.filter((m) => m.id !== row.original.id))
-            }
+            // onClick={() =>
+            //   setData(data.filter((m) => m.id !== row.original.id))
+            // }
             className="text-[#475467] hover:text-red-700"
           >
             <Trash2 size={16} />
@@ -188,7 +169,7 @@ export default function MembersPage() {
   });
 
   return (
-    <div>
+    <div className="relative">
       <div className="flex justify-between items-center mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -196,7 +177,7 @@ export default function MembersPage() {
               Team Members
             </h2>
             <span className="bg-white text-[#344054] text-xs font-medium rounded px-1.5 py-0.5 border">
-              48 users
+              {members.length}
             </span>
           </div>
           <p className="text-sm text-[#475467]">
@@ -204,38 +185,66 @@ export default function MembersPage() {
           </p>
         </div>
         <div>
-          <Button size="small">Add user</Button>
+          <Button
+            size="small"
+            onClick={() => setShowInviteForm((prev) => !prev)}
+          >
+            Add user
+          </Button>
         </div>
       </div>
 
-      {/* Invite Form
-      <form
-        onSubmit={handleSubmit(inviteMember)}
-        className="flex items-center gap-2 mb-6"
-      >
-        <input
-          type="email"
-          placeholder="Enter email"
-          {...register("email")}
-          className="border rounded p-2 flex-1 text-sm"
-        />
-        <select {...register("role")} className="border rounded p-2 text-sm">
-          {roles.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        >
-          <UserPlus size={16} />
-        </button>
-      </form>
-      {errors.email && (
-        <p className="text-red-500 text-xs">{errors.email.message}</p>
-      )} */}
+      {/* Invite Form */}
+      {showInviteForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
+            <button
+              className="absolute top-4 right-4 rounded-full bg-gray-100 hover:bg-gray-200 p-2"
+              onClick={() => setShowInviteForm(false)}
+            >
+              <X size={16} />
+            </button>
+            <h3 className="text-lg font-semibold mb-4">Invite Member</h3>
+            <form
+              onSubmit={handleSubmit(inviteMember)}
+              className="flex flex-col gap-4 text-sm"
+            >
+              <div className="flex flex-col gap-1">
+                <label htmlFor="email" className="text-[#344054] font-medium">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter email"
+                  {...register("email")}
+                  className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs">{errors.email.message}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="role" className="text-[#344054] font-medium">
+                  Role
+                </label>
+                <select
+                  {...register("role")}
+                  className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                >
+                  {roles.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="submit" size="small">
+                <UserPlus size={16} className="inline" /> Invite
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Members Table */}
       <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
