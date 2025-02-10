@@ -79,7 +79,11 @@ model Session {
 }
 
 model LinkedInAccount {
-  id           String    @id @default(uuid())
+  id         String @id @default(uuid())
+  sub        String
+  givenName  String
+  familyName String
+
   accessToken  String
   refreshToken String?
   expiresAt    DateTime?

@@ -92,11 +92,11 @@ export default function DashboardPage() {
             Manage your team members and their account permissions here.
           </p>
         </div>
-        <div>
+        {/* <div>
           <Button size="small" onClick={() => setShowPostForm((prev) => !prev)}>
             Write Post
           </Button>
-        </div>
+        </div> */}
       </div>
       <div className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
         {TODOS.map((todo) => (
@@ -124,7 +124,8 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-      {showPostForm && <PostForm />}
+      {/* {showPostForm && <PostForm />} */}
+      <PostForm />
     </section>
   );
 }
