@@ -34,9 +34,9 @@ model Organisation {
   updatedAt DateTime @updatedAt
 
   // Relations
-  members        Member[]
-  sessions       Session[]
-  socialAccounts SocialAccount[]
+  members  Member[]
+  sessions Session[]
+  linedIn  LinkedInAccount[]
 
   @@map("organisation")
 }
@@ -56,7 +56,7 @@ model Member {
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
-  scheduledPosts ScheduledPost[]
+  scheduledPosts Post[]
 
   @@unique([userId, organisationId]) // User can only have one role per organisation
   @@map("member")
@@ -78,26 +78,26 @@ model Session {
   @@map("session")
 }
 
-model SocialAccount {
-  id           String         @id @default(uuid())
-  platform     SocialPlatform
+model LinkedInAccount {
+  id           String    @id @default(uuid())
   accessToken  String
   refreshToken String?
   expiresAt    DateTime?
-  isActive     Boolean        @default(true)
+  isActive     Boolean   @default(true)
 
   // Relations
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
-  posts ScheduledPost[]
+  posts Post[]
 
-  @@unique([organisationId, platform])
-  @@map("social_account")
+  @@unique([organisationId])
+  @@map("linkedin_account")
 }
 
-model ScheduledPost {
+model Post {
   id           String     @id @default(uuid())
+  type         PostType
   content      String
   scheduledFor DateTime
   status       PostStatus @default(DRAFT)
@@ -105,8 +105,8 @@ model ScheduledPost {
   errorMessage String?
 
   // Relations
-  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
-  socialAccountId String
+  linkedInAccount LinkedInAccount @relation(fields: [linkedInId], references: [id], onDelete: Cascade)
+  linkedInId      String
 
   // Optional relation to track which user created the post
   createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
@@ -114,21 +114,8 @@ model ScheduledPost {
 
   // attachments   PostAttachment[]
 
-  @@map("scheduled_post")
+  @@map("post")
 }
-
-// model PostAttachment {
-//   id            String          @id @default(uuid())
-//   type          String          // e.g., 'image', 'video'
-//   url           String
-//   originalName  String?
-
-//   // Relations
-//   scheduledPost ScheduledPost   @relation(fields: [scheduledPostId], references: [id], onDelete: Cascade)
-//   scheduledPostId String
-
-//   @@map("post_attachment")
-// }
 
 enum Role {
   OWNER
@@ -136,7 +123,7 @@ enum Role {
   MEMBER
 }
 
-enum SocialPlatform {
+enum PostType {
   LINKEDIN
 }
 

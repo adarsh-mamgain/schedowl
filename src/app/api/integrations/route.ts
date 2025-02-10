@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import { SocialPlatform } from "@/src/enums/social-platoform";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -8,8 +7,6 @@ export async function GET(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   const organisationId = requestHeaders.get("x-organisation-id");
-
-  console.log("organisationId", organisationId);
 
   if (!organisationId || !platform) {
     return NextResponse.json(
@@ -19,10 +16,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const integration = await prisma.socialAccount.findFirst({
+    const integration = await prisma.linkedInAccount.findUnique({
       where: {
         organisationId: organisationId,
-        platform: platform as SocialPlatform,
       },
     });
 

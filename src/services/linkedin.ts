@@ -1,4 +1,3 @@
-import { SocialPlatform } from "@/src/enums/social-platoform";
 import prisma from "@/src/lib/prisma";
 import axios from "axios";
 
@@ -42,10 +41,9 @@ export class LinkedInService {
     const tokens = tokenResponse.data;
 
     try {
-      await prisma.socialAccount.create({
+      await prisma.linkedInAccount.create({
         data: {
           organisationId: state,
-          platform: SocialPlatform.LINKEDIN,
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
           expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
@@ -61,10 +59,9 @@ export class LinkedInService {
 
   static async post(integrationId: string, text: string) {
     try {
-      const integration = await prisma.socialAccount.findFirst({
+      const integration = await prisma.linkedInAccount.findFirst({
         where: {
           id: integrationId,
-          platform: SocialPlatform.LINKEDIN,
         },
       });
 
