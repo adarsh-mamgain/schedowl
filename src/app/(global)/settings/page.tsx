@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 export default function SetingsPage() {
   const router = useRouter();
-  router.push("/settings/members");
+  router.push("/settings/profile");
   return (
     <div className="w-full h-full flex flex-col items-center justify-center">
       <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>

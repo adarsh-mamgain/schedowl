@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 
 const TABS = [
+  { title: "Profile", path: "/settings/profile" },
   { title: "Members", path: "/settings/members" },
   { title: "Billing", path: "/settings/billing" },
   { title: "Integrations", path: "/settings/integrations" },
