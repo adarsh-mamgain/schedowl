@@ -130,10 +130,14 @@ const editorConfig = {
   onError: console.error,
 };
 
-export default function LexicalEditor() {
+export default function LexicalEditor({
+  onChange,
+}: {
+  onChange: (text: string) => void;
+}) {
   const [postContent, setPostContent] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleTime] = useState("");
+  // const [isScheduling, setIsScheduling] = useState(false);
 
   const handlePost = async () => {
     try {
@@ -162,6 +166,11 @@ export default function LexicalEditor() {
             <ContentEditable
               className="outline-none border-none p-4 min-h-[150px]"
               aria-label="Post content"
+              onInput={(e) => {
+                const text = (e.target as HTMLDivElement).innerText;
+                setPostContent(text);
+                onChange(text); // Pass text to parent
+              }}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
@@ -191,7 +200,7 @@ export default function LexicalEditor() {
               Schedule
             </Button>
             <Button
-              onClick={() => setIsScheduling((prev) => !prev)}
+              // onClick={() => setIsScheduling((prev) => !prev)}
               size="small"
             >
               Publish <SendHorizonal size={16} />

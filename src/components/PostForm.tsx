@@ -2,12 +2,15 @@
 
 import { Monitor, Tablet } from "lucide-react";
 import LexicalEditor from "@/src/components/LexicalEditor";
+import { useState } from "react";
 
 export default function PostForm() {
+  const [postContent, setPostContent] = useState("");
+
   return (
     <div className="grid grid-cols-12 gap-4">
       <div className="col-span-7">
-        <LexicalEditor />
+        <LexicalEditor onChange={setPostContent} />
       </div>
       <div className="bg-[#FCFCFD] col-span-5 border border-[#EAECF0] rounded-lg">
         <div className="bg-white flex justify-end p-1 border-b border-[#EAECF0] rounded-t-lg">
@@ -27,7 +30,9 @@ export default function PostForm() {
                 <span className="text-sm text-[#667085]">Now </span>
               </div>
             </div>
-            <div className="mb-6 text-[#475467]">Write something...</div>
+            <div className="mb-6 text-[#475467]">
+              {postContent || "Write something..."}
+            </div>
           </div>
         </div>
       </div>
