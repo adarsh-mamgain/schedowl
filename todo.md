@@ -33,8 +33,12 @@
 - [ ] build the whole available UI
 - [ ] uses Amazon SES for marketing emails
 - [ ] protect all the api routes and pages
+
   - [ ] jwt/session token
   - [ ] csrf token
+
+- create hetzner + coolify
+  - [ ] setup stage and prod account
 
 ### Research
 
