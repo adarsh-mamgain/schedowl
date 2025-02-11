@@ -17,7 +17,10 @@ import {
   COMMAND_PRIORITY_LOW,
 } from "lexical";
 import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
-import { Bold, Italic, List } from "lucide-react";
+import { Bold, Calendar, Italic, List, SendHorizonal } from "lucide-react";
+import Button from "@/src/components/Button";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const EMOJI_CATEGORIES = {
   Smileys: ["😀", "😍", "🤔", "😂", "🥲"],
@@ -61,7 +64,7 @@ function UnicodeToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center space-x-1 p-1 border-b border-[#EAECF0]">
+    <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-lg">
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
         className={`p-2 ${isBold ? "text-blue-500" : "text-[#98A2B3]"}`}
@@ -128,9 +131,31 @@ const editorConfig = {
 };
 
 export default function LexicalEditor() {
+  const [postContent, setPostContent] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  const handlePost = async () => {
+    try {
+      if (!postContent.trim()) {
+        toast.error("Post content cannot be empty");
+        return;
+      }
+
+      const payload = scheduleTime
+        ? { text: postContent, scheduleTime }
+        : { text: postContent };
+
+      await axios.post("/api/integrations/linkedin/post", payload);
+      toast.success("Post scheduled successfully!");
+    } catch {
+      toast.error("Failed to schedule/post");
+    }
+  };
+
   return (
     <LexicalComposer initialConfig={editorConfig}>
-      <div className="border border-[#EAECF0] rounded-lg">
+      <div className="border-x border-x-[#EAECF0] rounded-l-lg rounded-r-lg">
         <UnicodeToolbarPlugin />
         <RichTextPlugin
           contentEditable={
@@ -143,6 +168,36 @@ export default function LexicalEditor() {
         />
         <HistoryPlugin />
         <AutoFocusPlugin />
+        <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
+          Account:
+        </div>
+        <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
+          {/* {isScheduling && (
+            <input
+              type="datetime-local"
+              value={scheduleTime}
+              onChange={(e) => setScheduleTime(e.target.value)}
+              className="border p-2 rounded w-full"
+            />
+          )} */}
+          <div>
+            <Button variant="secondary" size="small">
+              Save draft
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handlePost} size="small">
+              <Calendar size={16} />
+              Schedule
+            </Button>
+            <Button
+              onClick={() => setIsScheduling((prev) => !prev)}
+              size="small"
+            >
+              Publish <SendHorizonal size={16} />
+            </Button>
+          </div>
+        </div>
       </div>
     </LexicalComposer>
   );
