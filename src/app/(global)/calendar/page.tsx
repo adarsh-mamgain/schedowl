@@ -27,10 +27,10 @@ export default function CalendarPage() {
         </div>
       </div>
       <CalendarView
-      // setShowPostForm={false}
-      // setSelectedDateTime={() => {
-      //   new Date(datetime);
-      // }}
+        setShowPostForm={setShowPostForm}
+        setSelectedDateTime={(datetime) => {
+          console.log("Selected DateTime:", datetime);
+        }}
       />
       {showPostForm && <PostForm />}
     </section>
