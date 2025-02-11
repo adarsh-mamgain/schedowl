@@ -33,7 +33,7 @@ const TODOS = [
 
 export default function DashboardPage() {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
-  const [showPostForm, setShowPostForm] = useState(false);
+  // const [showPostForm, setShowPostForm] = useState(false);
 
   useEffect(() => {
     const checkLinkedInIntegration = async () => {
