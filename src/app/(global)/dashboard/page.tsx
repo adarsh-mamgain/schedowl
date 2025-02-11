@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="font-semibold text-[#101828]">Your Dashboard</h1>
           <p className="text-sm text-[#475467]">
-            Manage your team members and their account permissions here.
+            Schedule posts, view analytics and see account overview.
           </p>
         </div>
         {/* <div>

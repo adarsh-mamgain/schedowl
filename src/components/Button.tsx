@@ -81,6 +81,8 @@ const Button: FC<ButtonProps> = ({
       onClick={onClick}
       style={{ ...style, width: loading ? buttonWidth : undefined }}
       disabled={loading}
+      aria-busy={loading ? "true" : "false"}
+      aria-disabled={props.disabled ? true : false}
       {...props}
     >
       <div
@@ -94,6 +96,7 @@ const Button: FC<ButtonProps> = ({
           size={20}
           className="absolute cursor-wait animate-spin"
           color={variant === "primary" ? "#fff" : "#344054"}
+          aria-live="polite"
         />
       )}
     </button>
