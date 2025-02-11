@@ -62,7 +62,7 @@ export class LinkedInService {
         },
       });
     } catch (error) {
-      console.error("Error during prisma.integration.create:", error);
+      console.error("Error during prisma.linkedInAccount.create:", error);
       throw error;
     }
 

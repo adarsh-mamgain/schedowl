@@ -1,5 +1,4 @@
 import { LoaderCircle } from "lucide-react";
-import Image from "next/image";
 import {
   FC,
   ReactNode,
@@ -15,7 +14,6 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "small" | "medium" | "large";
   onClick?: () => void;
   children: ReactNode;
-  icon?: string;
   className?: string;
   loading?: boolean;
 }
@@ -26,7 +24,6 @@ const Button: FC<ButtonProps> = ({
   size = "medium",
   onClick,
   children,
-  icon,
   className = "",
   loading = false,
   ...props
@@ -90,7 +87,6 @@ const Button: FC<ButtonProps> = ({
         className="flex items-center justify-center gap-3"
         style={{ visibility: loading ? "hidden" : "visible" }}
       >
-        {icon && <Image src={icon} alt="icon" width={20} height={20} />}
         {children}
       </div>
       {loading && (
