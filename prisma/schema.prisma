@@ -95,7 +95,6 @@ model LinkedInAccount {
 
   posts Post[]
 
-  @@unique([organisationId])
   @@map("linkedin_account")
 }
 

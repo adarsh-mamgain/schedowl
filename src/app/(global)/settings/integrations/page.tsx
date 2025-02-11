@@ -55,6 +55,24 @@ export default function IntegrationsPage() {
             </Button>
           </div>
         </div>
+        <div className="flex items-center justify-between border border-[#EAECF0] rounded-lg p-4 opacity-50 cursor-not-allowed">
+          <div className="flex items-center gap-3 text-sm">
+            <div className="w-10 h-10 flex items-center justify-center p-1 border border-[#EAECF0] rounded shadow-[0px_1px_2px_0px_#1018280D]">
+              <Image src="/x.svg" alt="x" width={40} height={40} />
+            </div>
+            <div>
+              <h3 className="text-[#101828] font-semibold">X</h3>
+              <p className="text-[#475467]">
+                World&apos;s largest social media platforms
+              </p>
+            </div>
+          </div>
+          <div className="grow-1">
+            <Button size="small" disabled={true}>
+              <Plus size={20} />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
