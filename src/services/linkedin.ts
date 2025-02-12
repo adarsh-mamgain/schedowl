@@ -124,4 +124,72 @@ export class LinkedInService {
       throw new Error("Failed to post to LinkedIn");
     }
   }
+
+  static async publishPost(linkedInAccountId: string, content: string) {
+    try {
+      const account = await prisma.linkedInAccount.findUnique({
+        where: { id: linkedInAccountId },
+      });
+
+      if (!account) throw new Error("LinkedIn account not found");
+
+      const response = await axios.post(
+        `${LINKEDIN_API_URL}/ugcPosts`,
+        {
+          author: `urn:li:person:${account.sub}`,
+          lifecycleState: "PUBLISHED",
+          specificContent: {
+            "com.linkedin.ugc.ShareContent": {
+              shareCommentary: { text: content },
+              shareMediaCategory: "NONE",
+            },
+          },
+          visibility: {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error publishing to LinkedIn:", error);
+      throw error;
+    }
+  }
+
+  static async processScheduledPosts() {
+    const now = new Date();
+    const posts = await prisma.post.findMany({
+      where: {
+        status: "SCHEDULED",
+        scheduledFor: { lte: now },
+      },
+      include: { linkedInAccount: true },
+    });
+
+    for (const post of posts) {
+      try {
+        await this.publishPost(post.linkedInId, post.content);
+        await prisma.post.update({
+          where: { id: post.id },
+          data: { status: "PUBLISHED", publishedAt: new Date() },
+        });
+      } catch (error) {
+        await prisma.post.update({
+          where: { id: post.id },
+          data: {
+            status: "FAILED",
+            errorMessage:
+              error instanceof Error ? error.message : "Unknown error",
+          },
+        });
+      }
+    }
+  }
 }
