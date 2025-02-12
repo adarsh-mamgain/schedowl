@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -17,7 +17,16 @@ import {
   COMMAND_PRIORITY_LOW,
 } from "lexical";
 import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
-import { Bold, Calendar, Italic, List, SendHorizonal } from "lucide-react";
+import {
+  Bold,
+  Calendar,
+  Check,
+  Italic,
+  List,
+  Plus,
+  SendHorizonal,
+  X,
+} from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -67,7 +76,7 @@ function UnicodeToolbarPlugin() {
     <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-lg">
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        className={`p-2 hover:bg-gray-200 bg-gray-100 rounded ${
+        className={`p-2 hover:bg-gray-200 rounded ${
           isBold ? "text-blue-500" : "text-[#98A2B3]"
         }`}
       >
@@ -75,7 +84,7 @@ function UnicodeToolbarPlugin() {
       </button>
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        className={`p-2 hover:bg-gray-200 bg-gray-100 rounded ${
+        className={`p-2 hover:bg-gray-200 rounded ${
           isItalic ? "text-blue-500" : "text-[#98A2B3]"
         }`}
       >
@@ -85,14 +94,14 @@ function UnicodeToolbarPlugin() {
         onClick={() =>
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
         }
-        className="text-[#98A2B3] p-2 hover:bg-gray-200 bg-gray-100 rounded"
+        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
       >
         <List size={16} strokeWidth={4} />
       </button>
       <div className="relative">
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-200 bg-gray-100 rounded"
+          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
         >
           😀
         </button>
@@ -121,6 +130,142 @@ function UnicodeToolbarPlugin() {
   );
 }
 
+interface LinkedInAccount {
+  id: string;
+  givenName: string;
+  familyName: string;
+}
+
+function InlineAccountSelect({
+  accounts,
+  selectedAccounts,
+  onChange,
+}: {
+  accounts: LinkedInAccount[];
+  selectedAccounts: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleAccount = (accountId: string) => {
+    const newSelected = selectedAccounts.includes(accountId)
+      ? selectedAccounts.filter((id) => id !== accountId)
+      : [...selectedAccounts, accountId];
+    onChange(newSelected);
+  };
+
+  const removeAccount = (accountId: string) => {
+    onChange(selectedAccounts.filter((id) => id !== accountId));
+  };
+
+  const filteredAccounts = accounts.filter((account) =>
+    `${account.givenName} ${account.familyName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="relative flex-1" ref={dropdownRef}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-600">Account:</span>
+
+        {/* Selected account chips */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectedAccounts.map((accountId) => {
+            const account = accounts.find((a) => a.id === accountId);
+            if (!account) return null;
+            return (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeAccount(account.id);
+                }}
+                key={account.id}
+                className="flex items-center gap-1 px-2 py-1 bg-[#1256c420] hover:bg-[#0e3e9a50] text-blue-800 rounded-full text-sm"
+              >
+                <span>
+                  {account.givenName} {account.familyName}
+                </span>
+                <span>
+                  <X size={12} />
+                </span>
+              </button>
+            );
+          })}
+
+          {/* Select button */}
+          <Button
+            onClick={() => setIsOpen(!isOpen)}
+            variant="secondary"
+            size="small"
+          >
+            <Plus size={16} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="absolute bottom-full left-0 mb-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg">
+          {/* Search input */}
+          <div className="p-2 border-b border-gray-200">
+            <input
+              type="text"
+              placeholder="Search accounts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Account list */}
+          <div className="max-h-48 overflow-y-auto">
+            {filteredAccounts.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">
+                No accounts found
+              </div>
+            ) : (
+              filteredAccounts.map((account) => (
+                <div
+                  key={account.id}
+                  onClick={() => toggleAccount(account.id)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm cursor-pointer hover:bg-gray-50 ${
+                    selectedAccounts.includes(account.id)
+                      ? "bg-[#1256c420]"
+                      : ""
+                  }`}
+                >
+                  <div className="flex-1">
+                    <span className="text-gray-900">
+                      {account.givenName} {account.familyName}
+                    </span>
+                  </div>
+                  {selectedAccounts.includes(account.id) && <Check size={16} />}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const editorConfig = {
   namespace: "LinkedInUnicodeEditor",
   nodes: [ListNode, ListItemNode],
@@ -135,13 +280,19 @@ const editorConfig = {
 };
 
 export default function LexicalEditor({
+  accounts = [],
+  selectedAccounts = [],
+  onAccountsChange,
   onChange,
 }: {
+  accounts: LinkedInAccount[];
+  selectedAccounts: string[];
+  onAccountsChange: (ids: string[]) => void;
   onChange: (text: string) => void;
 }) {
   const [postContent, setPostContent] = useState("");
-  const [scheduleTime] = useState("");
-  // const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const handlePost = async () => {
     try {
@@ -150,12 +301,26 @@ export default function LexicalEditor({
         return;
       }
 
-      const payload = scheduleTime
-        ? { text: postContent, scheduleTime }
-        : { text: postContent };
+      if (selectedAccounts.length === 0) {
+        toast.error("Please select at least one LinkedIn account");
+        return;
+      }
 
-      await axios.post("/api/integrations/linkedin/post", payload);
-      toast.success("Post scheduled successfully!");
+      const payload = {
+        content: postContent,
+        linkedInAccountIds: selectedAccounts,
+        ...(scheduleTime && { scheduledFor: scheduleTime }),
+      };
+
+      await axios.post(
+        isScheduling ? "/api/posts/schedule" : "/api/posts/publish",
+        payload
+      );
+      toast.success(
+        isScheduling
+          ? "Post scheduled successfully!"
+          : "Post published successfully!"
+      );
     } catch {
       toast.error("Failed to schedule/post");
     }
@@ -173,7 +338,7 @@ export default function LexicalEditor({
               onInput={(e) => {
                 const text = (e.target as HTMLDivElement).innerText;
                 setPostContent(text);
-                onChange(text); // Pass text to parent
+                onChange(text);
               }}
             />
           }
@@ -182,31 +347,36 @@ export default function LexicalEditor({
         <HistoryPlugin />
         <AutoFocusPlugin />
         <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
-          Account:
+          <InlineAccountSelect
+            accounts={accounts}
+            selectedAccounts={selectedAccounts}
+            onChange={onAccountsChange}
+          />
         </div>
         <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
-          {/* {isScheduling && (
+          {isScheduling && (
             <input
               type="datetime-local"
               value={scheduleTime}
               onChange={(e) => setScheduleTime(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded"
             />
-          )} */}
+          )}
           <div>
             <Button variant="secondary" size="small">
               Save draft
             </Button>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={handlePost} size="small">
+            <Button
+              variant="secondary"
+              onClick={() => setIsScheduling(!isScheduling)}
+              size="small"
+            >
               <Calendar size={16} />
               Schedule
             </Button>
-            <Button
-              // onClick={() => setIsScheduling((prev) => !prev)}
-              size="small"
-            >
+            <Button onClick={handlePost} size="small">
               Publish <SendHorizonal size={16} />
             </Button>
           </div>

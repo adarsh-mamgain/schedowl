@@ -62,27 +62,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Add this function to your DashboardPage component
-  // const postToLinkedIn = async (text: string) => {
-  //   try {
-  //     const response = await axios.post(
-  //       "/api/integrations/linkedin/post",
-  //       { text },
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     if (response.status !== 200) throw new Error("Failed to post");
-  //     // Handle success
-  //   } catch (error) {
-  //     // Handle error
-  //     console.error("Error posting to LinkedIn:", error);
-  //   }
-  // };
-
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
