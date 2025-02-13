@@ -37,6 +37,7 @@ model Organisation {
   members  Member[]
   sessions Session[]
   linkedIn LinkedInAccount[]
+  posts    Post[]
 
   @@map("organisation")
 }
@@ -121,6 +122,9 @@ model Post {
   // Optional relation to track which user created the post
   createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
+
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
 
   // attachments   PostAttachment[]
 

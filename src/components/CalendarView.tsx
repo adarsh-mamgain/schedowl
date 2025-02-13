@@ -6,66 +6,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/src/components/Button";
 
 interface Post {
-  id: number;
-  title: string;
-  time: string;
+  id: string;
+  type: string;
   content: string;
+  scheduledFor: string;
+  status: string;
+  createdById: string;
 }
 
 interface CalendarViewProps {
-  setShowPostForm: (show: boolean) => void;
   setSelectedDateTime: (datetime: string) => void;
+  posts: Post[];
 }
 
-// Sample scheduled posts data
-const SAMPLE_POSTS: Record<string, Post[]> = {
-  "2025-02-01": [
-    {
-      id: 1,
-      title: "Post Title 2025",
-      time: "9:00 AM",
-      content: "This is a sample post about business growth strategies",
-    },
-    {
-      id: 2,
-      title: "Post Title 2025",
-      time: "11:00 AM",
-      content: "Another interesting post about industry trends",
-    },
-  ],
-  "2025-02-03": [
-    {
-      id: 3,
-      title: "Post Title 2025",
-      time: "9:00 AM",
-      content: "Discussing the future of AI in business",
-    },
-    {
-      id: 4,
-      title: "Post Title 2025",
-      time: "11:00 AM",
-      content: "Tips for improving workplace productivity",
-    },
-  ],
-  "2025-02-07": [
-    {
-      id: 5,
-      title: "Post Title 2025",
-      time: "9:00 AM",
-      content: "Latest market analysis and insights",
-    },
-    {
-      id: 6,
-      title: "Post Title 2025",
-      time: "11:00 AM",
-      content: "Leadership strategies for the modern workplace",
-    },
-  ],
-};
-
 const CalendarView: React.FC<CalendarViewProps> = ({
-  setShowPostForm,
   setSelectedDateTime,
+  posts,
 }) => {
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(
     dayjs().startOf("month")
@@ -76,12 +32,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const startDay = currentMonth.startOf("month").day();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-  // Calculate previous month's days
-  const prevMonth = currentMonth.subtract(1, "month");
-  const daysInPrevMonth = prevMonth.daysInMonth();
+  // Calculate previous and next month's days
   const prevMonthDays = Array.from(
     { length: startDay },
-    (_, i) => daysInPrevMonth - startDay + i + 1
+    (_, i) => dayjs().subtract(1, "month").daysInMonth() - startDay + i + 1
   );
 
   // Calculate next month's days
@@ -89,19 +43,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const remainingDays = totalCells - (startDay + daysInMonth);
   const nextMonthDays = Array.from({ length: remainingDays }, (_, i) => i + 1);
 
-  const goToPrevMonth = () => {
+  const goToPrevMonth = () =>
     setCurrentMonth((prev) => prev.subtract(1, "month"));
-  };
-
-  const goToNextMonth = () => {
-    setCurrentMonth((prev) => prev.add(1, "month"));
-  };
+  const goToNextMonth = () => setCurrentMonth((prev) => prev.add(1, "month"));
 
   const handleDateClick = (day: number, isCurrentMonth: boolean = true) => {
     if (!isCurrentMonth) return;
     const selectedDate = currentMonth.date(day).format("YYYY-MM-DDTHH:mm");
     setSelectedDateTime(selectedDate);
-    setShowPostForm(true);
   };
 
   const handlePostClick = (e: React.MouseEvent, post: Post) => {
@@ -111,7 +60,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
   const getPostsForDate = (day: number): Post[] => {
     const date = currentMonth.date(day).format("YYYY-MM-DD");
-    return SAMPLE_POSTS[date] || [];
+    return posts.filter(
+      (post) => dayjs(post.scheduledFor).format("YYYY-MM-DD") === date
+    );
   };
 
   return (
@@ -134,7 +85,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
             <div
               key={day}
-              className="text-xs font-medium text-gray-600 p-2 border-b border-r border-[#EAECF0] last:border-r-0"
+              className="text-xs font-medium text-gray-600 p-2 border-b border-r border-[#EAECF0]"
             >
               {day}
             </div>
@@ -155,7 +106,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             <div
               key={`current-${day}`}
               onClick={() => handleDateClick(day)}
-              className="h-32 bg-white p-2 hover:bg-gray-50 cursor-pointer border-b border-r border-[#EAECF0] last:border-r-0"
+              className="h-32 bg-white p-2 hover:bg-gray-50 cursor-pointer border-b border-r border-[#EAECF0]"
             >
               <div className="text-sm font-semibold mb-1">{day}</div>
               <div className="space-y-1">
@@ -163,13 +114,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   <div
                     key={post.id}
                     onClick={(e) => handlePostClick(e, post)}
-                    className={`text-xs p-1 rounded cursor-pointer ${
-                      post.time === "9:00 AM"
-                        ? "bg-purple-100 text-purple-700"
-                        : "bg-orange-100 text-orange-700"
-                    }`}
+                    className="text-xs bg-blue-100 text-blue-700 p-1 rounded"
                   >
-                    {post.title} {post.time}
+                    {post.content}
                   </div>
                 ))}
               </div>
@@ -190,10 +137,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
       {selectedPost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md">
-            <h3 className="text-lg font-semibold mb-2">{selectedPost.title}</h3>
-            <p className="text-gray-600 mb-4">{selectedPost.time}</p>
+          <div className="bg-white p-4 rounded-lg max-w-md">
+            <h3 className="text-lg font-semibold mb-2">{selectedPost.type}</h3>
+            <p className="text-gray-600 mb-4">{selectedPost.scheduledFor}</p>
             <p className="mb-4">{selectedPost.content}</p>
+            <p className="mb-4">
+              <span className="border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
+                {selectedPost.status}
+              </span>
+            </p>
             <Button
               variant="secondary"
               size="small"

@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
               status: "SCHEDULED",
               linkedInId,
               createdById: memberId,
+              organisationId,
             },
           });
 

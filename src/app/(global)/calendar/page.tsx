@@ -1,16 +1,30 @@
 "use client";
 
-import Button from "@/src/components/Button";
-import PostForm from "@/src/components/PostForm";
+import axios from "axios";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const CalendarView = dynamic(() => import("@/src/components/CalendarView"), {
   ssr: false,
 });
 
 export default function CalendarPage() {
-  const [showPostForm, setShowPostForm] = useState(false);
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    const getPosts = async () => {
+      try {
+        const result = await axios.get("/api/posts");
+        setPosts(result.data);
+      } catch {
+        toast.error("Error fetching posts");
+      }
+    };
+
+    getPosts();
+  }, []);
+
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
@@ -20,19 +34,18 @@ export default function CalendarPage() {
             Manage your content calendar from here.
           </p>
         </div>
-        <div>
+        {/* <div>
           <Button size="small" onClick={() => setShowPostForm((prev) => !prev)}>
             Write Post
           </Button>
-        </div>
+        </div> */}
       </div>
       <CalendarView
-        setShowPostForm={setShowPostForm}
         setSelectedDateTime={(datetime) => {
           console.log("Selected DateTime:", datetime);
         }}
+        posts={posts}
       />
-      {showPostForm && <PostForm />}
     </section>
   );
 }
