@@ -69,62 +69,6 @@ export class LinkedInService {
     return tokens;
   }
 
-  static async post() {
-    try {
-      const now = new Date();
-      const posts = await prisma.post.findMany({
-        where: {
-          status: "SCHEDULED",
-          scheduledFor: { lte: now },
-        },
-        include: { linkedInAccount: true },
-      });
-
-      for (const post of posts) {
-        if (!post.linkedInAccount) continue;
-        try {
-          await axios.post(
-            `${LINKEDIN_API_URL}/ugcPosts`,
-            {
-              author: `urn:li:person:${post.linkedInAccount.sub}`,
-              lifecycleState: "PUBLISHED",
-              specificContent: {
-                "com.linkedin.ugc.ShareContent": {
-                  shareCommentary: { text: post.content },
-                  shareMediaCategory: "NONE",
-                },
-              },
-              visibility: {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-              },
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${post.linkedInAccount.accessToken}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          await prisma.post.update({
-            where: { id: post.id },
-            data: { status: "PUBLISHED", publishedAt: new Date() },
-          });
-        } catch (error) {
-          console.error("Error publishing post:", error);
-          await prisma.post.update({
-            where: { id: post.id },
-            data: { status: "FAILED", errorMessage: error! },
-          });
-        }
-      }
-
-      return true;
-    } catch {
-      throw new Error("Failed to post to LinkedIn");
-    }
-  }
-
   static async publishPost(linkedInAccountId: string, content: string) {
     try {
       const account = await prisma.linkedInAccount.findUnique({

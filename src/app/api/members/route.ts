@@ -1,4 +1,4 @@
-import { generateJWT } from "@/src/lib/auth";
+import { generateJWT } from "@/src/lib/auth/password";
 import { sendEmail } from "@/src/lib/mailer";
 import prisma from "@/src/lib/prisma";
 import { InviteSchema } from "@/src/schema";

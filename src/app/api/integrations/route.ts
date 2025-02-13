@@ -16,10 +16,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const integration = await prisma.linkedInAccount.findUnique({
-      where: {
-        organisationId: organisationId,
-      },
+    const integration = await prisma.linkedInAccount.findFirst({
+      where: { organisationId },
     });
 
     if (!integration) {
