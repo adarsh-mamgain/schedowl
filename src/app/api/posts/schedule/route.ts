@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   const memberId = requestHeaders.get("x-member-id");
   const organisationId = requestHeaders.get("x-organisation-id");
 
-  if (!userId || !organisationId) {
+  if (!userId || !memberId || !organisationId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
             !data.linkedInId ||
             !data.createdById
           ) {
-            console.error("Invalid data detected:", data);
+            console.error("Invalid data detected", data);
             throw new Error("Invalid data structure");
           }
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
               scheduledFor: new Date(scheduledFor),
               status: "SCHEDULED",
               linkedInId,
-              createdById: userId,
+              createdById: memberId,
             },
           });
 

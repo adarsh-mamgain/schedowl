@@ -380,6 +380,7 @@ export default function LexicalEditor({
                   onPost(true, scheduleTime);
                   setIsScheduling(false);
                   setScheduleTime("");
+                  setPostContent("");
                 } else {
                   setIsScheduling(!isScheduling);
                 }
