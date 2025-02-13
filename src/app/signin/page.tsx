@@ -8,11 +8,13 @@ import Button from "@/src/components/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Toaster from "@/src/components/ui/Toaster";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignInSchema } from "@/src/schema";
 import { z } from "zod";
 import { useSession } from "@/src/hooks/useSession";
+
+type FormValues = z.infer<typeof SignInSchema>;
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
@@ -29,13 +31,13 @@ export default function SignIn() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormValues>({
     resolver: zodResolver(SignInSchema),
   });
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = async (data: z.infer<typeof SignInSchema>) => {
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setIsLoading(true);
     try {
       await axios.post("/api/auth/signin", data, {
@@ -85,7 +87,9 @@ export default function SignIn() {
                 className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
               />
               {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email.message}</p>
+                <p className="text-red-500 text-sm">
+                  {errors.email.message as string}
+                </p>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -99,7 +103,7 @@ export default function SignIn() {
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
-                  {errors.password.message}
+                  {errors.password.message as string}
                 </p>
               )}
             </div>

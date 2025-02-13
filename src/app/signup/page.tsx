@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Button from "@/src/components/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -14,8 +14,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SignUpSchema } from "@/src/schema";
 import { z } from "zod";
 import { useSession } from "@/src/hooks/useSession";
+import { InvitePayload } from "@/src/types/auth";
+import { JWTVerifyResult } from "jose";
 
-export default function SignUp() {
+type FormValues = z.infer<typeof SignUpSchema>;
+
+function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
@@ -34,7 +38,7 @@ export default function SignUp() {
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormValues>({
     resolver: zodResolver(SignUpSchema),
   });
 
@@ -42,7 +46,9 @@ export default function SignUp() {
 
   useEffect(() => {
     const verifyToken = async () => {
-      const { payload } = await verifyJWT(token);
+      const { payload } = (await verifyJWT(
+        token
+      )) as JWTVerifyResult<InvitePayload>;
       setValue("email", payload.email);
       setValue("token", token);
       setIsEmailDisabled(true);
@@ -103,7 +109,9 @@ export default function SignUp() {
                 className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
               />
               {errors.name && (
-                <p className="text-red-500 text-sm">{errors.name.message}</p>
+                <p className="text-red-500 text-sm">
+                  {errors.name.message as string}
+                </p>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -119,7 +127,9 @@ export default function SignUp() {
                 }`}
               />
               {errors.email && (
-                <p className="text-red-500 text-sm">{errors.email.message}</p>
+                <p className="text-red-500 text-sm">
+                  {errors.email.message as string}
+                </p>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -133,7 +143,7 @@ export default function SignUp() {
               />
               {errors.password && (
                 <p className="text-red-500 text-sm">
-                  {errors.password.message}
+                  {errors.password.message as string}
                 </p>
               )}
             </div>
@@ -173,5 +183,20 @@ export default function SignUp() {
       </main>
       <Toaster />
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
+          <div className="text-[#101828]">Loading...</div>
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   );
 }

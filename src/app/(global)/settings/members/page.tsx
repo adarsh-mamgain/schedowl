@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ColumnDef,
@@ -22,43 +22,41 @@ const schema = z.object({
   role: z.enum(roles),
 });
 
+type FormValues = z.infer<typeof schema>;
+
 const MemberColors = {
   OWNER: "bg-amber-500",
   ADMIN: "bg-green-500",
   MEMBER: "bg-gray-400",
-};
+} as const;
 
-type Member = {
-  row: {
-    original: {
-      id: string;
-      role: string;
-      createdAt: string;
-      updatedAt: string;
-      userId: string;
-      organisationId: string;
-      user: {
-        id: string;
-        name: string;
-        email: string;
-        emailVerified: boolean;
-        image: boolean;
-        createdAt: string;
-        updatedAt: string;
-      };
-    };
+interface Member {
+  id: string;
+  role: keyof typeof MemberColors;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  organisationId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    emailVerified: boolean;
+    image: boolean;
+    createdAt: string;
+    updatedAt: string;
   };
-};
+}
 
 export default function MembersPage() {
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
 
@@ -75,7 +73,7 @@ export default function MembersPage() {
     getMembers();
   }, []);
 
-  const inviteMember = async (data: z.infer<typeof schema>) => {
+  const inviteMember: SubmitHandler<FormValues> = async (data) => {
     try {
       await axios.post("/api/members", data);
       toast.success("Member invited successfully!");
@@ -90,19 +88,11 @@ export default function MembersPage() {
     }
   };
 
-  // const updateRole = (id: string, newRole: "OWNER" | "ADMIN" | "MEMBER") => {
-  //   setMembers(members.map((m) => (m.id === id ? { ...m, role: newRole } : m)));
-  // };
-
-  // const deleteMember = (id: string) => {
-  //   setMembers(members.filter((m) => m.id !== id));
-  // };
-
-  const columns: ColumnDef<(typeof members)[number]>[] = [
+  const columns: ColumnDef<Member>[] = [
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }: Member) => (
+      cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div>
             <p className="text-sm font-medium text-[#101828]">
@@ -115,7 +105,7 @@ export default function MembersPage() {
     {
       accessorKey: "email",
       header: "Email address",
-      cell: ({ row }: Member) => (
+      cell: ({ row }) => (
         <div className="flex items-center gap-3">
           <div>
             <p className="text-sm font-medium text-[#101828]">
@@ -128,7 +118,7 @@ export default function MembersPage() {
     {
       accessorKey: "role",
       header: "Role",
-      cell: ({ row }: Member) => (
+      cell: ({ row }) => (
         <div className="flex">
           <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
             <span
@@ -149,12 +139,7 @@ export default function MembersPage() {
           <button className="text-gray-500 text-[#475467] hover:text-blue-600">
             <Pencil size={16} />
           </button>
-          <button
-            // onClick={() =>
-            //   setData(data.filter((m) => m.id !== row.original.id))
-            // }
-            className="text-[#475467] hover:text-red-700"
-          >
+          <button className="text-[#475467] hover:text-red-700">
             <Trash2 size={16} />
           </button>
         </div>
@@ -220,7 +205,9 @@ export default function MembersPage() {
                   className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-xs">{errors.email.message}</p>
+                  <p className="text-red-500 text-xs">
+                    {errors.email.message as string}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col gap-1">

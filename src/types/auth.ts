@@ -6,3 +6,8 @@ export interface SessionPayload extends JWTPayload {
   memberId: string;
   organisationId: string;
 }
+
+export interface InvitePayload extends JWTPayload {
+  email: string;
+  organisationId: string;
+}
