@@ -5,14 +5,14 @@ import LexicalEditor from "@/src/components/LexicalEditor";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import Button from "@/src/components/Button";
 
 export default function PostForm() {
   const [postContent, setPostContent] = useState("");
   const [accounts, setAccounts] = useState([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-  const [scheduleTime, setScheduleTime] = useState("");
-  const [isScheduling, setIsScheduling] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">(
+    "desktop"
+  );
 
   useEffect(() => {
     fetchLinkedInAccounts();
@@ -27,8 +27,8 @@ export default function PostForm() {
     }
   };
 
-  const handlePost = async (isScheduled = false) => {
-    if (!postContent.trim()) {
+  const handlePost = async (isScheduled: boolean, scheduleTime?: string) => {
+    if (!postContent) {
       toast.error("Post content cannot be empty");
       return;
     }
@@ -43,26 +43,32 @@ export default function PostForm() {
       return;
     }
 
+    const payload = {
+      content: postContent,
+      linkedInAccountIds: selectedAccounts,
+      ...(isScheduled &&
+        scheduleTime && {
+          scheduledFor: new Date(scheduleTime).toISOString(),
+        }),
+    };
+
     try {
       const endpoint = isScheduled
         ? "/api/posts/schedule"
         : "/api/posts/publish";
-      const payload = {
-        content: postContent,
-        linkedInAccountIds: selectedAccounts,
-        ...(isScheduled && { scheduledFor: scheduleTime }),
-      };
+      const response = await axios.post(endpoint, payload);
 
-      await axios.post(endpoint, payload);
-      toast.success(
-        isScheduled
-          ? "Post scheduled successfully!"
-          : "Post published successfully!"
-      );
-      setPostContent("");
-      setSelectedAccounts([]);
-      setScheduleTime("");
-    } catch {
+      if (response.data) {
+        toast.success(
+          isScheduled
+            ? "Post scheduled successfully!"
+            : "Post published successfully!"
+        );
+        setPostContent("");
+        setSelectedAccounts([]);
+      }
+    } catch (error) {
+      console.error("Post error:", error);
       toast.error(
         isScheduled ? "Failed to schedule post" : "Failed to publish post"
       );
@@ -77,45 +83,34 @@ export default function PostForm() {
           selectedAccounts={selectedAccounts}
           onChange={setPostContent}
           onAccountsChange={setSelectedAccounts}
+          onPost={handlePost}
         />
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            {isScheduling && (
-              <input
-                type="datetime-local"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                className="border p-2 rounded"
-              />
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsScheduling(!isScheduling);
-                if (!isScheduling) {
-                  handlePost(true);
-                }
-              }}
-            >
-              {isScheduling ? "Schedule" : "Schedule Post"}
-            </Button>
-            <Button onClick={() => handlePost(false)}>Publish Now</Button>
-          </div>
-        </div>
       </div>
       <div className="bg-[#FCFCFD] col-span-5 border border-[#EAECF0] rounded-lg">
         <div className="bg-white flex justify-end p-1 border-b border-[#EAECF0] rounded-t-lg">
-          <button className="p-2">
-            <Tablet size={16} color="#475467" />
+          <button
+            className={`p-2 ${
+              previewMode === "mobile" ? "text-blue-600" : "text-[#475467]"
+            }`}
+            onClick={() => setPreviewMode("mobile")}
+          >
+            <Tablet size={16} />
           </button>
-          <button className="p-2">
-            <Monitor size={16} color="#475467" />
+          <button
+            className={`p-2 ${
+              previewMode === "desktop" ? "text-blue-600" : "text-[#475467]"
+            }`}
+            onClick={() => setPreviewMode("desktop")}
+          >
+            <Monitor size={16} />
           </button>
         </div>
         <div className="p-4">
-          <div className="flex flex-col bg-white p-6 shadow rounded-lg">
+          <div
+            className={`flex flex-col bg-white p-6 shadow rounded-lg ${
+              previewMode === "mobile" ? "max-w-[375px] mx-auto" : ""
+            }`}
+          >
             <div className="flex items-center gap-4 mb-6">
               <div className="w-16 h-16 bg-gray-300 rounded-full"></div>
               <div className="flex flex-col">
@@ -123,7 +118,7 @@ export default function PostForm() {
                 <span className="text-sm text-[#667085]">Now </span>
               </div>
             </div>
-            <div className="mb-6 text-[#475467]">
+            <div className="mb-6 text-[#475467] whitespace-pre-wrap">
               {postContent || "Write something..."}
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   SELECTION_CHANGE_COMMAND,
   FORMAT_TEXT_COMMAND,
   COMMAND_PRIORITY_LOW,
+  $getRoot,
 } from "lexical";
 import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import {
@@ -128,6 +129,21 @@ function UnicodeToolbarPlugin() {
       </div>
     </div>
   );
+}
+
+function OnChangePlugin({ onChange }: { onChange: (text: string) => void }) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
+        const textContent = $getRoot().getTextContent();
+        onChange(textContent);
+      });
+    });
+  }, [editor, onChange]);
+
+  return null;
 }
 
 interface LinkedInAccount {
@@ -284,46 +300,38 @@ export default function LexicalEditor({
   selectedAccounts = [],
   onAccountsChange,
   onChange,
+  onPost,
 }: {
   accounts: LinkedInAccount[];
   selectedAccounts: string[];
   onAccountsChange: (ids: string[]) => void;
   onChange: (text: string) => void;
+  onPost: (isScheduled: boolean, scheduleTime?: string) => Promise<void>;
 }) {
   const [postContent, setPostContent] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
 
-  const handlePost = async () => {
+  useEffect(() => {
+    onChange(postContent);
+  }, [postContent, onChange]);
+
+  const handleDraftSave = async () => {
     try {
-      if (!postContent.trim()) {
-        toast.error("Post content cannot be empty");
-        return;
-      }
-
-      if (selectedAccounts.length === 0) {
-        toast.error("Please select at least one LinkedIn account");
-        return;
-      }
-
-      const payload = {
+      await axios.post("/api/posts/drafts", {
         content: postContent,
         linkedInAccountIds: selectedAccounts,
-        ...(scheduleTime && { scheduledFor: scheduleTime }),
-      };
-
-      await axios.post(
-        isScheduling ? "/api/posts/schedule" : "/api/posts/publish",
-        payload
-      );
-      toast.success(
-        isScheduling
-          ? "Post scheduled successfully!"
-          : "Post published successfully!"
-      );
+      });
+      toast.success("Draft saved successfully!");
     } catch {
-      toast.error("Failed to schedule/post");
+      toast.error("Failed to save draft");
     }
+  };
+
+  const getMinDateTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 5); // Set minimum time to 5 minutes from now
+    return now.toISOString().slice(0, 16); // Format as YYYY-MM-DDThh:mm
   };
 
   return (
@@ -335,15 +343,11 @@ export default function LexicalEditor({
             <ContentEditable
               className="outline-none border-none p-4 min-h-[150px]"
               aria-label="Post content"
-              onInput={(e) => {
-                const text = (e.target as HTMLDivElement).innerText;
-                setPostContent(text);
-                onChange(text);
-              }}
             />
           }
           ErrorBoundary={LexicalErrorBoundary}
         />
+        <OnChangePlugin onChange={setPostContent} />
         <HistoryPlugin />
         <AutoFocusPlugin />
         <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
@@ -354,29 +358,38 @@ export default function LexicalEditor({
           />
         </div>
         <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
-          {isScheduling && (
-            <input
-              type="datetime-local"
-              value={scheduleTime}
-              onChange={(e) => setScheduleTime(e.target.value)}
-              className="border p-2 rounded"
-            />
-          )}
           <div>
-            <Button variant="secondary" size="small">
+            <Button variant="secondary" size="small" onClick={handleDraftSave}>
               Save draft
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="relative flex gap-2">
+            {isScheduling && (
+              <input
+                type="datetime-local"
+                value={scheduleTime}
+                onChange={(e) => setScheduleTime(e.target.value)}
+                min={getMinDateTime()}
+                className="absolute w-full bottom-full left-0 border p-2 mb-1 rounded shadow-lg"
+              />
+            )}
             <Button
               variant="secondary"
-              onClick={() => setIsScheduling(!isScheduling)}
+              onClick={() => {
+                if (isScheduling && scheduleTime) {
+                  onPost(true, scheduleTime);
+                  setIsScheduling(false);
+                  setScheduleTime("");
+                } else {
+                  setIsScheduling(!isScheduling);
+                }
+              }}
               size="small"
             >
               <Calendar size={16} />
-              Schedule
+              {isScheduling ? "Schedule Post" : "Schedule"}
             </Button>
-            <Button onClick={handlePost} size="small">
+            <Button onClick={() => onPost(false)} size="small">
               Publish <SendHorizonal size={16} />
             </Button>
           </div>
