@@ -11,7 +11,6 @@ import { SignUpSchema } from "@/src/schema";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-
     const { email, password, name, token } = SignUpSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({ where: { email } });

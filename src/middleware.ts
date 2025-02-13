@@ -1,42 +1,59 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { validateSession } from "@/src/lib/auth";
+import { SessionManager } from "@/src/lib/auth/session";
+
+// Define public routes that don't need authentication
+const publicRoutes = [
+  "/signin",
+  "/signup",
+  "/api/auth/signin",
+  "/api/auth/signup",
+];
 
 export async function middleware(request: NextRequest) {
-  // Exclude auth routes from middleware
-  if (request.nextUrl.pathname.startsWith("/api/auth")) {
+  const { pathname } = request.nextUrl;
+
+  // Skip middleware for public routes and static files
+  if (
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/_next") ||
+    pathname.includes(".")
+  ) {
     return NextResponse.next();
   }
 
-  const session = await validateSession();
+  const session = await SessionManager.validateSession();
 
-  // Handle API routes
-  if (request.nextUrl.pathname.startsWith("/api")) {
-    if (!session) {
+  // If no session and trying to access protected route
+  if (!session) {
+    // For API routes, return 401
+    if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Add user info to request headers
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", session.userId);
-    if (session.organisationId) {
-      requestHeaders.set("x-organisation-id", session.organisationId);
-    }
-
-    return NextResponse.next({
-      headers: requestHeaders,
-    });
-  }
-
-  // Handle page routes
-  if (!session) {
+    // For page routes, redirect to signin
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  return NextResponse.next();
+  // Add session info to headers for protected routes
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-session-id", session.sessionId);
+  requestHeaders.set("x-user-id", session.userId);
+  requestHeaders.set("x-organisation-id", session.organisationId);
+  requestHeaders.set("x-member-id", session.memberId);
+
+  return NextResponse.next({
+    headers: requestHeaders,
+  });
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/dashboard/:path*"],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * 1. _next/static (static files)
+     * 2. _next/image (image optimization files)
+     * 3. favicon.ico (favicon file)
+     */
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };
