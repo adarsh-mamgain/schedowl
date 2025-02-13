@@ -1,8 +1,7 @@
-// app/api/auth/logout/route.ts
+import { SessionManager } from "@/src/lib/auth/session";
 import { NextResponse } from "next/server";
-import { destroySession } from "@/src/lib/auth";
 
 export async function POST() {
-  await destroySession();
+  await SessionManager.destroySession();
   return NextResponse.json({ success: true });
 }

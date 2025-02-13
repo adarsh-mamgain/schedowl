@@ -1,6 +1,9 @@
+"use server";
+
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import { comparePasswords, createSession } from "@/src/lib/auth";
+import { verifyPassword } from "@/src/lib/auth/password";
+import { SessionManager } from "@/src/lib/auth/session";
 import { SignInSchema } from "@/src/schema";
 
 export async function POST(request: Request) {
@@ -13,10 +16,8 @@ export async function POST(request: Request) {
       where: { email },
       include: {
         memberships: {
-          include: {
-            organisation: true,
-          },
-          take: 1, // Get first organisation if exists
+          where: { status: "ACCEPTED" },
+          include: { organisation: true },
         },
       },
     });
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     // Verify password
-    const isValid = await comparePasswords(password, user.password);
+    const isValid = await verifyPassword(password, user.password);
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -37,19 +38,44 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create session with first organisation if exists
-    const firstOrg = user.memberships[0]?.organisation;
-    const session = await createSession(user.id, firstOrg?.id);
+    // Check if user has any memberships
+    if (!user.memberships.length) {
+      return NextResponse.json(
+        { error: "No organisation available" },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      organisation: session.organisation,
-    });
-  } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    // Get first organisation
+    const firstMembership = user.memberships[0];
+
+    try {
+      // Create session
+      await SessionManager.createSession(
+        user.id,
+        firstMembership.organisationId
+      );
+
+      return NextResponse.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+        organisation: firstMembership.organisation,
+      });
+    } catch (sessionError) {
+      console.error("Session creation error:", sessionError);
+      return NextResponse.json(
+        { error: "Failed to create session" },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error("Signin error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

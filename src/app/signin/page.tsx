@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/src/components/Button";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -12,9 +12,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignInSchema } from "@/src/schema";
 import { z } from "zod";
+import { useSession } from "@/src/hooks/useSession";
 
 export default function SignIn() {
   const router = useRouter(); // ✅ Get the router instance
+  const { session, loading } = useSession();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!loading && session) {
+      router.replace("/dashboard");
+    }
+  }, [session, loading, router]);
 
   const {
     register,
@@ -36,7 +45,7 @@ export default function SignIn() {
       router.push("/dashboard"); // ✅ Redirect manually after success
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Signup failed.");
+        toast.error(error.response?.data?.error || "Signin failed.");
       } else {
         toast.error("An unexpected error occurred.");
       }

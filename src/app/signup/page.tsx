@@ -8,17 +8,26 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Toaster from "@/src/components/ui/Toaster";
 import Link from "next/link";
-import { verifyJWT } from "@/src/lib/auth";
+import { verifyJWT } from "@/src/lib/auth/password";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignUpSchema } from "@/src/schema";
 import { z } from "zod";
+import { useSession } from "@/src/hooks/useSession";
 
 export default function SignUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
   const [isEmailDisabled, setIsEmailDisabled] = useState(!!token);
+  const { session, loading } = useSession();
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (!loading && session) {
+      router.replace("/dashboard");
+    }
+  }, [session, loading, router]);
 
   const {
     register,

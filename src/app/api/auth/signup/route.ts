@@ -1,42 +1,51 @@
+"use server";
+
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import { hashPassword, createSession, verifyJWT } from "@/src/lib/auth";
+import { hashPassword } from "@/src/lib/auth/password";
 import { generateUniqueSlug } from "@/src/lib/common";
 import { sendEmail } from "@/src/lib/mailer";
-import type { Prisma } from "@prisma/client";
+import { SessionManager } from "@/src/lib/auth/session";
 import { SignUpSchema } from "@/src/schema";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
     const { email, password, name, token } = SignUpSchema.parse(body);
 
-    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      let user = await tx.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
-      if (token) {
-        await verifyJWT(token);
+    if (token) {
+      const invitation = await prisma.member.findUnique({
+        where: { token },
+        include: { organisation: true },
+      });
 
-        const invitation = await tx.member.findUnique({ where: { token } });
+      if (
+        !invitation ||
+        !invitation.expiresAt ||
+        invitation.expiresAt < new Date()
+      ) {
+        return NextResponse.json(
+          { error: "Invalid or expired invite." },
+          { status: 400 }
+        );
+      }
 
-        if (
-          !invitation ||
-          !invitation.expiresAt ||
-          invitation.expiresAt < new Date()
-        ) {
-          return NextResponse.json(
-            { error: "Invalid or expired invite." },
-            { status: 400 }
-          );
-        }
+      let user = existingUser;
+      const hashedPassword = await hashPassword(password);
 
+      // Transaction for invitation flow
+      const result = await prisma.$transaction(async (tx) => {
         if (!user) {
           user = await tx.user.create({
             data: {
               name,
               email,
-              password: await hashPassword(password),
+              password: hashedPassword,
             },
+            include: { memberships: { include: { organisation: true } } },
           });
         }
 
@@ -50,33 +59,51 @@ export async function POST(request: Request) {
           },
         });
 
-        sendEmail(
-          user.email,
-          "Welcome!",
-          `<p>You've successfully joined ${invitation.organisationId}!</p>`
-        );
+        return { user, organisation: invitation.organisation };
+      });
 
-        return NextResponse.json({
-          message: "Successfully joined organisation.",
-        });
-      }
+      await SessionManager.createSession(
+        result.user.id,
+        invitation.organisationId
+      );
 
-      if (user) {
-        return NextResponse.json(
-          { error: "Email already exists" },
-          { status: 400 }
-        );
-      }
+      await sendEmail(
+        result.user.email,
+        "Welcome to " + invitation.organisation.name,
+        `<p>You've successfully joined ${invitation.organisation.name}!</p>`
+      );
 
-      const hashedPassword = await hashPassword(password);
-      user = await tx.user.create({
-        data: { email, password: hashedPassword, name },
+      return NextResponse.json({
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+        },
+        organisation: result.organisation,
+      });
+    }
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Email already exists" },
+        { status: 400 }
+      );
+    }
+
+    // Transaction for regular signup flow
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: await hashPassword(password),
+          name,
+        },
       });
 
       const organisation = await tx.organisation.create({
         data: {
           name: "My Workspace",
-          slug: generateUniqueSlug("My Workspace"),
+          slug: generateUniqueSlug("my-workspace"),
           members: {
             create: {
               userId: user.id,
@@ -87,20 +114,27 @@ export async function POST(request: Request) {
         },
       });
 
-      const session = await createSession(user.id, organisation.id);
-
-      sendEmail(
-        user.email,
-        "Welcome!",
-        `<p>You've successfully joined ${organisation.name}!</p>`
-      );
-
-      return NextResponse.json({
-        user: { id: user.id, email: user.email, name: user.name },
-        organisation: session.organisation,
-      });
+      return { user, organisation };
     });
-  } catch {
+
+    await SessionManager.createSession(result.user.id, result.organisation.id);
+
+    await sendEmail(
+      result.user.email,
+      "Welcome to " + result.organisation.name,
+      `<p>Welcome to ${result.organisation.name}! Your workspace is ready.</p>`
+    );
+
+    return NextResponse.json({
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+      },
+      organisation: result.organisation,
+    });
+  } catch (error) {
+    console.error("Signup error:", error);
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
