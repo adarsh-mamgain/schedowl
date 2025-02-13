@@ -1,6 +1,4 @@
-import { IntegrationType } from "@/src/enums/integrations";
 import prisma from "@/src/lib/prisma";
-// import { decrypt, encrypt } from "@/src/util/common";
 import axios from "axios";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
@@ -23,7 +21,7 @@ export class LinkedInService {
   }
 
   static async handleCallback(code: string, state: string) {
-    // Exchange code for tokens
+    console.log("state", state);
     const tokenResponse = await axios.post(
       "https://www.linkedin.com/oauth/v2/accessToken",
       new URLSearchParams({
@@ -42,65 +40,51 @@ export class LinkedInService {
 
     const tokens = tokenResponse.data;
 
-    // const decryptedState = decrypt(state);
-    // if (userId !== decryptedState) {
-    //   throw new Error("State does not match user ID");
-    // }
+    const userinfo = await axios.get(`${LINKEDIN_API_URL}/userinfo`, {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const user = userinfo.data;
 
     try {
-      const integrationData = {
-        organisationId: state,
-        provider: IntegrationType.LINKEDIN,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token ?? "",
-        expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
-      };
-
-      const integration = await prisma.integration.create({
-        data: integrationData,
+      await prisma.linkedInAccount.create({
+        data: {
+          sub: user.sub,
+          givenName: user.given_name,
+          familyName: user.family_name,
+          organisationId: state,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          expiresAt: new Date(Date.now() + (tokens.expires_in ?? 0) * 1000),
+        },
       });
-
-      if (!integration) {
-        console.error("Error storing tokens in Supabase");
-        throw new Error("Error storing tokens in Supabase");
-      }
     } catch (error) {
-      console.error("Error during prisma.integration.create:", error);
-      throw new Error("Error storing tokens in Supabase");
+      console.error("Error during prisma.linkedInAccount.create:", error);
+      throw error;
     }
 
     return tokens;
   }
 
-  static async post(integrationId: string, text: string) {
+  static async publishPost(linkedInAccountId: string, content: string) {
     try {
-      const integration = await prisma.integration.findFirst({
-        where: {
-          id: integrationId,
-          provider: IntegrationType.LINKEDIN,
-        },
+      const account = await prisma.linkedInAccount.findUnique({
+        where: { id: linkedInAccountId },
       });
 
-      if (!integration) {
-        throw new Error("LinkedIn integration not found");
-      }
+      if (!account) throw new Error("LinkedIn account not found");
 
-      // Check if token is expired and refresh if needed
-      // if (new Date(integration.expires_at) < new Date()) {
-      //   await this.refreshToken(userId, integration.refresh_token);
-      // }
-
-      //! Post to LinkedIn
       const response = await axios.post(
         `${LINKEDIN_API_URL}/ugcPosts`,
         {
-          author: `urn:li:person:${8675309}`,
+          author: `urn:li:person:${account.sub}`,
           lifecycleState: "PUBLISHED",
           specificContent: {
             "com.linkedin.ugc.ShareContent": {
-              shareCommentary: {
-                text,
-              },
+              shareCommentary: { text: content },
               shareMediaCategory: "NONE",
             },
           },
@@ -110,23 +94,46 @@ export class LinkedInService {
         },
         {
           headers: {
-            Authorization: `Bearer ${integration.accessToken}`,
+            Authorization: `Bearer ${account.accessToken}`,
             "Content-Type": "application/json",
           },
         }
       );
 
-      if (response.status !== 201) {
-        throw new Error("Failed to post to LinkedIn");
-      }
-
       return response.data;
-    } catch {
-      throw new Error("Failed to post to LinkedIn");
+    } catch (error) {
+      console.error("Error publishing to LinkedIn:", error);
+      throw error;
     }
   }
 
-  // private static async refreshToken(userId: string, refreshToken: string) {
-  //   // Implement token refresh logic here
-  // }
+  static async processScheduledPosts() {
+    const now = new Date();
+    const posts = await prisma.post.findMany({
+      where: {
+        status: "SCHEDULED",
+        scheduledFor: { lte: now },
+      },
+      include: { linkedInAccount: true },
+    });
+
+    for (const post of posts) {
+      try {
+        await this.publishPost(post.linkedInId, post.content);
+        await prisma.post.update({
+          where: { id: post.id },
+          data: { status: "PUBLISHED", publishedAt: new Date() },
+        });
+      } catch (error) {
+        await prisma.post.update({
+          where: { id: post.id },
+          data: {
+            status: "FAILED",
+            errorMessage:
+              error instanceof Error ? error.message : "Unknown error",
+          },
+        });
+      }
+    }
+  }
 }

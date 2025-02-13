@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   try {
     await LinkedInService.handleCallback(code, state);
     return NextResponse.redirect(new URL("/dashboard", request.url));
-  } catch {
+  } catch (error) {
+    console.log(error);
     return NextResponse.json(
       { error: "Failed to connect LinkedIn" },
       { status: 500 }

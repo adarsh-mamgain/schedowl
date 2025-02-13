@@ -1,5 +1,9 @@
 ### Todo
 
+- [ ] add a toaster to showcase errors and success messages
+- [x] create DEV, STAGE and PRODUCTION environments
+  - [ ] create proper pipelines for each
+  - [ ] create todo for every release
 - [x] create the database schema for org and user
 - [x] make the login ui
   - [ ] create an organisation and super admin (type: 1)
@@ -7,14 +11,13 @@
   - [ ] admins can add members (type: 3)
   - [ ] integrate the Google login
   - [x] integrate the Credentials login
-- [ ] create DEV, STAGE and PRODUCTION environments
-  - [ ] create proper pipelines for each
 - [x] move this todo as a project to Notion Docs
 - [ ] protect all the api routes and pages
   - [ ] jwt/session token
   - [ ] csrf token
 - [x] integrate linkedin (type: 1)
   - [ ] match the state for oauth integration
+  - [ ] if error is thrown then handle it to return back to dashboard
 - [ ] handle refresh tokens for the account
 - [x] use prisma instead of supabase-js
   - [x] has types to use in whole app
@@ -29,6 +32,13 @@
   - store logs for each posts (retries of jsonb)
 - [ ] build the whole available UI
 - [ ] uses Amazon SES for marketing emails
+- [ ] protect all the api routes and pages
+
+  - [ ] jwt/session token
+  - [ ] csrf token
+
+- create hetzner + coolify
+  - [ ] setup stage and prod account
 
 ### Research
 
