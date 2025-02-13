@@ -1,21 +1,47 @@
-import { LinkedInService } from "@/src/services/linkedin";
-import { NextRequest, NextResponse } from "next/server";
+import { postQueue } from "@/src/services/queue";
+import prisma from "@/src/lib/prisma";
+import { NextResponse } from "next/server";
+import logger from "@/src/services/logger";
 
-export async function POST(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
-  const userId = requestHeaders.get("x-user-id");
-  const organisationId = requestHeaders.get("x-organisation-id");
+export const dynamic = "force-dynamic";
 
+export async function GET() {
   try {
-    if (!userId || !organisationId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Find posts that need to be scheduled
+    const posts = await prisma.post.findMany({
+      where: {
+        status: "SCHEDULED",
+        scheduledFor: {
+          lte: new Date(),
+        },
+        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }],
+      },
+      take: 50, // Process in batches
+    });
+
+    logger.info(`Found ${posts.length} posts to process`);
+
+    // Add posts to queue
+    for (const post of posts) {
+      await postQueue.add(
+        { postId: post.id },
+        {
+          jobId: `post-${post.id}`,
+          attempts: 5,
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      );
     }
 
-    await LinkedInService.post();
-
-    return NextResponse.json({ message: "Posts processed" });
+    return NextResponse.json({
+      message: `Queued ${posts.length} posts for processing`,
+    });
   } catch (error) {
-    console.error("Cron job error:", error);
-    return NextResponse.json({ message: "Internal Server Error" });
+    logger.error("Cron job error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
