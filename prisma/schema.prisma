@@ -36,7 +36,7 @@ model Organisation {
   // Relations
   members  Member[]
   sessions Session[]
-  linedIn  LinkedInAccount[]
+  linkedIn LinkedInAccount[]
 
   @@map("organisation")
 }
@@ -57,6 +57,7 @@ model Member {
   organisationId String
 
   scheduledPosts Post[]
+  sessions       Session[]
 
   @@unique([userId, organisationId]) // User can only have one role per organisation
   @@map("member")
@@ -69,18 +70,22 @@ model Session {
   createdAt    DateTime @default(now())
 
   // Relations
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  organisation   Organisation? @relation(fields: [organisationId], references: [id], onDelete: SetNull)
-  organisationId String?
+  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId       String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
 
   @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
   @@map("session")
 }
 
 model LinkedInAccount {
   id         String @id @default(uuid())
-  sub        String
+  sub        String @unique
   givenName  String
   familyName String
 
@@ -99,13 +104,15 @@ model LinkedInAccount {
 }
 
 model Post {
-  id           String     @id @default(uuid())
-  type         PostType
-  content      String
-  scheduledFor DateTime
-  status       PostStatus @default(DRAFT)
-  publishedAt  DateTime?
-  errorMessage String?
+  id                    String     @id @default(uuid())
+  type                  PostType
+  content               String
+  scheduledFor          DateTime
+  status                PostStatus @default(DRAFT)
+  publishedAt           DateTime?
+  errorMessage          String?
+  nextRetryAt           DateTime?
+  processingCompletedAt DateTime?
 
   // Relations
   linkedInAccount LinkedInAccount @relation(fields: [linkedInId], references: [id], onDelete: Cascade)
