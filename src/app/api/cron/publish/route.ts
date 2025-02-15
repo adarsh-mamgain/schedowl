@@ -26,7 +26,7 @@ export async function GET() {
       await postQueue.add(
         { postId: post.id },
         {
-          jobId: `post-${post.id}`,
+          jobId: `post-linkedin-${post.id}`,
           attempts: 5,
           removeOnComplete: true,
           removeOnFail: false,
