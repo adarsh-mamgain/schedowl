@@ -1,12 +1,14 @@
 "use server";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { verifyPassword } from "@/src/lib/auth/password";
 import { SessionManager } from "@/src/lib/auth/session";
 import { SignInSchema } from "@/src/schema";
+import logger from "@/src/services/logger";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   try {
     const body = await request.json();
     const { email, password } = SignInSchema.parse(body);
@@ -72,7 +74,10 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    console.error("Signin error:", error);
+    logger.error(
+      `${request.method} ${request.nextUrl.pathname} Signin error:`,
+      error
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

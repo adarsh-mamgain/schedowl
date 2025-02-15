@@ -1,14 +1,16 @@
 "use server";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { hashPassword } from "@/src/lib/auth/password";
 import { generateUniqueSlug } from "@/src/lib/common";
 import { sendEmail } from "@/src/lib/mailer";
 import { SessionManager } from "@/src/lib/auth/session";
 import { SignUpSchema } from "@/src/schema";
+import logger from "@/src/services/logger";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   try {
     const body = await request.json();
     const { email, password, name, token } = SignUpSchema.parse(body);
@@ -133,7 +135,10 @@ export async function POST(request: Request) {
       organisation: result.organisation,
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    logger.error(
+      `${request.method} ${request.nextUrl.pathname} Signup error:`,
+      error
+    );
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }

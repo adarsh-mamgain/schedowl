@@ -1,7 +1,9 @@
 import prisma from "@/src/lib/prisma";
+import logger from "@/src/services/logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const requestHeaders = new Headers(request.headers);
   const userId = requestHeaders.get("x-user-id");
   const organisationId = requestHeaders.get("x-organisation-id");

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
+import logger from "@/src/services/logger";
 
 export async function POST(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const requestHeaders = new Headers(request.headers);
   const userId = requestHeaders.get("x-user-id");
   const memberId = requestHeaders.get("x-member-id");
@@ -47,7 +49,6 @@ export async function POST(request: NextRequest) {
             !data.linkedInId ||
             !data.createdById
           ) {
-            console.error("Invalid data detected", data);
             throw new Error("Invalid data structure");
           }
 
@@ -65,8 +66,8 @@ export async function POST(request: NextRequest) {
 
           return result;
         } catch (dbError) {
-          console.error(
-            "Database error while creating post:",
+          logger.error(
+            `${request.method} ${request.nextUrl.pathname} Database error while creating post:`,
             dbError instanceof Error ? dbError.message : dbError
           );
           return null;
@@ -85,8 +86,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, posts: successfulResults });
   } catch (error) {
-    console.error(
-      "Error scheduling posts:",
+    logger.error(
+      `${request.method} ${request.nextUrl.pathname} Error scheduling posts:`,
       error instanceof Error ? error.message : error
     );
     return NextResponse.json(

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
+import logger from "@/src/services/logger";
 
 export async function GET(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const searchParams = request.nextUrl.searchParams;
   const platform = searchParams.get("platform");
 
@@ -30,7 +32,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       connected: !!integration,
     });
-  } catch {
+  } catch (error) {
+    logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
     return NextResponse.json(
       { error: "Failed to fetch integration" },
       { status: 500 }

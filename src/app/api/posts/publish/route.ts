@@ -1,7 +1,9 @@
 import { LinkedInService } from "@/src/services/linkedin";
+import logger from "@/src/services/logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const requestHeaders = new Headers(request.headers);
   const userId = requestHeaders.get("x-user-id");
   const organisationId = requestHeaders.get("x-organisation-id");
@@ -29,7 +31,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error("Error publishing posts:", error);
+    logger.error(
+      `${request.method} ${request.nextUrl.pathname} Error publishing posts:"`,
+      error
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
