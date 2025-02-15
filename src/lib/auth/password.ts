@@ -1,6 +1,11 @@
+"use server";
+
 import { compare, hash } from "bcryptjs";
 import { JWTPayload, jwtVerify, JWTVerifyResult, SignJWT } from "jose";
 
+if (!process.env.JWT_SECRET_KEY) {
+  throw new Error("JWT_SECRET_KEY is not set in environment variables");
+}
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET_KEY);
 
 export async function hashPassword(password: string) {
