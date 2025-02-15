@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -85,7 +85,7 @@ model Session {
 
 model LinkedInAccount {
   id         String @id @default(uuid())
-  sub        String @unique
+  sub        String
   givenName  String
   familyName String
 
@@ -100,6 +100,7 @@ model LinkedInAccount {
 
   posts Post[]
 
+  @@unique([sub, organisationId])
   @@map("linkedin_account")
 }
 

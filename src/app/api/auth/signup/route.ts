@@ -120,8 +120,8 @@ export async function POST(request: Request) {
 
     await sendEmail(
       result.user.email,
-      "Welcome to " + result.organisation.name,
-      `<p>Welcome to ${result.organisation.name}! Your workspace is ready.</p>`
+      `Welcome to ${result.organisation.name}`,
+      `<h1>Welcome to ${result.organisation.name}!<h1> <p>Your workspace is ready.</p>`
     );
 
     return NextResponse.json({
