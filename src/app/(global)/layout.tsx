@@ -43,7 +43,7 @@ export default function GlobalLayout({
         setMe(response.data);
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.error || "Signup failed.");
+          toast.error(error.response?.data?.error || "Failed to fetch user");
         } else {
           toast.error("An unexpected error occurred.");
         }
@@ -85,7 +85,7 @@ export default function GlobalLayout({
             <button
               key={tab.path}
               className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
-                pathname === tab.path
+                pathname.startsWith(tab.path)
                   ? "bg-gray-200 text-[#182230]"
                   : "text-[#344054]"
               }`}

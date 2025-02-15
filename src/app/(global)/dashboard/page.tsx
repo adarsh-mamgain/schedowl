@@ -44,7 +44,9 @@ export default function DashboardPage() {
         setLinkedInConnected(response.data.connected);
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.error || "Signup failed.");
+          toast.error(
+            error.response?.data?.error || "Failed to fetch integration"
+          );
         } else {
           toast.error("An unexpected error occurred.");
         }
