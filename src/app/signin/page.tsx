@@ -61,9 +61,9 @@ export default function SignIn() {
       <main>
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/SchedOwl logo.svg"
+            src="/SchedOwl Logo.svg"
             className="mb-6"
-            alt="SchedOwl logo"
+            alt="SchedOwl Logo"
             width={48}
             height={48}
           />
