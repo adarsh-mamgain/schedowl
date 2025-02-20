@@ -29,7 +29,7 @@ export const SignInSchema = z.object({
 export const profileSchema = z.object({
   name: z
     .string()
-    .min(2, "First name must be at least 2 characters")
+    .min(1, "First name must be at least 1 characters")
     .optional(),
   email: z.string().email("Invalid email address").optional(),
   password: z
