@@ -26,18 +26,32 @@ export const LoginSchema = z.object({
   password: z.string(),
 });
 
-export const profileSchema = z.object({
+export const ProfileSchema = z.object({
   name: z
     .string()
     .min(1, "First name must be at least 1 characters")
-    .optional(),
-  email: z.string().email("Invalid email address").optional(),
+    .nullable(),
+  email: z.string().email("Invalid email address").nullable(),
   password: z
     .string()
-    .min(8, { message: "Contain at least 8 characters" })
-    .regex(/[A-Z]/, { message: "Contain at least one uppercase letter" })
-    .regex(/[a-z]/, { message: "Contain at least one lowercase letter" })
-    .regex(/[0-9]/, { message: "Contain at least one number" })
-    .optional(),
-  image: z.any().optional(),
+    .nullable()
+    .refine(
+      (val) => {
+        // If password is not provided, it's valid
+        if (!val) return true;
+
+        // If password is provided, validate it
+        return (
+          val.length >= 8 &&
+          /[A-Z]/.test(val) &&
+          /[a-z]/.test(val) &&
+          /[0-9]/.test(val)
+        );
+      },
+      {
+        message:
+          "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one number",
+      }
+    ),
+  image: z.any().nullable(),
 });
