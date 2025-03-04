@@ -1,87 +1,57 @@
-import { generateJWT } from "@/src/lib/auth/password";
-import { sendEmail } from "@/src/lib/mailer";
+import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
-import { InviteSchema } from "@/src/schema";
 import logger from "@/src/services/logger";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
-  const requestHeaders = new Headers(request.headers);
-  const organisationId = requestHeaders.get("x-organisation-id");
+  const session = await getServerSession(authOptions);
 
-  if (!organisationId) {
+  if (!session?.organisation.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const members = await prisma.member.findMany({
-    where: { organisationId },
-    include: { user: { omit: { password: true } } },
+  // Get existing members
+  const members = await prisma.organisationRole.findMany({
+    where: {
+      organisationId: session.organisation.id,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          emailVerified: true,
+          image: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
   });
 
-  return NextResponse.json(members);
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { email, role } = InviteSchema.parse(body);
-
-    const organisationId = request.headers.get("x-organisation-id");
-    if (!organisationId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user already exists in the organisation
-    const existingMember = await prisma.member.findFirst({
-      where: {
-        organisationId,
-        OR: [{ user: { email } }],
+  // Get pending invitations
+  const invitations = await prisma.invitation.findMany({
+    where: {
+      orgId: session.organisation.id,
+      accepted: false,
+      expiresAt: {
+        gt: new Date(), // Only get non-expired invitations
       },
-    });
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      expiresAt: true,
+    },
+  });
 
-    if (existingMember) {
-      return NextResponse.json(
-        { error: "User is already a member of this organisation." },
-        { status: 400 }
-      );
-    }
-
-    const token = await generateJWT({
-      email,
-      organisationId,
-      exp: Math.floor(Date.now() / 1000) + 604800,
-    });
-
-    await prisma.member.create({
-      data: {
-        organisationId,
-        role,
-        token,
-        expiresAt: new Date(Date.now() + 604800000),
-      },
-    });
-
-    sendEmail(
-      email,
-      `Invitation to join ${organisationId}`,
-      `<p>Hey,</p> <p>Join our team at ${organisationId}.</p>
-
-       <p>Please click on the button below to sign up and then accept the invite.</p>
-
-       <p>
-         <a
-           type="button"
-           target="_blank"
-           href=${process.env.NEXT_PUBLIC_BASE_URL}/signup?token=${token}
-         >
-           Accept Invite
-         </a>
-       </p>`
-    );
-
-    return NextResponse.json({ message: "Invitation sent successfully" });
-  } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-  }
+  return NextResponse.json({
+    members,
+    invitations,
+  });
 }
