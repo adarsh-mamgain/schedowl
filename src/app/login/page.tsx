@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import Button from "@/src/components/Button";
-import { toast } from "react-toastify";
-import Toaster from "@/src/components/ui/Toaster";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema } from "@/src/schema";
@@ -172,7 +170,6 @@ function LoginForm() {
           </div>
         </div>
       </main>
-      <Toaster />
     </div>
   );
 }

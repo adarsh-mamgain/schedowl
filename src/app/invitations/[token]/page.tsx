@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Button from "@/src/components/Button";
-import { toast } from "react-toastify";
-import Toaster from "@/src/components/ui/Toaster";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -292,7 +290,6 @@ function InvitationForm({ params }: { params: { token: string } }) {
           </Button>
         </div>
       </main>
-      <Toaster />
     </div>
   );
 }

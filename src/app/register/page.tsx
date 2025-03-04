@@ -4,8 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
 import Button from "@/src/components/Button";
-import { toast } from "react-toastify";
-import Toaster from "@/src/components/ui/Toaster";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -191,7 +189,6 @@ function RegisterForm() {
           </div>
         </div>
       </main>
-      <Toaster />
     </div>
   );
 }

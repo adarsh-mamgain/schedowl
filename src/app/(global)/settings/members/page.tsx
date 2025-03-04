@@ -100,90 +100,93 @@ export default function MembersPage() {
     }
   };
 
-  const columns: ColumnDef<Member | Invitation>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => {
-        const data = row.original;
-        if ("user" in data) {
-          // It's a Member
+  const columns = useMemo<ColumnDef<Member | Invitation>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) => {
+          const data = row.original;
+          if ("user" in data) {
+            // It's a Member
+            return (
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-medium text-[#101828]">
+                    {data.user.name}
+                  </p>
+                </div>
+              </div>
+            );
+          } else {
+            // It's an Invitation
+            return (
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-medium text-[#101828]">
+                    Pending Invitation
+                  </p>
+                </div>
+              </div>
+            );
+          }
+        },
+      },
+      {
+        accessorKey: "email",
+        header: "Email address",
+        cell: ({ row }) => {
+          const data = row.original;
+          const email = "user" in data ? data.user.email : data.email;
           return (
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-sm font-medium text-[#101828]">
-                  {data.user.name}
-                </p>
+                <p className="text-sm font-medium text-[#101828]">{email}</p>
               </div>
             </div>
           );
-        } else {
-          // It's an Invitation
+        },
+      },
+      {
+        accessorKey: "role",
+        header: "Role",
+        cell: ({ row }) => {
+          const data = row.original;
+          const role = "user" in data ? data.role : data.role;
           return (
-            <div className="flex items-center gap-3">
-              <div>
-                <p className="text-sm font-medium text-[#101828]">
-                  Pending Invitation
-                </p>
+            <div className="flex">
+              <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
+                <span
+                  className={`w-2 h-2 rounded-full ${MemberColors[role]}`}
+                ></span>
+                <span>{role}</span>
+                {"expiresAt" in data && <span className="ml-1">(Pending)</span>}
               </div>
             </div>
           );
-        }
+        },
       },
-    },
-    {
-      accessorKey: "email",
-      header: "Email address",
-      cell: ({ row }) => {
-        const data = row.original;
-        const email = "user" in data ? data.user.email : data.email;
-        return (
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-sm font-medium text-[#101828]">{email}</p>
-            </div>
+      {
+        id: "actions",
+        header: "Actions",
+        cell: () => (
+          <div className="flex items-center gap-5">
+            <button className="text-gray-500 text-[#475467] hover:text-blue-600">
+              <Pencil size={16} />
+            </button>
+            <button className="text-[#475467] hover:text-red-700">
+              <Trash2 size={16} />
+            </button>
           </div>
-        );
+        ),
       },
-    },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => {
-        const data = row.original;
-        const role = "user" in data ? data.role : data.role;
-        return (
-          <div className="flex">
-            <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
-              <span
-                className={`w-2 h-2 rounded-full ${MemberColors[role]}`}
-              ></span>
-              <span>{role}</span>
-              {"expiresAt" in data && <span className="ml-1">(Pending)</span>}
-            </div>
-          </div>
-        );
-      },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: () => (
-        <div className="flex items-center gap-5">
-          <button className="text-gray-500 text-[#475467] hover:text-blue-600">
-            <Pencil size={16} />
-          </button>
-          <button className="text-[#475467] hover:text-red-700">
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-    },
-  ];
+    ],
+    []
+  );
 
   const table = useReactTable({
     data: useMemo(() => [...members, ...invitations], [members, invitations]),
-    columns: useMemo(() => columns, []),
+    columns: useMemo(() => columns, [columns]),
     getCoreRowModel: getCoreRowModel(),
   });
 
