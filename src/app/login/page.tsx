@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import Toaster from "@/src/components/ui/Toaster";
@@ -15,7 +15,7 @@ import { signIn } from "next-auth/react";
 
 type FormValues = z.infer<typeof LoginSchema>;
 
-export default function SignIn() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -174,5 +174,20 @@ export default function SignIn() {
       </main>
       <Toaster />
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
+          <div className="text-[#101828]">Loading...</div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

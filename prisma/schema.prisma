@@ -13,18 +13,18 @@ datasource db {
 
 // Represents application users who can be members of multiple organizations
 model User {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   name          String    @db.VarChar(255)
   email         String    @unique @db.VarChar(255)
-  password      String // Hashed password
+  password      String? // Hashed password
   emailVerified DateTime? // Timestamp of email verification
   image         String?   @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  memberships Member[] // User's memberships across organizations
-  sessions    Session[] // Active sessions for the user
+  organisations OrganisationRole[]
+  ownedOrgs     Organisation[] @relation("OrganizationOwner")
 
   @@index([email])
   @@map("users")
@@ -32,7 +32,7 @@ model User {
 
 // Represents an organization that can have multiple team members and social accounts
 model Organisation {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   name      String   @db.VarChar(255)
   slug      String   @unique @db.VarChar(100) // URL-friendly identifier
   image     String?  @db.Text
@@ -41,81 +41,49 @@ model Organisation {
   updatedAt DateTime @updatedAt
 
   // Relations
-  members  Member[] // Team members of the organization
-  sessions Session[] // Active sessions within the organization
+  ownerId     String
+  owner       User      @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     OrganisationRole[]
+  invitations Invitation[]
   socials  SocialAccount[] // Connected social media accounts
   posts    Post[] // All posts created by the organization
-  invites  Invite[] // Pending invitations to join the organization
   medias   MediaAttachment[]
 
   @@index([slug])
   @@map("organisations")
 }
 
-// Represents a user's membership within an organization
-model Member {
-  id        String       @id @default(uuid())
-  role      Role         @default(MEMBER) // User's role in the organization
-  status    InviteStatus @default(PENDING) // Membership status
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+// Represents a user's role in an organization
+model OrganisationRole {
+  id             String       @id @default(cuid())
+  role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  // Relations
-  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String? // Nullable for pending invites
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-
-  scheduledPosts  Post[] // Posts created by this member
-  sessions        Session[] // Active sessions of this member
-  mediaAttachment MediaAttachment[]
-
-  @@unique([userId, organisationId]) // User can only have one membership per organization
-  @@index([organisationId])
-  @@index([userId])
-  @@map("members")
-}
-
-// Tracks invitations sent to users to join an organization
-model Invite {
-  id        String       @id @default(uuid())
-  email     String       @db.VarChar(255) // Recipient's email
-  role      Role         @default(MEMBER) // Offered role in the organization
-  status    InviteStatus @default(PENDING)
-  createdAt DateTime     @default(now())
-
-  // Relations
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-  invitedBy      String // UUID of the user who created the invite
-
-  @@index([email])
-  @@index([organisationId])
-  @@map("invites")
-}
-
-// Tracks active user sessions across organizations
-model Session {
-  id         String   @id @default(uuid())
-  createdAt  DateTime @default(now())
-  lastActive DateTime @default(now()) // Last activity timestamp for session management
-
-  // Relations
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId       String
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([lastActive])
-  @@map("sessions")
+  @@unique([userId, organisationId])
+}
+
+// Represents an invitation to join an organization
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  role      Role
+  token     String   @unique
+  expiresAt DateTime
+  orgId     String
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  accepted  Boolean  @default(false)
 }
 
 // Represents a connected social media account
 model SocialAccount {
-  id         String      @id @default(uuid())
+  id         String      @id @default(cuid())
   type       AccountType // Type of social media platform
   identifier String // Platform-specific unique identifier
   name       String      @db.VarChar(255)
@@ -144,7 +112,7 @@ model SocialAccount {
 
 // Represents a social media post that can be scheduled
 model Post {
-  id           String      @id @default(uuid())
+  id           String      @id @default(cuid())
   type         AccountType // Platform type for the post
   content      String      @db.Text // Post content
   scheduledFor DateTime // Scheduled publication time
@@ -157,8 +125,8 @@ model Post {
   socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
   socialAccountId String
 
-  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdById String
+  // createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  // createdById String
 
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
@@ -168,14 +136,14 @@ model Post {
   @@index([status])
   @@index([scheduledFor])
   @@index([socialAccountId])
-  @@index([createdById])
+  // @@index([createdById])
   @@index([organisationId])
   @@map("posts")
 }
 
 // Junction table for post-media relationship
 model PostMedia {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
 
   // Relations
@@ -193,7 +161,7 @@ model PostMedia {
 
 // Represents media files attached to posts (images, videos, etc.)
 model MediaAttachment {
-  id        String    @id @default(uuid())
+  id        String    @id @default(cuid())
   type      MediaType // Type of media file
   url       String    @db.Text // Public S3 URL
   key       String    @db.Text // S3 object key
@@ -209,13 +177,13 @@ model MediaAttachment {
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
-  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdById String
+  // createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  // createdById String
 
   posts PostMedia[] // Attached to post
 
   @@index([organisationId])
-  @@index([createdById])
+  // @@index([createdById])
   @@index([type])
   @@map("media_attachments")
 }

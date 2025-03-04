@@ -103,9 +103,6 @@ function RegisterForm() {
                 {...register("email")}
                 type="email"
                 className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
-                // className={`text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D] ${
-                //   isEmailDisabled ? "bg-gray-100 cursor-not-allowed" : ""
-                // }`}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">
