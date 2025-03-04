@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
+import { authOptions } from "@/src/lib/auth";
+import { getServerSession } from "next-auth";
+import { AccountType } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const searchParams = request.nextUrl.searchParams;
   const platform = searchParams.get("platform");
+  const session = await getServerSession(authOptions);
 
-  const requestHeaders = new Headers(request.headers);
-  const organisationId = requestHeaders.get("x-organisation-id");
-
-  if (!organisationId || !platform) {
+  if (!session?.organisation.id || !platform) {
     return NextResponse.json(
       { error: "Organisation ID and platform are required" },
       { status: 400 }
@@ -18,8 +19,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const integration = await prisma.linkedInAccount.findFirst({
-      where: { organisationId },
+    const integration = await prisma.socialAccount.findFirst({
+      where: {
+        organisationId: session.organisation.id,
+        type: platform as AccountType,
+      },
     });
 
     if (!integration) {

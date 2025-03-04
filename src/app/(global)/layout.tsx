@@ -2,8 +2,6 @@
 
 import Button from "@/src/components/Button";
 import Toaster from "@/src/components/ui/Toaster";
-import { Organisation, User } from "@prisma/client";
-import axios from "axios";
 import {
   BarChart3,
   Calendar,
@@ -11,20 +9,15 @@ import {
   ChevronUp,
   Settings,
 } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
+import { useState } from "react";
 
 const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
   { title: "Calendar", path: "/calendar", icon: Calendar },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
-
-type UserMe = {
-  user: User;
-  organisation: Organisation;
-};
 
 export default function GlobalLayout({
   children,
@@ -34,28 +27,7 @@ export default function GlobalLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [me, setMe] = useState<UserMe>();
-
-  useEffect(() => {
-    const getUserAndOrgDetails = async () => {
-      try {
-        const response = await axios.get("/api/user");
-        setMe(response.data);
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.error || "Failed to fetch user");
-        } else {
-          toast.error("An unexpected error occurred.");
-        }
-      }
-    };
-    getUserAndOrgDetails();
-  }, []);
-
-  const signOut = async () => {
-    await axios.post("/api/auth/logout");
-    router.push("/signin");
-  };
+  const { data: session } = useSession();
 
   return (
     <div className="w-screen h-screen grid grid-cols-12">
@@ -65,7 +37,7 @@ export default function GlobalLayout({
             onClick={() => setDropdownOpen((prev) => !prev)}
             className="w-full flex items-center justify-between"
           >
-            <span>{me?.organisation.name}</span>
+            <span>{session?.organisation.name}</span>
             {dropdownOpen ? (
               <ChevronUp color="#344054" />
             ) : (
