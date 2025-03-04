@@ -8,5 +8,14 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
     };
+    organisation: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    organisationRole: {
+      id: string;
+      role: string;
+    };
   }
 }
