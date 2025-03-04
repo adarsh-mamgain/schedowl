@@ -5,7 +5,7 @@ export const InviteSchema = z.object({
   role: z.enum(["ADMIN", "MEMBER"]),
 });
 
-export const SignUpSchema = z.object({
+export const RegisterSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
   password: z
@@ -18,10 +18,10 @@ export const SignUpSchema = z.object({
       message: "Contain at least one lowercase letter",
     })
     .regex(/[0-9]/, { message: "Contain at least one number" }),
-  token: z.string().optional(),
+  organisationName: z.string().min(1, "Organization name is required"),
 });
 
-export const SignInSchema = z.object({
+export const LoginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string(),
 });
