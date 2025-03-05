@@ -9,10 +9,12 @@ import {
   ChevronUp,
   Settings,
   Image,
+  Upload,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
@@ -29,7 +31,39 @@ export default function GlobalLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleProfileImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/profile/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload profile image");
+      }
+
+      const data = await response.json();
+      await updateSession({ image: data.url });
+      toast.success("Profile image updated successfully");
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      toast.error("Failed to upload profile image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="h-screen flex">
@@ -40,7 +74,23 @@ export default function GlobalLayout({
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="w-full flex items-center justify-between"
             >
-              <span>{session?.organisation.name}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                  {session?.organisation?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={session.organisation.image}
+                      alt={session.organisation.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      {session?.organisation?.name?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <span>{session?.organisation?.name}</span>
+              </div>
               {dropdownOpen ? (
                 <ChevronUp color="#344054" />
               ) : (
@@ -48,8 +98,44 @@ export default function GlobalLayout({
               )}
             </button>
             {dropdownOpen && (
-              <div className="w-full flex flex-col gap-1 p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
-                <Button variant="secondary" size="small" onClick={signOut}>
+              <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                    {session?.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || ""}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        {session?.user?.name?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full cursor-pointer flex items-center justify-center">
+                      <Upload className="w-3 h-3" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
+                  <div>
+                    <p className="font-medium">{session?.user?.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {session?.user?.email}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => signOut()}
+                >
                   Sign out
                 </Button>
               </div>

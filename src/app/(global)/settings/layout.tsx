@@ -7,6 +7,7 @@ const TABS = [
   { title: "Members", path: "/settings/members" },
   { title: "Billing", path: "/settings/billing" },
   { title: "Integrations", path: "/settings/integrations" },
+  { title: "Organisation", path: "/settings/organisation" },
 ];
 
 export default function SettingsLayout({
