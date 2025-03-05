@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker": "pnpm exec ts-node -r tsconfig-paths/register src/services/worker.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -26,6 +27,7 @@
     "jose": "^5.9.6",
     "lexical": "^0.23.1",
     "lucide-react": "^0.474.0",
+    "minio": "^8.0.4",
     "next": "15.1.4",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",

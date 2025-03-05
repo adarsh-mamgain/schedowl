@@ -25,6 +25,8 @@ model User {
   // Relations
   organisations OrganisationRole[]
   ownedOrgs     Organisation[] @relation("OrganizationOwner")
+  createdPosts  Post[] // Posts created by this user
+  createdMedia  MediaAttachment[] // Media files created by this user
 
   @@index([email])
   @@map("users")
@@ -120,13 +122,14 @@ model Post {
   publishedAt  DateTime? // Actual publication timestamp
   errorMessage String?     @db.Text // Error message if publication failed
   metadata     Json        @default("{}") // Platform-specific post data
+  jobId        String?     // Bull queue job ID for scheduled posts
 
   // Relations
   socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
   socialAccountId String
 
-  // createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  // createdById String
+  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String
 
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
@@ -136,7 +139,7 @@ model Post {
   @@index([status])
   @@index([scheduledFor])
   @@index([socialAccountId])
-  // @@index([createdById])
+  @@index([createdById])
   @@index([organisationId])
   @@map("posts")
 }
@@ -177,13 +180,13 @@ model MediaAttachment {
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
 
-  // createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  // createdById String
+  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String
 
   posts PostMedia[] // Attached to post
 
   @@index([organisationId])
-  // @@index([createdById])
+  @@index([createdById])
   @@index([type])
   @@map("media_attachments")
 }

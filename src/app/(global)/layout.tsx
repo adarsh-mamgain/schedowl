@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
+  Image,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -16,6 +17,7 @@ import { useState } from "react";
 const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
   { title: "Calendar", path: "/calendar", icon: Calendar },
+  { title: "Media", path: "/media", icon: Image },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
 
