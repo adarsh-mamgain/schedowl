@@ -133,6 +133,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
+        session.user.image = token.image as string;
         session.organisation = token.organisation as Organisation;
         session.organisationRole = token.organisationRole as OrganisationRole;
       }
@@ -164,6 +165,7 @@ export const authOptions: NextAuthOptions = {
             id: orgRole.organisation.id,
             name: orgRole.organisation.name,
             slug: orgRole.organisation.slug,
+            image: orgRole.organisation.image,
           };
           token.organisationRole = {
             id: orgRole.id,

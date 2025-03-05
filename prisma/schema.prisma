@@ -1,5 +1,5 @@
 // Schema for Social Media Post Scheduler
-// Supports multiple social media platforms and organizations
+// Supports multiple social media platforms and organisations
 // Handles user management, social accounts, post scheduling, and media attachments
 
 generator client {
@@ -11,7 +11,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Represents application users who can be members of multiple organizations
+// Represents application users who can be members of multiple organisations
 model User {
   id            String    @id @default(cuid())
   name          String    @db.VarChar(255)
@@ -24,7 +24,7 @@ model User {
 
   // Relations
   organisations OrganisationRole[]
-  ownedOrgs     Organisation[] @relation("OrganizationOwner")
+  ownedOrgs     Organisation[]     @relation("OrganisationOwner")
   createdPosts  Post[] // Posts created by this user
   createdMedia  MediaAttachment[] // Media files created by this user
 
@@ -32,7 +32,7 @@ model User {
   @@map("users")
 }
 
-// Represents an organization that can have multiple team members and social accounts
+// Represents an organisation that can have multiple team members and social accounts
 model Organisation {
   id        String   @id @default(cuid())
   name      String   @db.VarChar(255)
@@ -44,24 +44,23 @@ model Organisation {
 
   // Relations
   ownerId     String
-  owner       User      @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner       User               @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members     OrganisationRole[]
   invitations Invitation[]
-  socials  SocialAccount[] // Connected social media accounts
-  posts    Post[] // All posts created by the organization
-  medias   MediaAttachment[]
+  socials     SocialAccount[] // Connected social media accounts
+  posts       Post[] // All posts created by the organisation
+  medias      MediaAttachment[]
 
   @@index([slug])
   @@map("organisations")
 }
 
-// Represents a user's role in an organization
+// Represents a user's role in an organisation
 model OrganisationRole {
   id             String       @id @default(cuid())
   role           Role         @default(MEMBER)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-
   userId         String
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organisationId String
@@ -70,17 +69,17 @@ model OrganisationRole {
   @@unique([userId, organisationId])
 }
 
-// Represents an invitation to join an organization
+// Represents an invitation to join an organisation
 model Invitation {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   email     String
   role      Role
-  token     String   @unique
+  token     String       @unique
   expiresAt DateTime
   orgId     String
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  accepted  Boolean  @default(false)
+  createdAt DateTime     @default(now())
+  accepted  Boolean      @default(false)
 }
 
 // Represents a connected social media account
@@ -122,17 +121,15 @@ model Post {
   publishedAt  DateTime? // Actual publication timestamp
   errorMessage String?     @db.Text // Error message if publication failed
   metadata     Json        @default("{}") // Platform-specific post data
-  jobId        String?     // Bull queue job ID for scheduled posts
+  jobId        String? // Bull queue job ID for scheduled posts
 
   // Relations
   socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
   socialAccountId String
-
-  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdById String
-
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
+  createdBy       User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById     String
+  organisation    Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId  String
 
   media PostMedia[] // Attached media files
 
@@ -146,15 +143,12 @@ model Post {
 
 // Junction table for post-media relationship
 model PostMedia {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  // Relations
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId String
-
-  media   MediaAttachment @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  mediaId String
+  id        String          @id @default(cuid())
+  createdAt DateTime        @default(now())
+  post      Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  media     MediaAttachment @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
 
   @@unique([postId, mediaId])
   @@index([postId])
@@ -179,11 +173,9 @@ model MediaAttachment {
 
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
-
-  createdBy   User @relation(fields: [createdById], references: [id], onDelete: Restrict)
-  createdById String
-
-  posts PostMedia[] // Attached to post
+  createdBy      User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById    String
+  posts          PostMedia[] // Attached to post
 
   @@index([organisationId])
   @@index([createdById])
@@ -220,7 +212,7 @@ enum InviteStatus {
   ACCEPTED // Invitation accepted
 }
 
-// Organization member roles
+// Organisation member roles
 enum Role {
   OWNER // Full control
   ADMIN // Management access

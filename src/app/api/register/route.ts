@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user and organization in a transaction
+    // Create user and organisation in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create user
       const user = await tx.user.create({
@@ -54,8 +54,8 @@ export async function POST(req: Request) {
         });
       }
 
-      // Create organization
-      const organization = await tx.organisation.create({
+      // Create organisation
+      const organisation = await tx.organisation.create({
         data: {
           name: organisationName,
           slug,
@@ -63,16 +63,16 @@ export async function POST(req: Request) {
         },
       });
 
-      // Create organization role for the owner
+      // Create organisation role for the owner
       await tx.organisationRole.create({
         data: {
           userId: user.id,
-          organisationId: organization.id,
+          organisationId: organisation.id,
           role: Role.OWNER,
         },
       });
 
-      return { user, organization };
+      return { user, organisation };
     });
 
     return NextResponse.json(
@@ -83,10 +83,10 @@ export async function POST(req: Request) {
           name: result.user.name,
           email: result.user.email,
         },
-        organization: {
-          id: result.organization.id,
-          name: result.organization.name,
-          slug: result.organization.slug,
+        organisation: {
+          id: result.organisation.id,
+          name: result.organisation.name,
+          slug: result.organisation.slug,
         },
       },
       { status: 201 }

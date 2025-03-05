@@ -18,7 +18,7 @@ export const RegisterSchema = z.object({
       message: "Contain at least one lowercase letter",
     })
     .regex(/[0-9]/, { message: "Contain at least one number" }),
-  organisationName: z.string().min(1, "Organization name is required"),
+  organisationName: z.string().min(1, "Organisation name is required"),
 });
 
 export const LoginSchema = z.object({

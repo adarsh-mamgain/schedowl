@@ -51,7 +51,7 @@ export default function MediaPage() {
     if (!files || files.length === 0) return;
 
     if (!session?.organisation?.id) {
-      toast.error("No organization selected");
+      toast.error("No organisation selected");
       return;
     }
 

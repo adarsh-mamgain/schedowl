@@ -20,7 +20,7 @@ type RegisterForm = z.infer<typeof registerSchema>;
 type InvitationData = {
   email: string;
   role: string;
-  organization: {
+  organisation: {
     name: string;
   };
 };
@@ -73,7 +73,7 @@ function InvitationForm({ params }: { params: { token: string } }) {
         },
         body: JSON.stringify({
           ...data,
-          organizationName: `${data.name}'s Organization`, // This will be replaced by the invited org
+          organisationName: `${data.name}'s Organisation`, // This will be replaced by the invited org
         }),
       });
 
@@ -165,7 +165,7 @@ function InvitationForm({ params }: { params: { token: string } }) {
             className="mb-4"
           />
           <h1 className="text-2xl font-semibold text-[#101828]">
-            You&apos;ve been invited to join {invitation.organization.name}
+            You&apos;ve been invited to join {invitation.organisation.name}
           </h1>
           <p className="text-[#475467] mt-2">Role: {invitation.role}</p>
         </div>
