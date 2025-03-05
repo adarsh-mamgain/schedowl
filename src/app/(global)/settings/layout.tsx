@@ -22,6 +22,9 @@ export default function SettingsLayout({
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="font-semibold text-[#101828]">Settings</h1>
+          <p className="text-sm text-[#475467]">
+            Manage your account settings from here.
+          </p>
         </div>
       </div>
 

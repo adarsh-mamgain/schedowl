@@ -32,29 +32,31 @@ export default function GlobalLayout({
   const { data: session } = useSession();
 
   return (
-    <div className="w-screen h-screen grid grid-cols-12">
-      <aside className="h-full col-span-2 border-r border-[#EAECF0] pt-6 p-4">
-        <div className="relative">
-          <button
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between"
-          >
-            <span>{session?.organisation.name}</span>
-            {dropdownOpen ? (
-              <ChevronUp color="#344054" />
-            ) : (
-              <ChevronDown color="#344054" />
+    <div className="h-screen flex">
+      <aside className="w-[240px] border-r border-[#EAECF0] flex flex-col">
+        <div className="pt-6 px-4">
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between"
+            >
+              <span>{session?.organisation.name}</span>
+              {dropdownOpen ? (
+                <ChevronUp color="#344054" />
+              ) : (
+                <ChevronDown color="#344054" />
+              )}
+            </button>
+            {dropdownOpen && (
+              <div className="w-full flex flex-col gap-1 p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
+                <Button variant="secondary" size="small" onClick={signOut}>
+                  Sign out
+                </Button>
+              </div>
             )}
-          </button>
-          {dropdownOpen && (
-            <div className="w-full flex flex-col gap-1 p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
-              <Button variant="secondary" size="small" onClick={signOut}>
-                Sign out
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
-        <div className="mt-4">
+        <nav className="flex-1 p-4">
           {TABS.map((tab) => (
             <button
               key={tab.path}
@@ -69,12 +71,14 @@ export default function GlobalLayout({
               {tab.title}
             </button>
           ))}
-        </div>
+        </nav>
       </aside>
 
-      <main className="col-span-10 h-full p-6">
-        {children}
-        <Toaster />
+      <main className="flex-1 overflow-auto">
+        <div className="p-6">
+          {children}
+          <Toaster />
+        </div>
       </main>
     </div>
   );

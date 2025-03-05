@@ -117,7 +117,12 @@ export default function MediaPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Media Library</h1>
+        <div>
+          <h1 className="font-semibold text-[#101828]">Media Library</h1>
+          <p className="text-sm text-[#475467]">
+            Manage your media files from here.
+          </p>
+        </div>
         <div className="relative">
           <label htmlFor="media-upload">
             <Button
