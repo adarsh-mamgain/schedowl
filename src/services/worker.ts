@@ -41,6 +41,14 @@ async function processScheduledPosts() {
         OR: [{ lastRetryAt: null }, { lastRetryAt: { lte: new Date() } }],
       },
       take: BATCH_SIZE,
+      include: {
+        socialAccount: true,
+        media: {
+          include: {
+            media: true,
+          },
+        },
+      },
     });
 
     if (posts.length === 0) {
@@ -62,7 +70,13 @@ async function processScheduledPosts() {
         }
 
         await postQueue.add(
-          { postId: post.id },
+          {
+            postId: post.id,
+            content: post.content,
+            mediaIds: post.media.map((m) => m.mediaId),
+            socialAccountId: post.socialAccountId,
+            createdById: post.createdById,
+          },
           {
             jobId,
             attempts: 5,
@@ -80,12 +94,19 @@ async function processScheduledPosts() {
   }
 }
 
+// Start processing posts
 setInterval(async () => {
   try {
     await processScheduledPosts();
   } catch (error) {
     logger.error("Error processing scheduled posts:", error);
   }
-}, 60000); // Run every 60 seconds
+}, 60000); // Check every minute
+
+// Initial run
+processScheduledPosts().catch((error) => {
+  logger.error("Error in initial post processing:", error);
+  process.exit(1);
+});
 
 logger.info("WORKER STARTED...");
