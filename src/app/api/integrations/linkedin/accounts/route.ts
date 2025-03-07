@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       where: { organisationId: session.organisation.id },
       orderBy: { createdAt: "desc" },
     });
-    console.log("result: ", result);
+
     return NextResponse.json(result);
   } catch (error) {
     logger.error(

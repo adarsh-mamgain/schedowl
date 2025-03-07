@@ -62,7 +62,6 @@ export async function POST(req: Request) {
 
     // Generate URL
     const url = `${process.env.MINIO_PUBLIC_URL}/${bucketName}/${objectName}`;
-    console.log("url", url);
 
     // Update organisation profile in database
     await prisma.organisation.update({

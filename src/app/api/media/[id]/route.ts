@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
-import { MinioClient } from "@/src/lib/minio";
+import { minioClient } from "@/src/lib/minio";
 
 export async function DELETE(
   request: Request,
@@ -29,7 +29,7 @@ export async function DELETE(
     }
 
     // Delete from MinIO
-    await MinioClient.removeObject("media", media.key);
+    await minioClient.removeObject("media", media.key);
 
     // Delete from database
     await prisma.mediaAttachment.delete({
