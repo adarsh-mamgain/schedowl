@@ -84,30 +84,25 @@ model Invitation {
 
 // Represents a connected social media account
 model SocialAccount {
-  id         String      @id @default(cuid())
-  type       AccountType // Type of social media platform
-  identifier String // Platform-specific unique identifier
-  name       String      @db.VarChar(255)
-  email      String?     @db.VarChar(255)
-  profileUrl String?     @db.Text
-  metadata   Json        @default("{}") // Platform-specific account data
-
-  // Authentication
-  accessToken  String // OAuth access token
-  refreshToken String? // OAuth refresh token
-  expiresAt    DateTime? // Token expiration timestamp
-  isActive     Boolean   @default(true)
-  lastSyncAt   DateTime? // Last successful sync with the platform
-
-  // Relations
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-  posts          Post[] // Posts scheduled for this account
+  id              String    @id @default(cuid())
+  type            String
+  identifier      String
+  name            String?
+  email           String?
+  accessToken     String
+  refreshToken    String?
+  tokenExpiry     DateTime?
+  expiresAt       DateTime?
+  organisationId  String
+  organisation    Organisation @relation(fields: [organisationId], references: [id])
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  posts           Post[]
 
   @@unique([type, identifier, organisationId]) // Each account can only be connected once per org
   @@index([type])
   @@index([organisationId])
-  @@index([isActive])
   @@map("social_accounts")
 }
 
@@ -122,6 +117,8 @@ model Post {
   errorMessage String?     @db.Text // Error message if publication failed
   metadata     Json        @default("{}") // Platform-specific post data
   jobId        String? // Bull queue job ID for scheduled posts
+  retryCount   Int         @default(0) // Number of retry attempts
+  lastRetryAt  DateTime? // Last retry timestamp
 
   // Relations
   socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
@@ -191,10 +188,12 @@ enum AccountType {
 
 // Post publication status
 enum PostStatus {
-  DRAFT // Initial state
-  SCHEDULED // Queued for publication
-  PUBLISHED // Successfully published
-  FAILED // Publication failed
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  RETRYING
+  CANCELLED
 }
 
 // Supported media types

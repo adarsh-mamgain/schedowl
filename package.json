@@ -7,9 +7,11 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
-    "worker": "pnpm exec ts-node -r tsconfig-paths/register src/services/worker.ts"
+    "worker": "pnpm exec ts-node -r tsconfig-paths/register src/worker.ts"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@hookform/resolvers": "^3.10.0",
     "@lexical/list": "^0.23.1",
     "@lexical/react": "^0.23.1",
@@ -22,6 +24,7 @@
     "bcrypt": "^5.1.1",
     "better-auth": "^1.1.15",
     "bull": "^4.16.5",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "ioredis": "^5.5.0",
     "jose": "^5.9.6",
