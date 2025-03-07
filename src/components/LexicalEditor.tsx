@@ -211,8 +211,7 @@ function OnChangePlugin({ onChange }: { onChange: (text: string) => void }) {
 
 interface LinkedInAccount {
   id: string;
-  givenName: string;
-  familyName: string;
+  name: string;
   type: string;
   metadata?: {
     picture?: string;
@@ -275,9 +274,7 @@ function InlineAccountSelect({
   };
 
   const filteredAccounts = accounts.filter((account) =>
-    `${account.givenName} ${account.familyName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    `${account.name}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -299,9 +296,7 @@ function InlineAccountSelect({
                 key={account.id}
                 className="flex items-center gap-1 px-2 py-1 bg-[#1256c420] hover:bg-[#0e3e9a50] text-blue-800 rounded-full text-sm"
               >
-                <span>
-                  {account.givenName} {account.familyName}
-                </span>
+                <span>{account.name}</span>
                 <span>
                   <X size={12} />
                 </span>
@@ -352,9 +347,7 @@ function InlineAccountSelect({
                   }`}
                 >
                   <div className="flex-1">
-                    <span className="text-gray-900">
-                      {account.givenName} {account.familyName}
-                    </span>
+                    <span className="text-gray-900">{account.name}</span>
                   </div>
                   {selectedAccounts.includes(account.id) && <Check size={16} />}
                 </div>
@@ -654,6 +647,11 @@ export default function LexicalEditor({
   const handlePost = async (isScheduled: boolean) => {
     setIsLoading(true);
     try {
+      if (isScheduled && !scheduleTime) {
+        toast.error("Please select a schedule time");
+        return;
+      }
+
       await onPost({
         content: postContent,
         status: isScheduled ? "SCHEDULED" : "PUBLISHED",
@@ -661,12 +659,6 @@ export default function LexicalEditor({
         socialAccountIds: selectedAccounts,
         mediaIds: selectedMedia.map((media) => media.id),
       });
-
-      if (isScheduled) {
-        toast.success("Post scheduled successfully!");
-      } else {
-        toast.success("Post published successfully!");
-      }
 
       // Reset form if not a draft
       if (!isDraft) {
@@ -802,8 +794,6 @@ export default function LexicalEditor({
               onClick={() => {
                 if (isScheduling && scheduleTime) {
                   handlePost(true);
-                  setIsScheduling(false);
-                  setScheduleTime("");
                 } else {
                   setIsScheduling(!isScheduling);
                 }
