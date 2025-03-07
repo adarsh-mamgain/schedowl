@@ -415,7 +415,6 @@ export class LinkedInService {
 
     // Check if the access token is expired
     if (new Date() >= new Date(account.expiresAt!)) {
-      console.log("Access token expired, refreshing...");
       account.accessToken = await this.refreshAccessToken(accountId);
     }
 
@@ -480,7 +479,6 @@ export class LinkedInService {
 
     // Check if the access token is expired
     if (new Date() >= new Date(account.expiresAt!)) {
-      console.log("Access token expired, refreshing...");
       account.accessToken = await this.refreshAccessToken(accountId);
     }
 
