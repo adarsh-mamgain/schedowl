@@ -14,11 +14,13 @@ export async function GET(request: NextRequest) {
     }
     const result = await prisma.socialAccount.findMany({
       where: { organisationId: session.organisation.id },
+      orderBy: { createdAt: "desc" },
     });
+    console.log("result: ", result);
     return NextResponse.json(result);
   } catch (error) {
     logger.error(
-      `${request.method} ${request.nextUrl.pathname} Error scheduling posts:`,
+      `${request.method} ${request.nextUrl.pathname} Error fetching linkedin accounts:`,
       error
     );
     return NextResponse.json(
