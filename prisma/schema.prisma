@@ -80,25 +80,27 @@ model Invitation {
   org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
   createdAt DateTime     @default(now())
   accepted  Boolean      @default(false)
+
+  @@unique([email, orgId]) // Ensure email is unique per organization
 }
 
 // Represents a connected social media account
 model SocialAccount {
-  id              String    @id @default(cuid())
-  type            String
-  identifier      String
-  name            String?
-  email           String?
-  accessToken     String
-  refreshToken    String?
-  tokenExpiry     DateTime?
-  expiresAt       DateTime?
-  organisationId  String
-  organisation    Organisation @relation(fields: [organisationId], references: [id])
-  metadata        Json?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  posts           Post[]
+  id             String       @id @default(cuid())
+  type           String
+  identifier     String
+  name           String?
+  email          String?
+  accessToken    String
+  refreshToken   String?
+  tokenExpiry    DateTime?
+  expiresAt      DateTime?
+  organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  posts          Post[]
 
   @@unique([type, identifier, organisationId]) // Each account can only be connected once per org
   @@index([type])
