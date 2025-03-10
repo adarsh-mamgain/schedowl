@@ -1,6 +1,32 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { Role } from "@prisma/client";
+import { Permission, rolePermissions } from "@/src/lib/permissions";
+
+// Define protected routes and their required permissions
+const protectedRoutes: Record<
+  string,
+  { method: string; permission: string }[]
+> = {
+  "/api/organisations": [
+    { method: "POST", permission: "manage_users" },
+    { method: "PUT", permission: "manage_billing" },
+    { method: "DELETE", permission: "manage_users" },
+  ],
+  "/api/users": [
+    { method: "POST", permission: "manage_users" },
+    { method: "PUT", permission: "assign_users" },
+    { method: "DELETE", permission: "manage_users" },
+  ],
+  "/api/posts": [
+    { method: "POST", permission: "manage_posts" },
+    { method: "PUT", permission: "approve_posts" },
+    { method: "DELETE", permission: "manage_posts" },
+  ],
+  "/api/analytics": [{ method: "GET", permission: "view_analytics" }],
+  "/api/ai": [{ method: "POST", permission: "use_ai_tools" }],
+};
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
@@ -23,6 +49,35 @@ export async function middleware(request: NextRequest) {
 
   if (!token && !isApiRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // Check API route permissions
+  if (isApiRoute && token) {
+    const path = request.nextUrl.pathname;
+    const method = request.method;
+    const route = Object.keys(protectedRoutes).find((route) =>
+      path.startsWith(route)
+    );
+
+    if (route && protectedRoutes[route]) {
+      const requiredPermission = protectedRoutes[route].find(
+        (r) => r.method === method
+      )?.permission;
+
+      if (requiredPermission) {
+        const userRole = (token as any).organisationRole?.role as Role;
+        const hasAccess = rolePermissions[userRole].includes(
+          requiredPermission as Permission
+        );
+
+        if (!hasAccess) {
+          return NextResponse.json(
+            { error: "Insufficient permissions" },
+            { status: 403 }
+          );
+        }
+      }
+    }
   }
 
   return NextResponse.next();
