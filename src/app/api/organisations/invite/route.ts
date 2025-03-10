@@ -11,13 +11,10 @@ const inviteSchema = z.object({
   role: z.enum(["ADMIN", "MEMBER"]),
 });
 
-export async function POST(
-  req: Request,
-  { params }: { params: { organisationId: string } }
-) {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.organisation.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -28,7 +25,7 @@ export async function POST(
     const inviterRole = await prisma.organisationRole.findFirst({
       where: {
         userId: session.user.id,
-        organisationId: params.organisationId,
+        organisationId: session.organisation.id,
       },
     });
 
@@ -48,7 +45,7 @@ export async function POST(
       const existingRole = await prisma.organisationRole.findFirst({
         where: {
           userId: existingUser.id,
-          organisationId: params.organisationId,
+          organisationId: session.organisation.id,
         },
       });
 
@@ -62,7 +59,7 @@ export async function POST(
 
     // Get organisation details
     const organisation = await prisma.organisation.findUnique({
-      where: { id: params.organisationId },
+      where: { id: session.organisation.id },
     });
 
     if (!organisation) {
@@ -80,15 +77,15 @@ export async function POST(
         role,
         token,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-        orgId: params.organisationId,
+        orgId: session.organisation.id,
       },
     });
 
     // Send invitation email
-    sendEmail(
-      email,
-      `You've been invited to join ${organisation.name}`,
-      `
+    await sendEmail({
+      to: email,
+      subject: `You've been invited to join ${organisation.name}`,
+      html: `
         <h1>You've been invited to join ${organisation.name} as a ${role}.</h1>
         <p>Click the link below to accept the invitation:</p>
         <a
@@ -99,8 +96,8 @@ export async function POST(
           Accept Invite
         </a>
         <p>This invitation will expire in 7 days.</p>
-      `
-    );
+      `,
+    });
 
     return NextResponse.json(
       {

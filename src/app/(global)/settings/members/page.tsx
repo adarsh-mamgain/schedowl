@@ -10,11 +10,13 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { Trash2, UserPlus, X, SendHorizonal } from "lucide-react";
 import axios from "axios";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 
 const roles = ["MEMBER", "ADMIN"] as const;
 
@@ -85,15 +87,73 @@ export default function MembersPage() {
 
   const inviteMember: SubmitHandler<FormValues> = async (data) => {
     try {
-      await axios.post(
-        `/api/organisations/${session?.organisation.id}/invite`,
-        data
-      );
+      await axios.post(`/api/organisations/invite`, data);
       toast.success("Member invited successfully!");
       setShowInviteForm(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.error || "Failed to invite member");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      await axios.delete(`/api/members/${memberId}`);
+      toast.success("Member removed successfully!");
+      setMembers(members.filter((m) => m.id !== memberId));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to remove member");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
+  };
+
+  const handleUpdateRole = async (memberId: string, newRole: Role) => {
+    try {
+      await axios.put(`/api/members/${memberId}`, { role: newRole });
+      toast.success("Member role updated successfully!");
+      setMembers(
+        members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+      );
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to update role");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
+  };
+
+  const handleRemoveInvitation = async (invitationId: string) => {
+    try {
+      await axios.delete(`/api/invitations/${invitationId}`);
+      toast.success("Invitation removed successfully!");
+      setInvitations(invitations.filter((i) => i.id !== invitationId));
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.error || "Failed to remove invitation"
+        );
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
+  };
+
+  const handleResendInvitation = async (invitationId: string) => {
+    try {
+      await axios.post(`/api/invitations/${invitationId}/resend`);
+      toast.success("Invitation resent successfully!");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.error || "Failed to resend invitation"
+        );
       } else {
         toast.error("An unexpected error occurred.");
       }
@@ -169,19 +229,79 @@ export default function MembersPage() {
       {
         id: "actions",
         header: "Actions",
-        cell: () => (
-          <div className="flex items-center gap-5">
-            <button className="text-gray-500 text-[#475467] hover:text-blue-600">
-              <Pencil size={16} />
-            </button>
-            <button className="text-[#475467] hover:text-red-700">
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const data = row.original;
+          const currentUserRole = session?.organisationRole?.role as Role;
+          const canManageUsers = hasPermission(currentUserRole, "manage_users");
+          const canAssignUsers = hasPermission(currentUserRole, "assign_users");
+
+          if (!canManageUsers && !canAssignUsers) {
+            return null;
+          }
+
+          if ("user" in data) {
+            // It's a Member
+            const isOwner = data.role === "OWNER";
+            const isCurrentUser = data.user.id === session?.user?.id;
+
+            if (isOwner || isCurrentUser) {
+              return null; // Don't show actions for owner or current user
+            }
+
+            return (
+              <div className="flex items-center gap-5">
+                {canAssignUsers && (
+                  <select
+                    value={data.role}
+                    onChange={(e) =>
+                      handleUpdateRole(data.id, e.target.value as Role)
+                    }
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    {roles.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {canManageUsers && (
+                  <button
+                    className="text-[#475467] hover:text-red-700"
+                    onClick={() => handleRemoveMember(data.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            );
+          } else {
+            // It's an Invitation
+            return (
+              <div className="flex items-center gap-5">
+                {canManageUsers && (
+                  <>
+                    <button
+                      className="text-[#475467] hover:text-blue-700"
+                      onClick={() => handleResendInvitation(data.id)}
+                    >
+                      <SendHorizonal size={16} />
+                    </button>
+                    <button
+                      className="text-[#475467] hover:text-red-700"
+                      onClick={() => handleRemoveInvitation(data.id)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          }
+        },
       },
     ],
-    []
+    [session?.organisationRole?.role, session?.user?.id]
   );
 
   const table = useReactTable({
@@ -189,6 +309,15 @@ export default function MembersPage() {
     columns: useMemo(() => columns, [columns]),
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const canManageUsers = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_users"
+  );
+  const canAssignUsers = hasPermission(
+    session?.organisationRole?.role as Role,
+    "assign_users"
+  );
 
   return (
     <div className="relative">
@@ -206,11 +335,13 @@ export default function MembersPage() {
             Manage your team members and their account permissions here.
           </p>
         </div>
-        <div>
-          <Button size="small" onClick={() => setShowInviteForm(true)}>
-            Add user
-          </Button>
-        </div>
+        {(canManageUsers || canAssignUsers) && (
+          <div>
+            <Button size="small" onClick={() => setShowInviteForm(true)}>
+              Add user
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Invite Form */}
