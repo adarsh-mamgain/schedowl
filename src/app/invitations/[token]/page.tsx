@@ -43,7 +43,7 @@ function InvitationForm({ params }: { params: { token: string } }) {
   useEffect(() => {
     const fetchInvitation = async () => {
       try {
-        const response = await fetch(`/api/invitations/${params.token}`);
+        const response = await fetch(`/api/invitations/token/${params.token}`);
         if (!response.ok) {
           const error = await response.json();
           throw new Error(error.error || "Failed to fetch invitation");
@@ -103,9 +103,12 @@ function InvitationForm({ params }: { params: { token: string } }) {
   };
 
   const acceptInvitation = async () => {
-    const response = await fetch(`/api/invitations/${params.token}/accept`, {
-      method: "POST",
-    });
+    const response = await fetch(
+      `/api/invitations/token/${params.token}/accept`,
+      {
+        method: "POST",
+      }
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -118,7 +121,7 @@ function InvitationForm({ params }: { params: { token: string } }) {
   const handleGoogleSignIn = async () => {
     try {
       await signIn("google", {
-        callbackUrl: `/invitations/${params.token}/accept`,
+        callbackUrl: `/invitations/token/${params.token}/accept`,
       });
     } catch {
       setError("Failed to sign in with Google");
@@ -126,7 +129,7 @@ function InvitationForm({ params }: { params: { token: string } }) {
   };
 
   const handleExistingUser = async () => {
-    router.push(`/login?callbackUrl=/invitations/${params.token}/accept`);
+    router.push(`/login?callbackUrl=/invitations/token/${params.token}/accept`);
   };
 
   if (isLoading) {

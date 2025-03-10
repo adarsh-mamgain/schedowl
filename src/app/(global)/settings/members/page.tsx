@@ -15,7 +15,7 @@ import axios from "axios";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-import { Role } from "@prisma/client";
+import { Invitation, Role } from "@prisma/client";
 import { hasPermission } from "@/src/lib/permissions";
 
 const roles = ["MEMBER", "ADMIN"] as const;
@@ -50,14 +50,6 @@ interface Member {
   };
 }
 
-interface Invitation {
-  id: string;
-  email: string;
-  role: keyof typeof MemberColors;
-  createdAt: string;
-  expiresAt: string;
-}
-
 export default function MembersPage() {
   const { data: session } = useSession();
   const [showInviteForm, setShowInviteForm] = useState(false);
@@ -90,6 +82,9 @@ export default function MembersPage() {
       await axios.post(`/api/organisations/invite`, data);
       toast.success("Member invited successfully!");
       setShowInviteForm(false);
+      // Refresh the invitations list
+      const result = await axios.get("/api/members");
+      setInvitations(result.data.invitations);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.error || "Failed to invite member");
