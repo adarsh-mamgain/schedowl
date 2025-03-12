@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { PostStatus } from "@prisma/client";
 import CalendarView from "@/src/components/CalendarView";
 import { toast } from "react-toastify";
@@ -51,11 +51,7 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf("month"));
   const router = useRouter();
 
-  useEffect(() => {
-    fetchPosts();
-  }, [currentMonth]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const startDate = currentMonth.startOf("month").toISOString();
@@ -80,7 +76,11 @@ export default function CalendarPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleCancelPost = async (postId: string) => {
     try {

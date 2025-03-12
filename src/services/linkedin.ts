@@ -1,6 +1,6 @@
 import prisma from "@/src/lib/prisma";
 import axios from "axios";
-import { MediaAttachment } from "@prisma/client";
+import { MediaAttachment, SocialAccount, Post } from "@prisma/client";
 import { PostStatus } from "@prisma/client";
 import logger from "@/src/services/logger";
 import { sendEmail } from "@/src/lib/mailer";
@@ -12,6 +12,24 @@ interface LinkedInError {
   status: number;
   message: string;
   code?: string;
+}
+
+interface LinkedInPost extends Post {
+  media: Array<{
+    media: MediaAttachment;
+  }>;
+}
+
+interface LinkedInSocialAccount extends SocialAccount {
+  providerAccountId: string;
+  accessToken: string;
+  refreshToken: string;
+  tokenExpiry: Date;
+}
+
+interface LinkedInMediaAttachment extends MediaAttachment {
+  socialAccount: LinkedInSocialAccount;
+  buffer?: Buffer;
 }
 
 export class LinkedInService {
@@ -39,8 +57,8 @@ export class LinkedInService {
     this.lastRequestTime = Date.now();
   }
 
-  private async handleLinkedInError(error: any): Promise<LinkedInError> {
-    if (error.response) {
+  private async handleLinkedInError(error: unknown): Promise<LinkedInError> {
+    if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
       const message = error.response.data?.message || "LinkedIn API error";
       const code = error.response.data?.code;
@@ -79,21 +97,23 @@ export class LinkedInService {
       }
     }
 
-    if (error.request) {
+    if (error instanceof Error) {
       return {
         status: 0,
-        message: "Network error. Please check your connection.",
+        message: error.message || "An unexpected error occurred.",
       };
     }
 
     return {
       status: 0,
-      message: error.message || "An unexpected error occurred.",
+      message: "An unexpected error occurred.",
     };
   }
 
-  private async refreshTokenIfNeeded(socialAccount: any) {
-    if (!socialAccount.refreshToken) return;
+  private async refreshTokenIfNeeded(
+    socialAccount: LinkedInSocialAccount
+  ): Promise<string> {
+    if (!socialAccount.refreshToken) return socialAccount.accessToken;
 
     const tokenExpiry = new Date(socialAccount.tokenExpiry);
     const now = new Date();
@@ -146,7 +166,10 @@ export class LinkedInService {
     return socialAccount.accessToken;
   }
 
-  public async publishPost(post: any, socialAccount: any) {
+  public async publishPost(
+    post: LinkedInPost,
+    socialAccount: LinkedInSocialAccount
+  ) {
     try {
       await this.delayForRateLimit();
       const accessToken = await this.refreshTokenIfNeeded(socialAccount);
@@ -154,9 +177,16 @@ export class LinkedInService {
       // Upload media if present
       const mediaIds = [];
       if (post.media && post.media.length > 0) {
-        for (const media of post.media) {
+        for (const mediaItem of post.media) {
           try {
-            const mediaId = await this.uploadMedia(media, accessToken);
+            const mediaWithSocialAccount = {
+              ...mediaItem.media,
+              socialAccount,
+            } as LinkedInMediaAttachment;
+            const mediaId = await this.uploadMedia(
+              mediaWithSocialAccount,
+              accessToken
+            );
             mediaIds.push(mediaId);
           } catch (error) {
             const linkedInError = await this.handleLinkedInError(error);
@@ -213,7 +243,10 @@ export class LinkedInService {
     }
   }
 
-  private async uploadMedia(media: any, accessToken: string) {
+  private async uploadMedia(
+    media: LinkedInMediaAttachment,
+    accessToken: string
+  ) {
     try {
       await this.delayForRateLimit();
       const response = await fetch(

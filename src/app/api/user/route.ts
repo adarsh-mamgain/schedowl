@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import bcrypt from "bcrypt";
+import { Prisma } from "@prisma/client";
 
 export async function GET() {
   try {
@@ -55,7 +56,7 @@ export async function PUT(request: Request) {
       hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       ...(name && { name }),
       ...(email && { email }),
       ...(hashedPassword && { password: hashedPassword }),
@@ -76,11 +77,14 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json(user);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating user profile:", error);
 
     // Handle unique constraint violation
-    if (error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
       return NextResponse.json(
         { error: "Email already in use" },
         { status: 400 }

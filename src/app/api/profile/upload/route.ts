@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     });
 
     // Generate URL
-    const url = `${process.env.MINIO_ENDPOINT}/${bucketName}/${objectName}`;
+    const url = `${process.env.MINIO_PUBLIC_URL}/${bucketName}/${objectName}`;
 
     // Update user profile in database
     await prisma.user.update({

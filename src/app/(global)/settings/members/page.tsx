@@ -296,7 +296,13 @@ export default function MembersPage() {
         },
       },
     ],
-    [session?.organisationRole?.role, session?.user?.id]
+    [
+      handleRemoveInvitation,
+      handleRemoveMember,
+      handleUpdateRole,
+      handleResendInvitation,
+      session,
+    ]
   );
 
   const table = useReactTable({

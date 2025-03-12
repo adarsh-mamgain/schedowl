@@ -3,6 +3,13 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { Role } from "@prisma/client";
 import { Permission, rolePermissions } from "@/src/lib/permissions";
+import { JWT } from "next-auth/jwt";
+
+interface CustomToken extends JWT {
+  organisationRole?: {
+    role: Role;
+  };
+}
 
 // Define protected routes and their required permissions
 const protectedRoutes: Record<
@@ -29,7 +36,7 @@ const protectedRoutes: Record<
 };
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const token = (await getToken({ req: request })) as CustomToken;
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register");
@@ -65,7 +72,7 @@ export async function middleware(request: NextRequest) {
       )?.permission;
 
       if (requiredPermission) {
-        const userRole = (token as any).organisationRole?.role as Role;
+        const userRole = token.organisationRole?.role as Role;
         const hasAccess = rolePermissions[userRole].includes(
           requiredPermission as Permission
         );
