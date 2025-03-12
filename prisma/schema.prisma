@@ -1,3 +1,7 @@
+// Schema for Social Media Post Scheduler
+// Supports multiple social media platforms and organisations
+// Handles user management, social accounts, post scheduling, and media attachments
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,148 +11,211 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Represents application users who can be members of multiple organisations
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password      String
-  emailVerified DateTime?
-  image         String?
+  id            String    @id @default(cuid())
+  name          String    @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  password      String? // Hashed password
+  emailVerified DateTime? // Timestamp of email verification
+  image         String?   @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  memberships Member[]
-  sessions    Session[]
+  organisations OrganisationRole[]
+  ownedOrgs     Organisation[]     @relation("OrganisationOwner")
+  createdPosts  Post[] // Posts created by this user
+  createdMedia  MediaAttachment[] // Media files created by this user
 
-  @@map("user")
+  @@index([email])
+  @@map("users")
 }
 
+// Represents an organisation that can have multiple team members and social accounts
 model Organisation {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  image     String?
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  slug      String   @unique @db.VarChar(100) // URL-friendly identifier
+  image     String?  @db.Text
+  isActive  Boolean  @default(true) // Soft deletion status
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  members  Member[]
-  sessions Session[]
-  linkedIn LinkedInAccount[]
-  posts    Post[]
+  ownerId     String
+  owner       User               @relation("OrganisationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     OrganisationRole[]
+  invitations Invitation[]
+  socials     SocialAccount[] // Connected social media accounts
+  posts       Post[] // All posts created by the organisation
+  medias      MediaAttachment[]
 
-  @@map("organisation")
+  @@index([slug])
+  @@map("organisations")
 }
 
-model Member {
-  id        String       @id @default(uuid())
-  role      Role         @default(MEMBER)
-  status    InviteStatus @default(PENDING) // Pending until accepted
-  token     String?      @unique // Invitation token
-  expiresAt DateTime?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  // Relations
-  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String?
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-
-  scheduledPosts Post[]
-  sessions       Session[]
-
-  @@unique([userId, organisationId]) // User can only have one role per organisation
-  @@map("member")
-}
-
-model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-
-  // Relations
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+// Represents a user's role in an organisation
+model OrganisationRole {
+  id             String       @id @default(cuid())
+  role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   userId         String
-  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId       String
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([sessionToken])
-  @@index([expiresAt])
-  @@map("session")
+  @@unique([userId, organisationId])
 }
 
-model LinkedInAccount {
-  id         String @id @default(uuid())
-  sub        String
-  givenName  String
-  familyName String
+// Represents an invitation to join an organisation
+model Invitation {
+  id        String       @id @default(cuid())
+  email     String
+  role      Role
+  token     String       @unique
+  expiresAt DateTime
+  orgId     String
+  org       Organisation @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  accepted  Boolean      @default(false)
 
-  accessToken  String
-  refreshToken String?
-  expiresAt    DateTime?
-  isActive     Boolean   @default(true)
-
-  // Relations
-  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
-  organisationId String
-
-  posts Post[]
-
-  @@unique([sub, organisationId])
-  @@map("linkedin_account")
+  @@unique([email, orgId]) // Ensure email is unique per organization
 }
 
+// Represents a connected social media account
+model SocialAccount {
+  id             String       @id @default(cuid())
+  type           String
+  identifier     String
+  name           String?
+  email          String?
+  accessToken    String
+  refreshToken   String?
+  tokenExpiry    DateTime?
+  expiresAt      DateTime?
+  organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  posts          Post[]
+
+  @@unique([type, identifier, organisationId]) // Each account can only be connected once per org
+  @@index([type])
+  @@index([organisationId])
+  @@map("social_accounts")
+}
+
+// Represents a social media post that can be scheduled
 model Post {
-  id                    String     @id @default(uuid())
-  type                  PostType
-  content               String
-  scheduledFor          DateTime
-  status                PostStatus @default(DRAFT)
-  publishedAt           DateTime?
-  errorMessage          String?
-  nextRetryAt           DateTime?
-  processingCompletedAt DateTime?
+  id           String      @id @default(cuid())
+  type         AccountType // Platform type for the post
+  content      String      @db.Text // Post content
+  scheduledFor DateTime // Scheduled publication time
+  status       PostStatus  @default(DRAFT)
+  publishedAt  DateTime? // Actual publication timestamp
+  errorMessage String?     @db.Text // Error message if publication failed
+  metadata     Json        @default("{}") // Platform-specific post data
+  jobId        String? // Bull queue job ID for scheduled posts
+  retryCount   Int         @default(0) // Number of retry attempts
+  lastRetryAt  DateTime? // Last retry timestamp
 
   // Relations
-  linkedInAccount LinkedInAccount @relation(fields: [linkedInId], references: [id], onDelete: Cascade)
-  linkedInId      String
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  socialAccountId String
+  createdBy       User          @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById     String
+  organisation    Organisation  @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId  String
 
-  // Optional relation to track which user created the post
-  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  createdById String
+  media PostMedia[] // Attached media files
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([socialAccountId])
+  @@index([createdById])
+  @@index([organisationId])
+  @@map("posts")
+}
+
+// Junction table for post-media relationship
+model PostMedia {
+  id        String          @id @default(cuid())
+  createdAt DateTime        @default(now())
+  post      Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  media     MediaAttachment @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  mediaId   String
+
+  @@unique([postId, mediaId])
+  @@index([postId])
+  @@index([mediaId])
+  @@map("post_media")
+}
+
+// Represents media files attached to posts (images, videos, etc.)
+model MediaAttachment {
+  id        String    @id @default(cuid())
+  type      MediaType // Type of media file
+  url       String    @db.Text // Public S3 URL
+  key       String    @db.Text // S3 object key
+  filename  String    @db.VarChar(255)
+  size      Int // File size in bytes
+  mimeType  String    @db.VarChar(127)
+  width     Int? // Image/video width
+  height    Int? // Image/video height
+  duration  Float? // Video/audio duration in seconds
+  metadata  Json      @default("{}") // Platform-specific media metadata
+  createdAt DateTime  @default(now())
 
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
   organisationId String
+  createdBy      User         @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  createdById    String
+  posts          PostMedia[] // Attached to post
 
-  // attachments   PostAttachment[]
-
-  @@map("post")
+  @@index([organisationId])
+  @@index([createdById])
+  @@index([type])
+  @@map("media_attachments")
 }
 
-enum Role {
-  OWNER
-  ADMIN
-  MEMBER
-}
-
-enum PostType {
+// Currently supported social media platforms
+enum AccountType {
   LINKEDIN
+  // Future platforms can be added here
 }
 
+// Post publication status
 enum PostStatus {
   DRAFT
   SCHEDULED
   PUBLISHED
   FAILED
+  RETRYING
+  CANCELLED
 }
 
+// Supported media types
+enum MediaType {
+  IMAGE // Static images
+  VIDEO // Video files
+  DOCUMENT // Documents (PDFs, etc.)
+  GIF // Animated GIFs
+  AUDIO // Audio files
+}
+
+// Invitation status
 enum InviteStatus {
-  PENDING
-  ACCEPTED
+  PENDING // Awaiting acceptance
+  ACCEPTED // Invitation accepted
+}
+
+// Organisation member roles
+enum Role {
+  OWNER // Full control
+  ADMIN // Management access
+  MEMBER // Basic access
 }

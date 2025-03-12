@@ -10,7 +10,7 @@ import {
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   type?: "button" | "submit" | "reset";
-  variant?: "primary" | "secondary" | "outline";
+  variant?: "primary" | "secondary" | "outline" | "danger";
   size?: "small" | "medium" | "large";
   onClick?: () => void;
   children: ReactNode;
@@ -40,6 +40,9 @@ const Button: FC<ButtonProps> = ({
     outline: `bg-transparent text-[#344054] border-[#344054] ${
       loading ? "opacity-90" : "hover:bg-[#f0f0f0] active:bg-[#e0e0e0]"
     }`,
+    danger: `bg-[#D92D20] text-white ${
+      loading ? "opacity-90" : "hover:bg-[#B42318] active:bg-[#74160e]"
+    }`,
   };
   const sizes = {
     small: "text-sm py-2 px-3",
@@ -58,6 +61,11 @@ const Button: FC<ButtonProps> = ({
         "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
     },
     outline: {},
+    danger: {
+      border: "2px solid",
+      borderImageSource:
+        "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%)",
+    },
   };
 
   const variantStyle = variants[variant] || variants.primary;

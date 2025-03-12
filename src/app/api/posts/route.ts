@@ -1,37 +1,67 @@
-import prisma from "@/src/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import dayjs from "dayjs";
+import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
+import { PostStatus } from "@prisma/client";
 
-export async function GET(request: NextRequest) {
-  logger.info(`${request.method} ${request.nextUrl.pathname}`);
-  const requestHeaders = new Headers(request.headers);
-  const userId = requestHeaders.get("x-user-id");
-  const memberId = requestHeaders.get("x-member-id");
-  const organisationId = requestHeaders.get("x-organisation-id");
+const isValidStatus = (status: string | null): status is PostStatus => {
+  return (
+    status !== null && Object.values(PostStatus).includes(status as PostStatus)
+  );
+};
 
-  if (!userId || !memberId || !organisationId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const startOfMonth = dayjs().startOf("month").toISOString();
-  const endOfMonth = dayjs().endOf("month").toISOString();
-
+export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.organisation.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    if (!startDate || !endDate) {
+      return NextResponse.json(
+        { error: "Start date and end date are required" },
+        { status: 400 }
+      );
+    }
+
     const posts = await prisma.post.findMany({
       where: {
-        organisationId,
+        organisationId: session.organisation.id,
         scheduledFor: {
-          gte: startOfMonth,
-          lte: endOfMonth,
+          gte: new Date(startDate),
+          lte: new Date(endDate),
         },
       },
+      include: {
+        socialAccount: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        media: {
+          include: {
+            media: true,
+          },
+        },
+      },
+      orderBy: {
+        scheduledFor: "asc",
+      },
     });
-    return NextResponse.json(posts);
+
+    return NextResponse.json({ posts });
   } catch (error) {
-    logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
+    console.error("Error fetching posts:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to fetch posts" },
       { status: 500 }
     );
   }

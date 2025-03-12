@@ -12,10 +12,11 @@ export function useSession() {
       .then((res) => res.json())
       .then((data) => {
         setSession(data.session);
-        setLoading(false);
       })
       .catch(() => {
         setSession(null);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);

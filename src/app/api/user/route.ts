@@ -1,44 +1,95 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
-import logger from "@/src/services/logger";
-import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcrypt";
 
-export async function GET(request: NextRequest) {
-  logger.info(`${request.method} ${request.nextUrl.pathname}`);
-  const requestHeaders = new Headers(request.headers);
-  const userId = requestHeaders.get("x-user-id");
-  const organisationId = requestHeaders.get("x-organisation-id");
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!userId || !organisationId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
+}
 
-  const user = await prisma.member.findFirst({
-    where: {
-      userId: userId as string,
-      organisationId: organisationId,
-    },
-    include: {
-      user: {
-        omit: {
-          password: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
-      organisation: {
-        omit: {
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
-    },
-    omit: {
-      userId: true,
-      organisationId: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
 
-  return NextResponse.json(user);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { name, email, password, image } = body;
+
+    // If password is provided, hash it
+    let hashedPassword;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    const updateData: any = {
+      ...(name && { name }),
+      ...(email && { email }),
+      ...(hashedPassword && { password: hashedPassword }),
+      ...(image && { image }),
+    };
+
+    const user = await prisma.user.update({
+      where: {
+        email: session.user.email,
+      },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+    });
+
+    return NextResponse.json(user);
+  } catch (error: any) {
+    console.error("Error updating user profile:", error);
+
+    // Handle unique constraint violation
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Email already in use" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

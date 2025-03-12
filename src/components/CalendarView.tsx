@@ -2,30 +2,50 @@
 
 import React, { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Edit2, Trash2 } from "lucide-react";
 import Button from "@/src/components/Button";
+import { PostStatus } from "@prisma/client";
 
 interface Post {
   id: string;
   type: string;
   content: string;
   scheduledFor: string;
-  status: string;
+  status: PostStatus;
   createdById: string;
+  mediaIds?: string[];
+  socialAccount: {
+    id: string;
+    name: string;
+    type: string;
+    profileUrl: string | null;
+  };
+  createdBy: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+  errorMessage?: string | null;
+  retryCount?: number;
 }
 
 interface CalendarViewProps {
   setSelectedDateTime: (datetime: string) => void;
   posts: Post[];
+  onCancelPost: (postId: string) => Promise<void>;
+  onEditPost: (postId: string) => void;
+  currentMonth: Dayjs;
+  onMonthChange: (month: Dayjs) => void;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({
   setSelectedDateTime,
   posts,
+  onCancelPost,
+  onEditPost,
+  currentMonth,
+  onMonthChange,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(
-    dayjs().startOf("month")
-  );
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const daysInMonth = currentMonth.daysInMonth();
@@ -35,7 +55,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   // Calculate previous and next month's days
   const prevMonthDays = Array.from(
     { length: startDay },
-    (_, i) => dayjs().subtract(1, "month").daysInMonth() - startDay + i + 1
+    (_, i) => currentMonth.subtract(1, "month").daysInMonth() - startDay + i + 1
   );
 
   // Calculate next month's days
@@ -43,9 +63,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const remainingDays = totalCells - (startDay + daysInMonth);
   const nextMonthDays = Array.from({ length: remainingDays }, (_, i) => i + 1);
 
-  const goToPrevMonth = () =>
-    setCurrentMonth((prev) => prev.subtract(1, "month"));
-  const goToNextMonth = () => setCurrentMonth((prev) => prev.add(1, "month"));
+  const goToPrevMonth = () => onMonthChange(currentMonth.subtract(1, "month"));
+  const goToNextMonth = () => onMonthChange(currentMonth.add(1, "month"));
 
   const handleDateClick = (day: number, isCurrentMonth: boolean = true) => {
     if (!isCurrentMonth) return;
@@ -63,6 +82,23 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     return posts.filter(
       (post) => dayjs(post.scheduledFor).format("YYYY-MM-DD") === date
     );
+  };
+
+  const getStatusColor = (status: PostStatus) => {
+    switch (status) {
+      case "PUBLISHED":
+        return "bg-green-100 text-green-700";
+      case "SCHEDULED":
+        return "bg-blue-100 text-blue-700";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-700";
+      case "FAILED":
+        return "bg-red-100 text-red-700";
+      case "RETRYING":
+        return "bg-yellow-100 text-yellow-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
   };
 
   return (
@@ -114,7 +150,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   <div
                     key={post.id}
                     onClick={(e) => handlePostClick(e, post)}
-                    className="text-xs bg-blue-100 text-blue-700 p-1 rounded"
+                    className={`text-xs ${getStatusColor(
+                      post.status
+                    )} p-1 rounded truncate`}
                   >
                     {post.content}
                   </div>
@@ -137,22 +175,88 @@ const CalendarView: React.FC<CalendarViewProps> = ({
 
       {selectedPost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg max-w-md">
-            <h3 className="text-lg font-semibold mb-2">{selectedPost.type}</h3>
-            <p className="text-gray-600 mb-4">{selectedPost.scheduledFor}</p>
-            <p className="mb-4">{selectedPost.content}</p>
-            <p className="mb-4">
-              <span className="border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
-                {selectedPost.status}
-              </span>
-            </p>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => setSelectedPost(null)}
-            >
-              Close
-            </Button>
+          <div className="bg-white p-4 rounded-lg max-w-md w-full">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">{selectedPost.type}</h3>
+                <p className="text-sm text-gray-600">
+                  {selectedPost.socialAccount.name}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {selectedPost.status === "SCHEDULED" && (
+                  <Button
+                    variant="danger"
+                    size="small"
+                    onClick={() => onCancelPost(selectedPost.id)}
+                  >
+                    <Trash2 size={16} className="mr-1" />
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => onEditPost(selectedPost.id)}
+                >
+                  <Edit2 size={16} className="mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => setSelectedPost(null)}
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-600">Scheduled for</p>
+                <p className="text-sm font-medium">
+                  {dayjs(selectedPost.scheduledFor).format(
+                    "MMMM D, YYYY h:mm A"
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Content</p>
+                <p className="text-sm">{selectedPost.content}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Status</p>
+                <span
+                  className={`inline-block text-xs font-medium px-2 py-1 rounded-md ${getStatusColor(
+                    selectedPost.status
+                  )}`}
+                >
+                  {selectedPost.status}
+                </span>
+              </div>
+              {selectedPost.mediaIds && selectedPost.mediaIds.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Media</p>
+                  <p className="text-sm">
+                    {selectedPost.mediaIds.length} attachments
+                  </p>
+                </div>
+              )}
+              {selectedPost.errorMessage && (
+                <div>
+                  <p className="text-sm text-gray-600">Error</p>
+                  <p className="text-sm text-red-600">
+                    {selectedPost.errorMessage}
+                  </p>
+                </div>
+              )}
+              {selectedPost.retryCount && selectedPost.retryCount > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600">Retry Count</p>
+                  <p className="text-sm">{selectedPost.retryCount}/5</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

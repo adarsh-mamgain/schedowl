@@ -6,6 +6,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
+interface PostPayload {
+  content: string;
+  linkedInAccountIds: string[];
+  scheduledFor?: string;
+  mediaIds?: string[];
+}
+
 export default function PostForm() {
   const [postContent, setPostContent] = useState("");
   const [accounts, setAccounts] = useState([]);
@@ -27,40 +34,50 @@ export default function PostForm() {
     }
   };
 
-  const handlePost = async (isScheduled: boolean, scheduleTime?: string) => {
-    if (!postContent) {
+  const handlePost = async (post: {
+    content: string;
+    status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+    scheduledFor?: string;
+    mediaIds?: string[];
+    socialAccountIds: string[];
+  }) => {
+    if (!post.content) {
       toast.error("Post content cannot be empty");
       return;
     }
 
-    if (selectedAccounts.length === 0) {
+    if (post.socialAccountIds.length === 0) {
       toast.error("Please select at least one LinkedIn account");
       return;
     }
 
-    if (isScheduled && !scheduleTime) {
-      toast.error("Please select a schedule time");
-      return;
-    }
-
-    const payload = {
-      content: postContent,
-      linkedInAccountIds: selectedAccounts,
-      ...(isScheduled &&
-        scheduleTime && {
-          scheduledFor: new Date(scheduleTime).toISOString(),
-        }),
-    };
-
     try {
-      const endpoint = isScheduled
-        ? "/api/posts/schedule"
-        : "/api/posts/publish";
+      let endpoint = "/api/posts/publish";
+      let payload: PostPayload = {
+        content: post.content,
+        linkedInAccountIds: post.socialAccountIds,
+      };
+
+      if (post.status === "SCHEDULED" && post.scheduledFor) {
+        endpoint = "/api/posts/schedule";
+        payload = {
+          ...payload,
+          scheduledFor: post.scheduledFor,
+        };
+      }
+
+      if (post.mediaIds && post.mediaIds.length > 0) {
+        payload = {
+          ...payload,
+          mediaIds: post.mediaIds,
+        };
+      }
+
       const response = await axios.post(endpoint, payload);
 
       if (response.data) {
         toast.success(
-          isScheduled
+          post.status === "SCHEDULED"
             ? "Post scheduled successfully!"
             : "Post published successfully!"
         );
@@ -70,7 +87,9 @@ export default function PostForm() {
     } catch (error) {
       console.error("Post error:", error);
       toast.error(
-        isScheduled ? "Failed to schedule post" : "Failed to publish post"
+        post.status === "SCHEDULED"
+          ? "Failed to schedule post"
+          : "Failed to publish post"
       );
     }
   };

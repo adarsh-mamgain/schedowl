@@ -1,46 +1,38 @@
-### Todo
+## Todo
 
-- [ ] add a toaster to showcase errors and success messages
+### - [ ] CronJob worker setup
+
+### - [ ] Automatic migrate dev and deploy
+
 - [x] create DEV, STAGE and PRODUCTION environments
   - [ ] create proper pipelines for each
   - [ ] create todo for every release
-- [x] create the database schema for org and user
 - [x] make the login ui
-  - [ ] create an organisation and super admin (type: 1)
-  - [ ] superadmin can add other admins (type: 2)
-  - [ ] admins can add members (type: 3)
-  - [ ] integrate the Google login
+  - [x] create an organisation and super admin (type: 1)
+  - [x] superadmin can add other admins (type: 2)
+  - [x] admins can add members (type: 3)
+  - [x] integrate the Google login
   - [x] integrate the Credentials login
-- [x] move this todo as a project to Notion Docs
-- [ ] protect all the api routes and pages
-  - [ ] jwt/session token
-  - [ ] csrf token
+- [x] protect all the api routes and pages
+  - [x] jwt/session token
+  - [x] csrf token
 - [x] integrate linkedin (type: 1)
-  - [ ] match the state for oauth integration
+  - [x] match the state for oauth integration
   - [ ] if error is thrown then handle it to return back to dashboard
-- [ ] handle refresh tokens for the account
-- [x] use prisma instead of supabase-js
-  - [x] has types to use in whole app
-  - [x] allows for proper migrations changes to be created
-  - [x] can migrate db to some other infrastructure
-  - [ ] handle all db requests as transactions
-- [ ] allow posting from the account
+- [x] handle refresh tokens for the account
 - [ ] allow scheduling the posts (cronjob)
   - add backups to check if the posts are in the queue
   - add exponential retries
   - add error/failure handling through emails
   - store logs for each posts (retries of jsonb)
-- [ ] build the whole available UI
+- [x] build the whole available UI
 - [ ] uses Amazon SES for marketing emails
-- [ ] protect all the api routes and pages
-
-  - [ ] jwt/session token
-  - [ ] csrf token
 
 - create hetzner + coolify
-  - [ ] setup stage and prod account
+  - [x] setup stage account
+  - [ ] setup prod account
 
-### Research
+## Research
 
 - unicode bold
 - unicode italics
