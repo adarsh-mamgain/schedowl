@@ -1,7 +1,9 @@
-import { LinkedInService } from "@/src/app/services/linkedin";
+import { LinkedInService } from "@/src/services/linkedin";
+import logger from "@/src/services/logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
   const state = searchParams.get("state");
@@ -14,6 +16,7 @@ export async function GET(request: NextRequest) {
     await LinkedInService.handleCallback(code, state);
     return NextResponse.redirect(new URL("/dashboard", request.url));
   } catch (error) {
+    logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
     return NextResponse.json(
       { error: "Failed to connect LinkedIn" },
       { status: 500 }

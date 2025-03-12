@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  memberships Member[]
+  sessions    Session[]
+
+  @@map("user")
+}
+
+model Organisation {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members  Member[]
+  sessions Session[]
+  linkedIn LinkedInAccount[]
+  posts    Post[]
+
+  @@map("organisation")
+}
+
+model Member {
+  id        String       @id @default(uuid())
+  role      Role         @default(MEMBER)
+  status    InviteStatus @default(PENDING) // Pending until accepted
+  token     String?      @unique // Invitation token
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String?
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  scheduledPosts Post[]
+  sessions       Session[]
+
+  @@unique([userId, organisationId]) // User can only have one role per organisation
+  @@map("member")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  // Relations
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId       String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+model LinkedInAccount {
+  id         String @id @default(uuid())
+  sub        String
+  givenName  String
+  familyName String
+
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  isActive     Boolean   @default(true)
+
+  // Relations
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  posts Post[]
+
+  @@unique([sub, organisationId])
+  @@map("linkedin_account")
+}
+
+model Post {
+  id                    String     @id @default(uuid())
+  type                  PostType
+  content               String
+  scheduledFor          DateTime
+  status                PostStatus @default(DRAFT)
+  publishedAt           DateTime?
+  errorMessage          String?
+  nextRetryAt           DateTime?
+  processingCompletedAt DateTime?
+
+  // Relations
+  linkedInAccount LinkedInAccount @relation(fields: [linkedInId], references: [id], onDelete: Cascade)
+  linkedInId      String
+
+  // Optional relation to track which user created the post
+  createdBy   Member @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  organisationId String
+
+  // attachments   PostAttachment[]
+
+  @@map("post")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum PostType {
+  LINKEDIN
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+}

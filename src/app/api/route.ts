@@ -1,14 +1,8 @@
-/**
- * @swagger
- * /api:
- *   get:
- *     description: Returns the hello world
- *     responses:
- *       200:
- *         description: Hello World!
- */
-export async function GET(_request: Request) {
-  // Do whatever you want
+import logger from "@/src/services/logger";
+import { NextRequest } from "next/server";
+
+export async function GET(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   return new Response("Hello World!", {
     status: 200,
   });

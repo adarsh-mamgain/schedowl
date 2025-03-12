@@ -1,38 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/supabase";
+import prisma from "@/src/lib/prisma";
+import logger from "@/src/services/logger";
 
 export async function GET(request: NextRequest) {
+  logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const searchParams = request.nextUrl.searchParams;
-  const userId = searchParams.get("userId");
-  const type = searchParams.get("type");
+  const platform = searchParams.get("platform");
 
-  if (!userId || !type) {
+  const requestHeaders = new Headers(request.headers);
+  const organisationId = requestHeaders.get("x-organisation-id");
+
+  if (!organisationId || !platform) {
     return NextResponse.json(
-      { error: "User ID and type are required" },
+      { error: "Organisation ID and platform are required" },
       { status: 400 }
     );
   }
 
   try {
-    const { data: integration, error } = await supabase
-      .from("integrations")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("type", type)
-      .single();
+    const integration = await prisma.linkedInAccount.findFirst({
+      where: { organisationId },
+    });
 
-    if (error) {
-      throw NextResponse.json(
-        { error: "Failed to fetch integration" },
-        { status: 500 }
+    if (!integration) {
+      return NextResponse.json(
+        { error: "No integration exists" },
+        { status: 404 }
       );
     }
 
     return NextResponse.json({
       connected: !!integration,
-      integration,
     });
   } catch (error) {
+    logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
     return NextResponse.json(
       { error: "Failed to fetch integration" },
       { status: 500 }

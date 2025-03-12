@@ -1,4 +1,4 @@
-import { LinkedInService } from "@/src/services/linkedin";
+import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -9,17 +9,19 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!organisationId) {
-      return NextResponse.json(
-        { error: "Organisation ID is undefined" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const authUrl = await LinkedInService.getAuthUrl(organisationId);
-    return NextResponse.json({ url: authUrl });
+    const result = await prisma.linkedInAccount.findMany({
+      where: { organisationId },
+    });
+    return NextResponse.json(result);
   } catch (error) {
-    logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
+    logger.error(
+      `${request.method} ${request.nextUrl.pathname} Error scheduling posts:`,
+      error
+    );
     return NextResponse.json(
-      { error: "Failed to generate auth URL" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
