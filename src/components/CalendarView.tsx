@@ -37,7 +37,7 @@ interface Post {
 }
 
 interface CalendarViewProps {
-  setSelectedDateTime: (datetime: string) => void;
+  setSelectedDateTime?: (datetime: string) => void;
   posts: Post[];
   onCancelPost: (postId: string) => Promise<void>;
   onEditPost: (postId: string) => void;
@@ -78,7 +78,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const handleDateClick = (day: number, isCurrentMonth: boolean = true) => {
     if (!isCurrentMonth) return;
     const selectedDate = currentMonth.date(day).format("YYYY-MM-DDTHH:mm");
-    setSelectedDateTime(selectedDate);
+    setSelectedDateTime?.(selectedDate);
   };
 
   const handlePostClick = (e: React.MouseEvent, post: Post) => {

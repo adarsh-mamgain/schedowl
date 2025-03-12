@@ -116,7 +116,7 @@ export default function PostForm() {
     return (
       <div className="text-center py-8">
         <p className="text-gray-600">
-          You don't have permission to create or manage posts.
+          You don&apos;t have permission to create or manage posts.
         </p>
       </div>
     );

@@ -30,7 +30,7 @@ export default function IntegrationsPage() {
       const response = await fetch("/api/integrations/linkedin/accounts");
       const data = await response.json();
       setAccounts(data); // Remove .accounts since the API returns the array directly
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch connected accounts");
     } finally {
       setLoading(false);

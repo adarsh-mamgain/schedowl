@@ -6,7 +6,6 @@ import logger from "@/src/services/logger";
 import { sendEmail } from "@/src/lib/mailer";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
-const LINKEDIN_API_URL_V1 = "https://api.linkedin.com/v1";
 
 interface LinkedInError {
   status: number;
@@ -301,7 +300,7 @@ export class LinkedInService {
     }
   }
 
-  public async handleFailedPost(post: any, error: LinkedInError) {
+  public async handleFailedPost(post: LinkedInPost, error: LinkedInError) {
     try {
       // Update post status
       await prisma.post.update({
@@ -314,20 +313,20 @@ export class LinkedInService {
         },
       });
 
-      // Send email notification
-      const user = await prisma.user.findUnique({
+      // Send notification email
+      const user = await prisma.user.findFirst({
         where: { id: post.createdById },
       });
 
       if (user?.email) {
         await sendEmail({
           to: user.email,
-          subject: "Post Failed - Schedowl",
+          subject: "Post Failed to Publish",
           template: "post-failed",
           context: {
             postContent: post.content,
             errorMessage: error.message,
-            retryCount: post.retryCount + 1,
+            retryCount: (post.retryCount || 0) + 1,
           },
         });
       }

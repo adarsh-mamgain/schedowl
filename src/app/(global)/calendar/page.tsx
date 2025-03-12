@@ -47,7 +47,6 @@ export default function CalendarPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDateTime, setSelectedDateTime] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf("month"));
   const router = useRouter();
 
@@ -184,7 +183,6 @@ export default function CalendarPage() {
         )}
       </div>
       <CalendarView
-        setSelectedDateTime={setSelectedDateTime}
         posts={mappedPosts}
         onCancelPost={handleCancelPost}
         onEditPost={handleEditPost}
