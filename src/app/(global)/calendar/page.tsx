@@ -8,6 +8,9 @@ import axios from "axios";
 import Button from "@/src/components/Button";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 
 interface Post {
   id: string;
@@ -41,6 +44,7 @@ interface Post {
 }
 
 export default function CalendarPage() {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDateTime, setSelectedDateTime] = useState<string>("");
@@ -88,6 +92,20 @@ export default function CalendarPage() {
     }
   };
 
+  const handleApprovePost = async (postId: string) => {
+    try {
+      await axios.post(`/api/posts/${postId}/approve`);
+      toast.success("Post approved successfully");
+      fetchPosts();
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to approve post");
+      } else {
+        toast.error("Failed to approve post");
+      }
+    }
+  };
+
   const handleEditPost = (postId: string) => {
     router.push(`/posts/${postId}/edit`);
   };
@@ -99,6 +117,15 @@ export default function CalendarPage() {
   const handleMonthChange = (newMonth: dayjs.Dayjs) => {
     setCurrentMonth(newMonth);
   };
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
 
   const mappedPosts = posts.map((post) => ({
     id: post.id,
@@ -124,11 +151,13 @@ export default function CalendarPage() {
               Manage your content calendar from here.
             </p>
           </div>
-          <div>
-            <Button size="small" onClick={handleCreatePost}>
-              Write Post
-            </Button>
-          </div>
+          {canManagePosts && (
+            <div>
+              <Button size="small" onClick={handleCreatePost}>
+                Write Post
+              </Button>
+            </div>
+          )}
         </div>
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-gray-500">Loading posts...</div>
@@ -146,17 +175,20 @@ export default function CalendarPage() {
             Manage your content calendar from here.
           </p>
         </div>
-        <div>
-          <Button size="small" onClick={handleCreatePost}>
-            Write Post
-          </Button>
-        </div>
+        {canManagePosts && (
+          <div>
+            <Button size="small" onClick={handleCreatePost}>
+              Write Post
+            </Button>
+          </div>
+        )}
       </div>
       <CalendarView
         setSelectedDateTime={setSelectedDateTime}
         posts={mappedPosts}
         onCancelPost={handleCancelPost}
         onEditPost={handleEditPost}
+        onApprovePost={canApprovePosts ? handleApprovePost : undefined}
         currentMonth={currentMonth}
         onMonthChange={handleMonthChange}
       />

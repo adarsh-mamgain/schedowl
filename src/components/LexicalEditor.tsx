@@ -551,6 +551,17 @@ const editorConfig = {
   onError: console.error,
 };
 
+interface LexicalEditorProps {
+  accounts: LinkedInAccount[];
+  selectedAccounts: string[];
+  onAccountsChange: (ids: string[]) => void;
+  onChange: (text: string) => void;
+  onPost: (post: Post) => Promise<void>;
+  initialPost?: Post;
+  onDraftSave?: (post: Post) => Promise<void>;
+  requireApproval?: boolean;
+}
+
 export default function LexicalEditor({
   accounts = [],
   selectedAccounts = [],
@@ -559,15 +570,8 @@ export default function LexicalEditor({
   onPost,
   initialPost,
   onDraftSave,
-}: {
-  accounts: LinkedInAccount[];
-  selectedAccounts: string[];
-  onAccountsChange: (ids: string[]) => void;
-  onChange: (text: string) => void;
-  onPost: (post: Post) => Promise<void>;
-  initialPost?: Post;
-  onDraftSave?: (post: Post) => Promise<void>;
-}) {
+  requireApproval = false,
+}: LexicalEditorProps) {
   const [postContent, setPostContent] = useState(initialPost?.content || "");
   const [scheduleTime, setScheduleTime] = useState(
     initialPost?.scheduledFor || ""
@@ -652,13 +656,25 @@ export default function LexicalEditor({
         return;
       }
 
-      await onPost({
-        content: postContent,
-        status: isScheduled ? "SCHEDULED" : "PUBLISHED",
-        scheduledFor: isScheduled ? scheduleTime : undefined,
-        socialAccountIds: selectedAccounts,
-        mediaIds: selectedMedia.map((media) => media.id),
-      });
+      // If approval is required, save as draft
+      if (requireApproval) {
+        await onPost({
+          content: postContent,
+          status: "DRAFT",
+          scheduledFor: isScheduled ? scheduleTime : undefined,
+          socialAccountIds: selectedAccounts,
+          mediaIds: selectedMedia.map((media) => media.id),
+        });
+        toast.success("Post saved as draft and pending approval");
+      } else {
+        await onPost({
+          content: postContent,
+          status: isScheduled ? "SCHEDULED" : "PUBLISHED",
+          scheduledFor: isScheduled ? scheduleTime : undefined,
+          socialAccountIds: selectedAccounts,
+          mediaIds: selectedMedia.map((media) => media.id),
+        });
+      }
 
       // Reset form if not a draft
       if (!isDraft) {
@@ -809,7 +825,8 @@ export default function LexicalEditor({
               size="small"
               disabled={isLoading}
             >
-              Publish <SendHorizonal size={16} />
+              {requireApproval ? "Submit for Approval" : "Publish"}
+              <SendHorizonal size={16} />
             </Button>
           </div>
         </div>

@@ -2,7 +2,14 @@
 
 import React, { useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import { ChevronLeft, ChevronRight, X, Edit2, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Edit2,
+  Trash2,
+  Check,
+} from "lucide-react";
 import Button from "@/src/components/Button";
 import { PostStatus } from "@prisma/client";
 
@@ -34,6 +41,7 @@ interface CalendarViewProps {
   posts: Post[];
   onCancelPost: (postId: string) => Promise<void>;
   onEditPost: (postId: string) => void;
+  onApprovePost?: (postId: string) => Promise<void>;
   currentMonth: Dayjs;
   onMonthChange: (month: Dayjs) => void;
 }
@@ -43,6 +51,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   posts,
   onCancelPost,
   onEditPost,
+  onApprovePost,
   currentMonth,
   onMonthChange,
 }) => {
@@ -192,6 +201,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   >
                     <Trash2 size={16} className="mr-1" />
                     Cancel
+                  </Button>
+                )}
+                {selectedPost.status === "DRAFT" && onApprovePost && (
+                  <Button
+                    variant="primary"
+                    size="small"
+                    onClick={() => onApprovePost(selectedPost.id)}
+                  >
+                    <Check size={16} className="mr-1" />
+                    Approve
                   </Button>
                 )}
                 <Button
