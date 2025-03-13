@@ -6,10 +6,7 @@ import { authOptions } from "@/src/lib/auth";
 import { requirePermission } from "@/src/lib/permissions";
 import { Role } from "@prisma/client";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { postId: string } }
-) {
+export async function POST(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const session = await getServerSession(authOptions);
 
@@ -18,7 +15,8 @@ export async function POST(
   }
 
   try {
-    const postId = params.postId;
+    const searchParams = request.nextUrl.searchParams;
+    const postId = searchParams.get("postId") ?? "";
 
     // Check if the user has permission to approve posts
     requirePermission(session.organisationRole.role as Role, "approve_posts");

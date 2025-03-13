@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 
-export async function GET(
-  req: Request,
-  { params }: { params: { token: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
     // Find invitation
+    const searchParams = request.nextUrl.searchParams;
+    const token = searchParams.get("token") ?? "";
+
     const invitation = await prisma.invitation.findUnique({
-      where: { token: params.token },
+      where: { token },
       include: {
         org: {
           select: {
