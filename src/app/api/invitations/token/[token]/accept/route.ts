@@ -1,21 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { token: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const token = searchParams.get("token") ?? "";
+
     // Find invitation
     const invitation = await prisma.invitation.findUnique({
-      where: { token: params.token },
+      where: { token },
     });
 
     if (!invitation) {

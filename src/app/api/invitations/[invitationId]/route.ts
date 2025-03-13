@@ -5,17 +5,15 @@ import prisma from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
 import { requirePermission } from "@/src/lib/permissions";
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { invitationId: string } }
-) {
+export async function DELETE(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.organisation.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const invitationId = params.invitationId;
+    const searchParams = request.nextUrl.searchParams;
+    const invitationId = searchParams.get("invitationId") ?? "";
 
     // Check if the user has permission to manage users
     requirePermission(session.organisationRole.role as Role, "manage_users");

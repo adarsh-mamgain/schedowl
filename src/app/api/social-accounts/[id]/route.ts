@@ -1,21 +1,21 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.organisation.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get("id") ?? "";
+
     const account = await prisma.socialAccount.findUnique({
       where: {
-        id: params.id,
+        id,
         organisationId: session.organisation.id,
       },
     });
@@ -25,9 +25,7 @@ export async function DELETE(
     }
 
     await prisma.socialAccount.delete({
-      where: {
-        id: params.id,
-      },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Account deleted successfully" });

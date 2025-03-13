@@ -6,17 +6,15 @@ import { Role } from "@prisma/client";
 import { requirePermission } from "@/src/lib/permissions";
 import { sendEmail } from "@/src/lib/mailer";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { invitationId: string } }
-) {
+export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.organisation.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const invitationId = params.invitationId;
+    const searchParams = request.nextUrl.searchParams;
+    const invitationId = searchParams.get("invitationId") ?? "";
 
     // Check if the user has permission to manage users
     requirePermission(session.organisationRole.role as Role, "manage_users");
