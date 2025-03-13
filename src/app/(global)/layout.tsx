@@ -2,29 +2,34 @@
 
 import Button from "@/src/components/Button";
 import Toaster from "@/src/components/ui/Toaster";
-import { Organisation, User } from "@prisma/client";
-import axios from "axios";
 import {
   BarChart3,
   Calendar,
   ChevronDown,
   ChevronUp,
   Settings,
+  Image,
+  Upload,
 } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+
+interface UserOrganisation {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string | null;
+  role: string;
+}
 
 const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
   { title: "Calendar", path: "/calendar", icon: Calendar },
+  { title: "Media", path: "/media", icon: Image },
   { title: "Settings", path: "/settings", icon: Settings },
 ];
-
-type UserMe = {
-  user: User;
-  organisation: Organisation;
-};
 
 export default function GlobalLayout({
   children,
@@ -34,53 +39,214 @@ export default function GlobalLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [me, setMe] = useState<UserMe>();
+  const { data: session, update: updateSession } = useSession();
+  const [isUploading, setIsUploading] = useState(false);
+  const [userOrganisations, setUserOrganisations] = useState<
+    UserOrganisation[]
+  >([]);
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
 
   useEffect(() => {
-    const getUserAndOrgDetails = async () => {
+    const fetchUserOrganisations = async () => {
+      setIsLoadingOrgs(true);
       try {
-        const response = await axios.get("/api/user");
-        setMe(response.data);
+        const response = await fetch("/api/organisations");
+        if (!response.ok) throw new Error("Failed to fetch organisations");
+        const data = await response.json();
+        setUserOrganisations(data.organisations);
       } catch (error) {
-        if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.error || "Failed to fetch user");
-        } else {
-          toast.error("An unexpected error occurred.");
-        }
+        console.error("Error fetching organisations:", error);
+        toast.error("Failed to load organisations");
+      } finally {
+        setIsLoadingOrgs(false);
       }
     };
-    getUserAndOrgDetails();
+
+    fetchUserOrganisations();
   }, []);
 
-  const signOut = async () => {
-    await axios.post("/api/auth/logout");
-    router.push("/signin");
+  const switchOrganisation = async (orgId: string) => {
+    try {
+      const response = await fetch("/api/organisations/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organisationId: orgId }),
+      });
+
+      if (!response.ok) throw new Error("Failed to switch organisation");
+
+      const data = await response.json();
+      await updateSession(data);
+      setDropdownOpen(false);
+      toast.success("Successfully switched organisation");
+      router.refresh();
+    } catch (error) {
+      console.error("Error switching organisation:", error);
+      toast.error("Failed to switch organisation");
+    }
+  };
+
+  const handleProfileImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/profile/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload profile image");
+      }
+
+      const data = await response.json();
+      await updateSession({ image: data.url });
+      toast.success("Profile image updated successfully");
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      toast.error("Failed to upload profile image");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <div className="w-screen h-screen grid grid-cols-12">
-      <aside className="h-full col-span-2 border-r border-[#EAECF0] pt-6 p-4">
-        <div className="relative">
-          <button
-            onClick={() => setDropdownOpen((prev) => !prev)}
-            className="w-full flex items-center justify-between"
-          >
-            <span>{me?.organisation.name}</span>
-            {dropdownOpen ? (
-              <ChevronUp color="#344054" />
-            ) : (
-              <ChevronDown color="#344054" />
+    <div className="h-screen flex">
+      <aside className="w-[240px] border-r border-[#EAECF0] flex flex-col">
+        <div className="pt-6 px-4">
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                  {session?.organisation?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={session.organisation.image}
+                      alt={session.organisation.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      {session?.organisation?.name?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <span className="truncate">{session?.organisation?.name}</span>
+              </div>
+              {dropdownOpen ? (
+                <ChevronUp color="#344054" className="flex-shrink-0" />
+              ) : (
+                <ChevronDown color="#344054" className="flex-shrink-0" />
+              )}
+            </button>
+            {dropdownOpen && (
+              <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg z-50">
+                <div className="flex items-center gap-2">
+                  <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                    {session?.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || ""}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        {session?.user?.name?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full cursor-pointer flex items-center justify-center">
+                      <Upload className="w-3 h-3" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {session?.user?.email}
+                    </p>
+                  </div>
+                </div>
+
+                {isLoadingOrgs ? (
+                  <div className="text-sm text-gray-500">
+                    Loading organisations...
+                  </div>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto">
+                    <div className="text-xs font-medium text-gray-500 mb-2">
+                      Your organisations
+                    </div>
+                    {userOrganisations.map((org) => (
+                      <button
+                        key={org.id}
+                        onClick={() => switchOrganisation(org.id)}
+                        className={`w-full flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 ${
+                          session?.organisation?.id === org.id
+                            ? "bg-gray-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="w-6 h-6 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                          {org.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={org.image}
+                              alt={org.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                              {org.name[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate text-sm text-left">
+                            {org.name}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500 text-left">
+                            {org.role}
+                          </span>
+                        </div>
+                        {session?.organisation?.id === org.id && (
+                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => signOut()}
+                >
+                  Sign out
+                </Button>
+              </div>
             )}
-          </button>
-          {dropdownOpen && (
-            <div className="w-full flex flex-col gap-1 p-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg">
-              <Button variant="secondary" size="small" onClick={signOut}>
-                Sign out
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
-        <div className="mt-4">
+        <nav className="flex-1 p-4">
           {TABS.map((tab) => (
             <button
               key={tab.path}
@@ -91,16 +257,18 @@ export default function GlobalLayout({
               }`}
               onClick={() => router.push(tab.path)}
             >
-              <tab.icon size={16} color={"#344054"} />
-              {tab.title}
+              <tab.icon size={16} color={"#344054"} className="flex-shrink-0" />
+              <span className="truncate">{tab.title}</span>
             </button>
           ))}
-        </div>
+        </nav>
       </aside>
 
-      <main className="col-span-10 h-full p-6">
-        {children}
-        <Toaster />
+      <main className="flex-1 overflow-auto">
+        <div className="p-6">
+          {children}
+          <Toaster />
+        </div>
       </main>
     </div>
   );

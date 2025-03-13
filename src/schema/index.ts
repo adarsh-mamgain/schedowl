@@ -5,7 +5,7 @@ export const InviteSchema = z.object({
   role: z.enum(["ADMIN", "MEMBER"]),
 });
 
-export const SignUpSchema = z.object({
+export const RegisterSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   email: z.string().email({ message: "Invalid email address" }),
   password: z
@@ -18,10 +18,40 @@ export const SignUpSchema = z.object({
       message: "Contain at least one lowercase letter",
     })
     .regex(/[0-9]/, { message: "Contain at least one number" }),
-  token: z.string().optional(),
+  organisationName: z.string().min(1, "Organisation name is required"),
 });
 
-export const SignInSchema = z.object({
+export const LoginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string(),
+});
+
+export const ProfileSchema = z.object({
+  name: z
+    .string()
+    .min(1, "First name must be at least 1 characters")
+    .nullable(),
+  email: z.string().email("Invalid email address").nullable(),
+  password: z
+    .string()
+    .nullable()
+    .refine(
+      (val) => {
+        // If password is not provided, it's valid
+        if (!val) return true;
+
+        // If password is provided, validate it
+        return (
+          val.length >= 8 &&
+          /[A-Z]/.test(val) &&
+          /[a-z]/.test(val) &&
+          /[0-9]/.test(val)
+        );
+      },
+      {
+        message:
+          "Password must contain at least 8 characters, one uppercase letter, one lowercase letter, and one number",
+      }
+    ),
+  image: z.any().nullable(),
 });

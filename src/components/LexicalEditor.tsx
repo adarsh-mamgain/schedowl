@@ -27,15 +27,38 @@ import {
   Plus,
   SendHorizonal,
   X,
+  Image as ImageIcon,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import data from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
+import Image from "next/image";
 
-const EMOJI_CATEGORIES = {
-  Smileys: ["😀", "😍", "🤔", "😂", "🥲"],
-  Objects: ["🚀", "💡", "📱", "💻", "🎉"],
-  Symbols: ["❤️", "✨", "🔥", "👍", "🌟"],
+// Add Unicode support for LinkedIn posts
+const LINKEDIN_UNICODE_SUPPORT = {
+  // Basic formatting
+  bold: "\u{1D400}", // Mathematical Bold A
+  italic: "\u{1D434}", // Mathematical Italic A
+  underline: "\u{0332}", // Combining Low Line
+
+  // Special characters
+  bullet: "\u{2022}", // Bullet
+  arrow: "\u{2192}", // Right Arrow
+  checkmark: "\u{2713}", // Check Mark
+  star: "\u{2605}", // Black Star
+  heart: "\u{2764}", // Heavy Black Heart
+
+  // Emojis
+  smile: "\u{1F642}", // Slightly Smiling Face
+  thumbsUp: "\u{1F44D}", // Thumbs Up
+  rocket: "\u{1F680}", // Rocket
+  lightBulb: "\u{1F4A1}", // Light Bulb
+  calendar: "\u{1F4C5}", // Calendar
 };
 
 function UnicodeToolbarPlugin() {
@@ -43,6 +66,20 @@ function UnicodeToolbarPlugin() {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const updateToolbar = () => {
     const selection = $getSelection();
@@ -63,12 +100,21 @@ function UnicodeToolbarPlugin() {
     );
   }, [editor]);
 
-  const insertEmoji = (emoji: string) => {
+  const insertEmoji = (emoji: { native: string }) => {
     editor.update(() => {
       const selection = $getSelection();
       if (selection) {
-        selection.insertText(emoji);
+        selection.insertText(emoji.native);
         setShowEmojiPicker(false);
+      }
+    });
+  };
+
+  const insertUnicode = (unicode: string) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (selection) {
+        selection.insertText(unicode);
       }
     });
   };
@@ -80,6 +126,7 @@ function UnicodeToolbarPlugin() {
         className={`p-2 hover:bg-gray-200 rounded ${
           isBold ? "text-blue-500" : "text-[#98A2B3]"
         }`}
+        title="Bold"
       >
         <Bold size={16} strokeWidth={4} />
       </button>
@@ -88,6 +135,7 @@ function UnicodeToolbarPlugin() {
         className={`p-2 hover:bg-gray-200 rounded ${
           isItalic ? "text-blue-500" : "text-[#98A2B3]"
         }`}
+        title="Italic"
       >
         <Italic size={16} strokeWidth={4} />
       </button>
@@ -96,37 +144,52 @@ function UnicodeToolbarPlugin() {
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
         }
         className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        title="Bullet List"
       >
         <List size={16} strokeWidth={4} />
       </button>
-      <div className="relative">
+      <div className="relative" ref={pickerRef}>
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           className="text-xs text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+          title="Insert Emoji"
         >
           😀
         </button>
         {showEmojiPicker && (
-          <div className="absolute z-10 bg-white border rounded shadow-lg p-2">
-            {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
-              <div key={category} className="mb-2">
-                <div className="text-xs text-gray-500">{category}</div>
-                <div className="flex space-x-1">
-                  {emojis.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => insertEmoji(emoji)}
-                      className="text-xl"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="absolute z-10 top-full left-0 mt-1">
+            <Picker
+              data={data}
+              onEmojiSelect={insertEmoji}
+              theme="light"
+              emojiSize={20}
+              emojiButtonSize={28}
+            />
           </div>
         )}
       </div>
+      <div className="h-4 w-px bg-gray-300 mx-1" />
+      <button
+        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
+        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        title="Bullet Point"
+      >
+        •
+      </button>
+      <button
+        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
+        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        title="Arrow"
+      >
+        →
+      </button>
+      <button
+        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
+        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        title="Checkmark"
+      >
+        ✓
+      </button>
     </div>
   );
 }
@@ -148,8 +211,29 @@ function OnChangePlugin({ onChange }: { onChange: (text: string) => void }) {
 
 interface LinkedInAccount {
   id: string;
-  givenName: string;
-  familyName: string;
+  name: string;
+  type: string;
+  metadata?: {
+    picture?: string;
+    profileUrl?: string;
+  };
+}
+
+interface MediaAttachment {
+  id: string;
+  url: string;
+  type: string;
+  filename: string;
+  preview?: string;
+}
+
+interface Post {
+  id?: string;
+  content: string;
+  status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+  scheduledFor?: string;
+  mediaIds?: string[];
+  socialAccountIds: string[];
 }
 
 function InlineAccountSelect({
@@ -190,9 +274,7 @@ function InlineAccountSelect({
   };
 
   const filteredAccounts = accounts.filter((account) =>
-    `${account.givenName} ${account.familyName}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+    `${account.name}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -214,9 +296,7 @@ function InlineAccountSelect({
                 key={account.id}
                 className="flex items-center gap-1 px-2 py-1 bg-[#1256c420] hover:bg-[#0e3e9a50] text-blue-800 rounded-full text-sm"
               >
-                <span>
-                  {account.givenName} {account.familyName}
-                </span>
+                <span>{account.name}</span>
                 <span>
                   <X size={12} />
                 </span>
@@ -267,9 +347,7 @@ function InlineAccountSelect({
                   }`}
                 >
                   <div className="flex-1">
-                    <span className="text-gray-900">
-                      {account.givenName} {account.familyName}
-                    </span>
+                    <span className="text-gray-900">{account.name}</span>
                   </div>
                   {selectedAccounts.includes(account.id) && <Check size={16} />}
                 </div>
@@ -282,6 +360,181 @@ function InlineAccountSelect({
   );
 }
 
+interface MediaLibraryItem extends MediaAttachment {
+  selected?: boolean;
+}
+
+function MediaLibraryModal({
+  isOpen,
+  onClose,
+  onSelect,
+  selectedMedia,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (media: MediaLibraryItem[]) => void;
+  selectedMedia: MediaLibraryItem[];
+}) {
+  const [mediaItems, setMediaItems] = useState<MediaLibraryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchMediaLibrary = async () => {
+      try {
+        const response = await axios.get("/api/media");
+        const items = response.data.map((item: MediaLibraryItem) => ({
+          ...item,
+          selected: selectedMedia.some((selected) => selected.id === item.id),
+        }));
+        setMediaItems(items);
+      } catch {
+        toast.error("Failed to fetch media library");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchMediaLibrary();
+    }
+  }, [isOpen, selectedMedia]);
+
+  const handleMediaUpload = async (files: FileList) => {
+    setUploading(true);
+    const formData = new FormData();
+    Array.from(files).forEach((file) => {
+      formData.append("files", file);
+    });
+
+    try {
+      const response = await axios.post("/api/media/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const newMedia = response.data.map((media: MediaLibraryItem) => ({
+        ...media,
+        selected: false,
+      }));
+
+      setMediaItems((prev) => [...prev, ...newMedia]);
+      toast.success("Media uploaded successfully!");
+    } catch {
+      toast.error("Failed to upload media");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toggleMediaSelection = (mediaId: string) => {
+    setMediaItems((prev) =>
+      prev.map((item) =>
+        item.id === mediaId ? { ...item, selected: !item.selected } : item
+      )
+    );
+  };
+
+  const handleSelect = () => {
+    const selectedItems = mediaItems.filter((item) => item.selected);
+    onSelect(selectedItems);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-[800px] h-[600px] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Media Library</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-hidden flex">
+          {/* Sidebar */}
+          <div className="w-64 border-r p-4">
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={(e) =>
+                    e.target.files && handleMediaUpload(e.target.files)
+                  }
+                  className="hidden"
+                  ref={fileInputRef}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                  Upload Media
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto p-4">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="animate-spin" size={24} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-4">
+                {mediaItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 ${
+                      item.selected ? "border-blue-500" : "border-transparent"
+                    }`}
+                    onClick={() => toggleMediaSelection(item.id)}
+                  >
+                    <Image
+                      src={item.url}
+                      alt={item.filename}
+                      className="aspect-video"
+                      width={128}
+                      height={128}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
+                      {item.selected && (
+                        <Check className="text-white" size={24} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 border-t flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSelect}>Select Media</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const editorConfig = {
   namespace: "LinkedInUnicodeEditor",
   nodes: [ListNode, ListItemNode],
@@ -290,10 +543,26 @@ const editorConfig = {
     text: {
       bold: "font-bold",
       italic: "italic",
+      underline: "underline",
+    },
+    list: {
+      ul: "list-disc list-inside",
+      ol: "list-decimal list-inside",
     },
   },
   onError: console.error,
 };
+
+interface LexicalEditorProps {
+  accounts: LinkedInAccount[];
+  selectedAccounts: string[];
+  onAccountsChange: (ids: string[]) => void;
+  onChange: (text: string) => void;
+  onPost: (post: Post) => Promise<void>;
+  initialPost?: Post;
+  onDraftSave?: (post: Post) => Promise<void>;
+  requireApproval?: boolean;
+}
 
 export default function LexicalEditor({
   accounts = [],
@@ -301,37 +570,132 @@ export default function LexicalEditor({
   onAccountsChange,
   onChange,
   onPost,
-}: {
-  accounts: LinkedInAccount[];
-  selectedAccounts: string[];
-  onAccountsChange: (ids: string[]) => void;
-  onChange: (text: string) => void;
-  onPost: (isScheduled: boolean, scheduleTime?: string) => Promise<void>;
-}) {
-  const [postContent, setPostContent] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
+  initialPost,
+  onDraftSave,
+  requireApproval = false,
+}: LexicalEditorProps) {
+  const [postContent, setPostContent] = useState(initialPost?.content || "");
+  const [scheduleTime, setScheduleTime] = useState(
+    initialPost?.scheduledFor || ""
+  );
   const [isScheduling, setIsScheduling] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<MediaAttachment[]>(
+    initialPost?.mediaIds?.map((id) => ({
+      id,
+      url: "",
+      type: "IMAGE",
+      filename: "",
+      preview: "",
+    })) || []
+  );
+  const [isDraft, setIsDraft] = useState(initialPost?.status === "DRAFT");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
 
   useEffect(() => {
     onChange(postContent);
   }, [postContent, onChange]);
 
   const handleDraftSave = async () => {
+    if (!onDraftSave) return;
+
+    setIsLoading(true);
     try {
-      await axios.post("/api/posts/drafts", {
+      await onDraftSave({
         content: postContent,
-        linkedInAccountIds: selectedAccounts,
+        status: "DRAFT",
+        socialAccountIds: selectedAccounts,
+        mediaIds: selectedMedia.map((media) => media.id),
       });
+      setIsDraft(true);
       toast.success("Draft saved successfully!");
     } catch {
       toast.error("Failed to save draft");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getMinDateTime = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 5); // Set minimum time to 5 minutes from now
-    return now.toISOString().slice(0, 16); // Format as YYYY-MM-DDThh:mm
+  const handleRemoveMedia = (index: number) => {
+    setSelectedMedia((prev) => {
+      const newMedia = [...prev];
+      URL.revokeObjectURL(newMedia[index].preview || "");
+      newMedia.splice(index, 1);
+      return newMedia;
+    });
+  };
+
+  const handlePost = async (isScheduled: boolean) => {
+    setIsLoading(true);
+    try {
+      if (isScheduled && !scheduleTime) {
+        toast.error("Please select a schedule time");
+        return;
+      }
+
+      // If approval is required, save as draft
+      if (requireApproval) {
+        await onPost({
+          content: postContent,
+          status: "DRAFT",
+          scheduledFor: isScheduled ? scheduleTime : undefined,
+          socialAccountIds: selectedAccounts,
+          mediaIds: selectedMedia.map((media) => media.id),
+        });
+        setIsDraft(true);
+        toast.success("Post saved as draft and pending approval");
+      } else {
+        await onPost({
+          content: postContent,
+          status: isScheduled ? "SCHEDULED" : "PUBLISHED",
+          scheduledFor: isScheduled ? scheduleTime : undefined,
+          socialAccountIds: selectedAccounts,
+          mediaIds: selectedMedia.map((media) => media.id),
+        });
+        setIsDraft(false);
+      }
+
+      // Reset form if not a draft
+      if (!isDraft) {
+        setPostContent("");
+        setSelectedMedia([]);
+        setScheduleTime("");
+        setIsScheduling(false);
+      }
+    } catch {
+      toast.error(
+        isScheduled ? "Failed to schedule post" : "Failed to publish post"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup object URLs
+      selectedMedia.forEach((media) => {
+        if (media.preview) URL.revokeObjectURL(media.preview);
+      });
+    };
+  }, [selectedMedia]);
+
+  const handleMediaLibrarySelect = (selectedMedia: MediaLibraryItem[]) => {
+    setSelectedMedia((prev) => {
+      const newMedia = [...prev];
+      selectedMedia.forEach((media) => {
+        if (!newMedia.some((item) => item.id === media.id)) {
+          newMedia.push({
+            id: media.id,
+            url: media.url,
+            type: media.type,
+            filename: media.filename,
+            preview: media.url,
+          });
+        }
+      });
+      return newMedia;
+    });
   };
 
   return (
@@ -350,6 +714,9 @@ export default function LexicalEditor({
         <OnChangePlugin onChange={setPostContent} />
         <HistoryPlugin />
         <AutoFocusPlugin />
+        <ListPlugin />
+
+        {/* Account Selection */}
         <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
           <InlineAccountSelect
             accounts={accounts}
@@ -357,9 +724,55 @@ export default function LexicalEditor({
             onChange={onAccountsChange}
           />
         </div>
+
+        {/* Media Section */}
+        <div className="p-2 border-t border-t-[#EAECF0]">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => setShowMediaLibrary(true)}
+              >
+                <ImageIcon size={16} className="mr-1" />
+                Media Library
+              </Button>
+            </div>
+            <div className="flex">
+              {selectedMedia.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedMedia.map((media, index) => (
+                    <div key={media.id} className="relative group">
+                      <Image
+                        src={media.preview || media.url}
+                        alt={media.filename}
+                        className="rounded"
+                        width={80}
+                        height={80}
+                      />
+                      <button
+                        onClick={() => handleRemoveMedia(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
-          <div>
-            <Button variant="secondary" size="small" onClick={handleDraftSave}>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={handleDraftSave}
+              disabled={isLoading}
+            >
               Save draft
             </Button>
           </div>
@@ -369,7 +782,7 @@ export default function LexicalEditor({
                 type="datetime-local"
                 value={scheduleTime}
                 onChange={(e) => setScheduleTime(e.target.value)}
-                min={getMinDateTime()}
+                min={new Date().toISOString().slice(0, 16)}
                 className="absolute w-full bottom-full left-0 border p-2 mb-1 rounded shadow-lg"
               />
             )}
@@ -377,25 +790,35 @@ export default function LexicalEditor({
               variant="secondary"
               onClick={() => {
                 if (isScheduling && scheduleTime) {
-                  onPost(true, scheduleTime);
-                  setIsScheduling(false);
-                  setScheduleTime("");
-                  setPostContent("");
+                  handlePost(true);
                 } else {
                   setIsScheduling(!isScheduling);
                 }
               }}
               size="small"
+              disabled={isLoading}
             >
               <Calendar size={16} />
               {isScheduling ? "Schedule Post" : "Schedule"}
             </Button>
-            <Button onClick={() => onPost(false)} size="small">
-              Publish <SendHorizonal size={16} />
+            <Button
+              onClick={() => handlePost(false)}
+              size="small"
+              disabled={isLoading}
+            >
+              {requireApproval ? "Submit for Approval" : "Publish"}
+              <SendHorizonal size={16} />
             </Button>
           </div>
         </div>
       </div>
+
+      <MediaLibraryModal
+        isOpen={showMediaLibrary}
+        onClose={() => setShowMediaLibrary(false)}
+        onSelect={handleMediaLibrarySelect}
+        selectedMedia={selectedMedia}
+      />
     </LexicalComposer>
   );
 }

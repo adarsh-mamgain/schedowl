@@ -1,23 +1,26 @@
+import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
-  const requestHeaders = new Headers(request.headers);
-  const organisationId = requestHeaders.get("x-organisation-id");
+  const session = await getServerSession(authOptions);
 
   try {
-    if (!organisationId) {
+    if (!session?.organisation.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const result = await prisma.linkedInAccount.findMany({
-      where: { organisationId },
+    const result = await prisma.socialAccount.findMany({
+      where: { organisationId: session.organisation.id },
+      orderBy: { createdAt: "desc" },
     });
+
     return NextResponse.json(result);
   } catch (error) {
     logger.error(
-      `${request.method} ${request.nextUrl.pathname} Error scheduling posts:`,
+      `${request.method} ${request.nextUrl.pathname} Error fetching linkedin accounts:`,
       error
     );
     return NextResponse.json(

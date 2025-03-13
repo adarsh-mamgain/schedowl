@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         scheduledFor: {
           lte: new Date(),
         },
-        OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: new Date() } }],
+        OR: [{ lastRetryAt: null }, { lastRetryAt: { lte: new Date() } }],
       },
       take: 50, // Process in batches
     });

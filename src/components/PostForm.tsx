@@ -5,8 +5,19 @@ import LexicalEditor from "@/src/components/LexicalEditor";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
+
+interface PostPayload {
+  content: string;
+  linkedInAccountIds: string[];
+  scheduledFor?: string;
+  mediaIds?: string[];
+}
 
 export default function PostForm() {
+  const { data: session } = useSession();
   const [postContent, setPostContent] = useState("");
   const [accounts, setAccounts] = useState([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
@@ -27,40 +38,50 @@ export default function PostForm() {
     }
   };
 
-  const handlePost = async (isScheduled: boolean, scheduleTime?: string) => {
-    if (!postContent) {
+  const handlePost = async (post: {
+    content: string;
+    status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+    scheduledFor?: string;
+    mediaIds?: string[];
+    socialAccountIds: string[];
+  }) => {
+    if (!post.content) {
       toast.error("Post content cannot be empty");
       return;
     }
 
-    if (selectedAccounts.length === 0) {
+    if (post.socialAccountIds.length === 0) {
       toast.error("Please select at least one LinkedIn account");
       return;
     }
 
-    if (isScheduled && !scheduleTime) {
-      toast.error("Please select a schedule time");
-      return;
-    }
-
-    const payload = {
-      content: postContent,
-      linkedInAccountIds: selectedAccounts,
-      ...(isScheduled &&
-        scheduleTime && {
-          scheduledFor: new Date(scheduleTime).toISOString(),
-        }),
-    };
-
     try {
-      const endpoint = isScheduled
-        ? "/api/posts/schedule"
-        : "/api/posts/publish";
+      let endpoint = "/api/posts/publish";
+      let payload: PostPayload = {
+        content: post.content,
+        linkedInAccountIds: post.socialAccountIds,
+      };
+
+      if (post.status === "SCHEDULED" && post.scheduledFor) {
+        endpoint = "/api/posts/schedule";
+        payload = {
+          ...payload,
+          scheduledFor: post.scheduledFor,
+        };
+      }
+
+      if (post.mediaIds && post.mediaIds.length > 0) {
+        payload = {
+          ...payload,
+          mediaIds: post.mediaIds,
+        };
+      }
+
       const response = await axios.post(endpoint, payload);
 
       if (response.data) {
         toast.success(
-          isScheduled
+          post.status === "SCHEDULED"
             ? "Post scheduled successfully!"
             : "Post published successfully!"
         );
@@ -69,11 +90,37 @@ export default function PostForm() {
       }
     } catch (error) {
       console.error("Post error:", error);
-      toast.error(
-        isScheduled ? "Failed to schedule post" : "Failed to publish post"
-      );
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to publish post");
+      } else {
+        toast.error(
+          post.status === "SCHEDULED"
+            ? "Failed to schedule post"
+            : "Failed to publish post"
+        );
+      }
     }
   };
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
+
+  // If user can't manage posts, show a message
+  if (!canManagePosts) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">
+          You don&apos;t have permission to create or manage posts.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-12 gap-4">
@@ -84,6 +131,7 @@ export default function PostForm() {
           onChange={setPostContent}
           onAccountsChange={setSelectedAccounts}
           onPost={handlePost}
+          requireApproval={!canApprovePosts}
         />
       </div>
       <div className="bg-[#FCFCFD] col-span-5 border border-[#EAECF0] rounded-lg">

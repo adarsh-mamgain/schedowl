@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -10,10 +10,13 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { Pencil, Trash2, UserPlus, X } from "lucide-react";
+import { Trash2, UserPlus, X, SendHorizonal } from "lucide-react";
 import axios from "axios";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { Invitation, Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 
 const roles = ["MEMBER", "ADMIN"] as const;
 
@@ -35,7 +38,6 @@ interface Member {
   role: keyof typeof MemberColors;
   createdAt: string;
   updatedAt: string;
-  userId: string;
   organisationId: string;
   user: {
     id: string;
@@ -49,12 +51,13 @@ interface Member {
 }
 
 export default function MembersPage() {
+  const { data: session } = useSession();
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -64,7 +67,8 @@ export default function MembersPage() {
     const getMembers = async () => {
       try {
         const result = await axios.get("/api/members");
-        setMembers(result.data);
+        setMembers(result.data.members);
+        setInvitations(result.data.invitations);
       } catch {
         toast.error("Error fetching members");
       }
@@ -75,10 +79,12 @@ export default function MembersPage() {
 
   const inviteMember: SubmitHandler<FormValues> = async (data) => {
     try {
-      await axios.post("/api/members", data);
+      await axios.post(`/api/organisations/invite`, data);
       toast.success("Member invited successfully!");
-      reset();
       setShowInviteForm(false);
+      // Refresh the invitations list
+      const result = await axios.get("/api/members");
+      setInvitations(result.data.invitations);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.error || "Failed to invite member");
@@ -88,70 +94,240 @@ export default function MembersPage() {
     }
   };
 
-  const columns: ColumnDef<Member>[] = [
-    {
-      accessorKey: "name",
-      header: "Name",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-sm font-medium text-[#101828]">
-              {row.original.user.name}
-            </p>
-          </div>
-        </div>
-      ),
+  const handleRemoveMember = useCallback(
+    async (memberId: string) => {
+      try {
+        await axios.delete(`/api/members/${memberId}`);
+        toast.success("Member removed successfully!");
+        setMembers(members.filter((m) => m.id !== memberId));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.error || "Failed to remove member");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
+      }
     },
-    {
-      accessorKey: "email",
-      header: "Email address",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <div>
-            <p className="text-sm font-medium text-[#101828]">
-              {row.original.user.email}
-            </p>
-          </div>
-        </div>
-      ),
+    [members]
+  );
+
+  const handleUpdateRole = useCallback(
+    async (memberId: string, newRole: Role) => {
+      try {
+        await axios.put(`/api/members/${memberId}`, { role: newRole });
+        toast.success("Member role updated successfully!");
+        setMembers(
+          members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+        );
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.error || "Failed to update role");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
+      }
     },
-    {
-      accessorKey: "role",
-      header: "Role",
-      cell: ({ row }) => (
-        <div className="flex">
-          <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                MemberColors[row.original.role]
-              }`}
-            ></span>
-            <span>{row.original.role}</span>
-          </div>
-        </div>
-      ),
+    [members]
+  );
+
+  const handleRemoveInvitation = useCallback(
+    async (invitationId: string) => {
+      try {
+        await axios.delete(`/api/invitations/${invitationId}`);
+        toast.success("Invitation removed successfully!");
+        setInvitations(invitations.filter((i) => i.id !== invitationId));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(
+            error.response?.data?.error || "Failed to remove invitation"
+          );
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
+      }
     },
-    {
-      id: "actions",
-      header: "Actions",
-      cell: () => (
-        <div className="flex items-center gap-5">
-          <button className="text-gray-500 text-[#475467] hover:text-blue-600">
-            <Pencil size={16} />
-          </button>
-          <button className="text-[#475467] hover:text-red-700">
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-    },
-  ];
+    [invitations]
+  );
+
+  const handleResendInvitation = useCallback(async (invitationId: string) => {
+    try {
+      await axios.post(`/api/invitations/${invitationId}/resend`);
+      toast.success("Invitation resent successfully!");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.error || "Failed to resend invitation"
+        );
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
+  }, []);
+
+  const columns = useMemo<ColumnDef<Member | Invitation>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) => {
+          const data = row.original;
+          if ("user" in data) {
+            // It's a Member
+            return (
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-medium text-[#101828]">
+                    {data.user.name}
+                  </p>
+                </div>
+              </div>
+            );
+          } else {
+            // It's an Invitation
+            return (
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-sm font-medium text-[#101828]">
+                    Pending Invitation
+                  </p>
+                </div>
+              </div>
+            );
+          }
+        },
+      },
+      {
+        accessorKey: "email",
+        header: "Email address",
+        cell: ({ row }) => {
+          const data = row.original;
+          const email = "user" in data ? data.user.email : data.email;
+          return (
+            <div className="flex items-center gap-3">
+              <div>
+                <p className="text-sm font-medium text-[#101828]">{email}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "role",
+        header: "Role",
+        cell: ({ row }) => {
+          const data = row.original;
+          const role = "user" in data ? data.role : data.role;
+          return (
+            <div className="flex">
+              <div className="flex items-center gap-1 border border-[#D0D5DD] text-xs font-medium px-1.5 py-0.5 rounded-md shadow-[0px_1px_2px_0px_#1018280D]">
+                <span
+                  className={`w-2 h-2 rounded-full ${MemberColors[role]}`}
+                ></span>
+                <span>{role}</span>
+                {"expiresAt" in data && <span className="ml-1">(Pending)</span>}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const data = row.original;
+          const currentUserRole = session?.organisationRole?.role as Role;
+          const canManageUsers = hasPermission(currentUserRole, "manage_users");
+          const canAssignUsers = hasPermission(currentUserRole, "assign_users");
+
+          if (!canManageUsers && !canAssignUsers) {
+            return null;
+          }
+
+          if ("user" in data) {
+            // It's a Member
+            const isOwner = data.role === "OWNER";
+            const isCurrentUser = data.user.id === session?.user?.id;
+
+            if (isOwner || isCurrentUser) {
+              return null; // Don't show actions for owner or current user
+            }
+
+            return (
+              <div className="flex items-center gap-5">
+                {canAssignUsers && (
+                  <select
+                    value={data.role}
+                    onChange={(e) =>
+                      handleUpdateRole(data.id, e.target.value as Role)
+                    }
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    {roles.map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {canManageUsers && (
+                  <button
+                    className="text-[#475467] hover:text-red-700"
+                    onClick={() => handleRemoveMember(data.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            );
+          } else {
+            // It's an Invitation
+            return (
+              <div className="flex items-center gap-5">
+                {canManageUsers && (
+                  <>
+                    <button
+                      className="text-[#475467] hover:text-blue-700"
+                      onClick={() => handleResendInvitation(data.id)}
+                    >
+                      <SendHorizonal size={16} />
+                    </button>
+                    <button
+                      className="text-[#475467] hover:text-red-700"
+                      onClick={() => handleRemoveInvitation(data.id)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          }
+        },
+      },
+    ],
+    [
+      handleRemoveInvitation,
+      handleRemoveMember,
+      handleUpdateRole,
+      handleResendInvitation,
+      session,
+    ]
+  );
 
   const table = useReactTable({
-    data: members,
-    columns,
+    data: useMemo(() => [...members, ...invitations], [members, invitations]),
+    columns: useMemo(() => columns, [columns]),
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const canManageUsers = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_users"
+  );
+  const canAssignUsers = hasPermission(
+    session?.organisationRole?.role as Role,
+    "assign_users"
+  );
 
   return (
     <div className="relative">
@@ -162,26 +338,25 @@ export default function MembersPage() {
               Team Members
             </h2>
             <span className="bg-white text-[#344054] text-xs font-medium rounded px-1.5 py-0.5 border">
-              {members.length}
+              {members.length + invitations.length}
             </span>
           </div>
           <p className="text-sm text-[#475467]">
             Manage your team members and their account permissions here.
           </p>
         </div>
-        <div>
-          <Button
-            size="small"
-            onClick={() => setShowInviteForm((prev) => !prev)}
-          >
-            Add user
-          </Button>
-        </div>
+        {(canManageUsers || canAssignUsers) && (
+          <div>
+            <Button size="small" onClick={() => setShowInviteForm(true)}>
+              Add user
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Invite Form */}
       {showInviteForm && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
             <button
               className="absolute top-4 right-4 rounded-full bg-gray-100 hover:bg-gray-200 p-2"
@@ -202,7 +377,7 @@ export default function MembersPage() {
                   type="email"
                   placeholder="Enter email"
                   {...register("email")}
-                  className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
                 />
                 {errors.email && (
                   <p className="text-red-500 text-xs">
@@ -216,7 +391,7 @@ export default function MembersPage() {
                 </label>
                 <select
                   {...register("role")}
-                  className="text-[#667085 px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
                 >
                   {roles.map((role) => (
                     <option key={role} value={role}>
