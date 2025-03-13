@@ -94,7 +94,7 @@ export default function OrganisationSettingsPage() {
               </h2>
             </div>
             <p className="text-sm text-[#475467]">
-              Update your organisation's details and branding.
+              Update your organisation&apos;s details and branding.
             </p>
           </div>
           <div className="flex gap-2">

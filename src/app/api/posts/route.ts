@@ -1,15 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
-import logger from "@/src/services/logger";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
-import { PostStatus } from "@prisma/client";
-
-const isValidStatus = (status: string | null): status is PostStatus => {
-  return (
-    status !== null && Object.values(PostStatus).includes(status as PostStatus)
-  );
-};
 
 export async function GET(request: Request) {
   try {

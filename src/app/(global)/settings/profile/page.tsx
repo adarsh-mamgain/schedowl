@@ -17,7 +17,7 @@ type ProfileFormValues = z.infer<typeof ProfileSchema>;
 export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const {
@@ -25,13 +25,9 @@ export default function ProfilePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema),
   });
-
-  const name = watch("name");
-  const email = watch("email");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -41,7 +37,8 @@ export default function ProfilePage() {
         setValue("name", userData.name || "");
         setValue("email", userData.email || "");
         setPhotoPreview(userData.image || null);
-      } catch (error) {
+      } catch (err) {
+        console.error("Failed to load profile data:", err);
         toast.error("Failed to load profile data");
       }
     };
@@ -62,7 +59,7 @@ export default function ProfilePage() {
       toast.success("Profile updated successfully");
       setIsEditing(false);
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to update profile");
     }
   };

@@ -4,6 +4,8 @@ import logger from "@/src/services/logger";
 import { schedulePost } from "@/src/services/queue";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
+import { requirePermission } from "@/src/lib/permissions";
+import { Role } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
@@ -28,6 +30,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Check if the user has permission to manage posts
+    requirePermission(session.organisationRole.role as Role, "manage_posts");
 
     // Validate media IDs if provided
     if (mediaIds.length > 0) {
@@ -92,6 +97,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(posts);
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Insufficient permissions"
+    ) {
+      return NextResponse.json(
+        { error: "You don't have permission to schedule posts" },
+        { status: 403 }
+      );
+    }
     logger.error(
       `${request.method} ${request.nextUrl.pathname} Error scheduling posts:`,
       error

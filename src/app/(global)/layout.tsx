@@ -13,8 +13,16 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+
+interface UserOrganisation {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string | null;
+  role: string;
+}
 
 const TABS = [
   { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
@@ -33,6 +41,50 @@ export default function GlobalLayout({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { data: session, update: updateSession } = useSession();
   const [isUploading, setIsUploading] = useState(false);
+  const [userOrganisations, setUserOrganisations] = useState<
+    UserOrganisation[]
+  >([]);
+  const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
+
+  useEffect(() => {
+    const fetchUserOrganisations = async () => {
+      setIsLoadingOrgs(true);
+      try {
+        const response = await fetch("/api/organisations");
+        if (!response.ok) throw new Error("Failed to fetch organisations");
+        const data = await response.json();
+        setUserOrganisations(data.organisations);
+      } catch (error) {
+        console.error("Error fetching organisations:", error);
+        toast.error("Failed to load organisations");
+      } finally {
+        setIsLoadingOrgs(false);
+      }
+    };
+
+    fetchUserOrganisations();
+  }, []);
+
+  const switchOrganisation = async (orgId: string) => {
+    try {
+      const response = await fetch("/api/organisations/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organisationId: orgId }),
+      });
+
+      if (!response.ok) throw new Error("Failed to switch organisation");
+
+      const data = await response.json();
+      await updateSession(data);
+      setDropdownOpen(false);
+      toast.success("Successfully switched organisation");
+      router.refresh();
+    } catch (error) {
+      console.error("Error switching organisation:", error);
+      toast.error("Failed to switch organisation");
+    }
+  };
 
   const handleProfileImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
@@ -74,8 +126,8 @@ export default function GlobalLayout({
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="w-full flex items-center justify-between"
             >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
                   {session?.organisation?.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -89,18 +141,18 @@ export default function GlobalLayout({
                     </div>
                   )}
                 </div>
-                <span>{session?.organisation?.name}</span>
+                <span className="truncate">{session?.organisation?.name}</span>
               </div>
               {dropdownOpen ? (
-                <ChevronUp color="#344054" />
+                <ChevronUp color="#344054" className="flex-shrink-0" />
               ) : (
-                <ChevronDown color="#344054" />
+                <ChevronDown color="#344054" className="flex-shrink-0" />
               )}
             </button>
             {dropdownOpen && (
-              <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg">
+              <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg z-50">
                 <div className="flex items-center gap-2">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                  <div className="relative w-10 h-10 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
                     {session?.user?.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -124,13 +176,65 @@ export default function GlobalLayout({
                       />
                     </label>
                   </div>
-                  <div>
-                    <p className="font-medium">{session?.user?.name}</p>
-                    <p className="text-sm text-gray-500">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-sm text-gray-500 truncate">
                       {session?.user?.email}
                     </p>
                   </div>
                 </div>
+
+                {isLoadingOrgs ? (
+                  <div className="text-sm text-gray-500">
+                    Loading organisations...
+                  </div>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto">
+                    <div className="text-xs font-medium text-gray-500 mb-2">
+                      Your organisations
+                    </div>
+                    {userOrganisations.map((org) => (
+                      <button
+                        key={org.id}
+                        onClick={() => switchOrganisation(org.id)}
+                        className={`w-full flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 ${
+                          session?.organisation?.id === org.id
+                            ? "bg-gray-50"
+                            : ""
+                        }`}
+                      >
+                        <div className="w-6 h-6 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                          {org.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={org.image}
+                              alt={org.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                              {org.name[0].toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate text-sm text-left">
+                            {org.name}
+                          </span>
+                          <span className="block truncate text-xs text-gray-500 text-left">
+                            {org.role}
+                          </span>
+                        </div>
+                        {session?.organisation?.id === org.id && (
+                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <Button
                   variant="secondary"
                   size="small"
@@ -153,8 +257,8 @@ export default function GlobalLayout({
               }`}
               onClick={() => router.push(tab.path)}
             >
-              <tab.icon size={16} color={"#344054"} />
-              {tab.title}
+              <tab.icon size={16} color={"#344054"} className="flex-shrink-0" />
+              <span className="truncate">{tab.title}</span>
             </button>
           ))}
         </nav>

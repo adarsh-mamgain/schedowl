@@ -5,6 +5,9 @@ import LexicalEditor from "@/src/components/LexicalEditor";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 
 interface PostPayload {
   content: string;
@@ -14,6 +17,7 @@ interface PostPayload {
 }
 
 export default function PostForm() {
+  const { data: session } = useSession();
   const [postContent, setPostContent] = useState("");
   const [accounts, setAccounts] = useState([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
@@ -86,13 +90,37 @@ export default function PostForm() {
       }
     } catch (error) {
       console.error("Post error:", error);
-      toast.error(
-        post.status === "SCHEDULED"
-          ? "Failed to schedule post"
-          : "Failed to publish post"
-      );
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to publish post");
+      } else {
+        toast.error(
+          post.status === "SCHEDULED"
+            ? "Failed to schedule post"
+            : "Failed to publish post"
+        );
+      }
     }
   };
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
+
+  // If user can't manage posts, show a message
+  if (!canManagePosts) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">
+          You don&apos;t have permission to create or manage posts.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-12 gap-4">
@@ -103,6 +131,7 @@ export default function PostForm() {
           onChange={setPostContent}
           onAccountsChange={setSelectedAccounts}
           onPost={handlePost}
+          requireApproval={!canApprovePosts}
         />
       </div>
       <div className="bg-[#FCFCFD] col-span-5 border border-[#EAECF0] rounded-lg">

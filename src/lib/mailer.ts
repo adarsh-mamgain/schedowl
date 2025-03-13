@@ -1,11 +1,17 @@
 import nodemailer from "nodemailer";
 import logger from "@/src/services/logger";
 
+interface PostFailedContext {
+  postContent: string;
+  errorMessage: string;
+  retryCount: number;
+}
+
 interface EmailOptions {
   to: string;
   subject: string;
-  template?: string;
-  context?: Record<string, any>;
+  template?: keyof typeof templates;
+  context?: PostFailedContext;
   html?: string;
 }
 
@@ -20,7 +26,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const templates = {
-  "post-failed": (context: Record<string, any>) => `
+  "post-failed": (context: PostFailedContext) => `
     <h2>Post Failed</h2>
     <p>Your scheduled post has failed to publish.</p>
     <p><strong>Content:</strong> ${context.postContent}</p>
@@ -28,7 +34,7 @@ const templates = {
     <p><strong>Retry Count:</strong> ${context.retryCount}/5</p>
     <p>Please check your post settings and try again.</p>
   `,
-};
+} as const;
 
 export async function sendEmail({
   to,

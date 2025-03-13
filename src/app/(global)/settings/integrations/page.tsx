@@ -20,8 +20,8 @@ export default function IntegrationsPage() {
     try {
       const response = await axios.get("/api/integrations/linkedin");
       window.location.href = response.data.url;
-    } catch (error) {
-      console.error("Failed to connect LinkedIn:", error);
+    } catch {
+      toast.error("Failed to connect LinkedIn");
     }
   };
 
@@ -30,7 +30,7 @@ export default function IntegrationsPage() {
       const response = await fetch("/api/integrations/linkedin/accounts");
       const data = await response.json();
       setAccounts(data); // Remove .accounts since the API returns the array directly
-    } catch (error) {
+    } catch {
       toast.error("Failed to fetch connected accounts");
     } finally {
       setLoading(false);
@@ -49,7 +49,7 @@ export default function IntegrationsPage() {
 
       toast.success("Account disconnected successfully");
       fetchAccounts();
-    } catch (error) {
+    } catch {
       toast.error("Failed to disconnect account");
     }
   };
@@ -173,11 +173,15 @@ export default function IntegrationsPage() {
                           typeof account.metadata === "object" &&
                           "profileUrl" in account.metadata &&
                           typeof account.metadata.picture === "string" && (
-                            <img
-                              className="h-8 w-8 rounded-full"
-                              src={account.metadata.picture}
-                              alt={account.name || "Profile picture"}
-                            />
+                            <div className="relative h-8 w-8">
+                              <Image
+                                className="rounded-full"
+                                src={account.metadata.picture}
+                                alt={account.name || "Profile picture"}
+                                fill
+                                sizes="32px"
+                              />
+                            </div>
                           )}
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">

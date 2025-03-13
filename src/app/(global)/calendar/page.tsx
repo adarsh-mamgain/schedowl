@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { PostStatus } from "@prisma/client";
 import CalendarView from "@/src/components/CalendarView";
 import { toast } from "react-toastify";
@@ -8,6 +8,9 @@ import axios from "axios";
 import Button from "@/src/components/Button";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 
 interface Post {
   id: string;
@@ -41,17 +44,13 @@ interface Post {
 }
 
 export default function CalendarPage() {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDateTime, setSelectedDateTime] = useState<string>("");
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf("month"));
   const router = useRouter();
 
-  useEffect(() => {
-    fetchPosts();
-  }, [currentMonth]);
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const startDate = currentMonth.startOf("month").toISOString();
@@ -76,15 +75,33 @@ export default function CalendarPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentMonth]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleCancelPost = async (postId: string) => {
     try {
       await axios.post(`/api/posts/${postId}/cancel`);
       toast.success("Post cancelled successfully");
       fetchPosts();
-    } catch (error) {
+    } catch {
       toast.error("Failed to cancel post");
+    }
+  };
+
+  const handleApprovePost = async (postId: string) => {
+    try {
+      await axios.post(`/api/posts/${postId}/approve`);
+      toast.success("Post approved successfully");
+      fetchPosts();
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to approve post");
+      } else {
+        toast.error("Failed to approve post");
+      }
     }
   };
 
@@ -99,6 +116,15 @@ export default function CalendarPage() {
   const handleMonthChange = (newMonth: dayjs.Dayjs) => {
     setCurrentMonth(newMonth);
   };
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
 
   const mappedPosts = posts.map((post) => ({
     id: post.id,
@@ -124,11 +150,13 @@ export default function CalendarPage() {
               Manage your content calendar from here.
             </p>
           </div>
-          <div>
-            <Button size="small" onClick={handleCreatePost}>
-              Write Post
-            </Button>
-          </div>
+          {canManagePosts && (
+            <div>
+              <Button size="small" onClick={handleCreatePost}>
+                Write Post
+              </Button>
+            </div>
+          )}
         </div>
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-gray-500">Loading posts...</div>
@@ -146,17 +174,19 @@ export default function CalendarPage() {
             Manage your content calendar from here.
           </p>
         </div>
-        <div>
-          <Button size="small" onClick={handleCreatePost}>
-            Write Post
-          </Button>
-        </div>
+        {canManagePosts && (
+          <div>
+            <Button size="small" onClick={handleCreatePost}>
+              Write Post
+            </Button>
+          </div>
+        )}
       </div>
       <CalendarView
-        setSelectedDateTime={setSelectedDateTime}
         posts={mappedPosts}
         onCancelPost={handleCancelPost}
         onEditPost={handleEditPost}
+        onApprovePost={canApprovePosts ? handleApprovePost : undefined}
         currentMonth={currentMonth}
         onMonthChange={handleMonthChange}
       />

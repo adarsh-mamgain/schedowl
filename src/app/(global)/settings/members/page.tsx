@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -94,53 +94,62 @@ export default function MembersPage() {
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    try {
-      await axios.delete(`/api/members/${memberId}`);
-      toast.success("Member removed successfully!");
-      setMembers(members.filter((m) => m.id !== memberId));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Failed to remove member");
-      } else {
-        toast.error("An unexpected error occurred.");
+  const handleRemoveMember = useCallback(
+    async (memberId: string) => {
+      try {
+        await axios.delete(`/api/members/${memberId}`);
+        toast.success("Member removed successfully!");
+        setMembers(members.filter((m) => m.id !== memberId));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.error || "Failed to remove member");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
       }
-    }
-  };
+    },
+    [members]
+  );
 
-  const handleUpdateRole = async (memberId: string, newRole: Role) => {
-    try {
-      await axios.put(`/api/members/${memberId}`, { role: newRole });
-      toast.success("Member role updated successfully!");
-      setMembers(
-        members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
-      );
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.error || "Failed to update role");
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
-    }
-  };
-
-  const handleRemoveInvitation = async (invitationId: string) => {
-    try {
-      await axios.delete(`/api/invitations/${invitationId}`);
-      toast.success("Invitation removed successfully!");
-      setInvitations(invitations.filter((i) => i.id !== invitationId));
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.error || "Failed to remove invitation"
+  const handleUpdateRole = useCallback(
+    async (memberId: string, newRole: Role) => {
+      try {
+        await axios.put(`/api/members/${memberId}`, { role: newRole });
+        toast.success("Member role updated successfully!");
+        setMembers(
+          members.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
         );
-      } else {
-        toast.error("An unexpected error occurred.");
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.error || "Failed to update role");
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
       }
-    }
-  };
+    },
+    [members]
+  );
 
-  const handleResendInvitation = async (invitationId: string) => {
+  const handleRemoveInvitation = useCallback(
+    async (invitationId: string) => {
+      try {
+        await axios.delete(`/api/invitations/${invitationId}`);
+        toast.success("Invitation removed successfully!");
+        setInvitations(invitations.filter((i) => i.id !== invitationId));
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(
+            error.response?.data?.error || "Failed to remove invitation"
+          );
+        } else {
+          toast.error("An unexpected error occurred.");
+        }
+      }
+    },
+    [invitations]
+  );
+
+  const handleResendInvitation = useCallback(async (invitationId: string) => {
     try {
       await axios.post(`/api/invitations/${invitationId}/resend`);
       toast.success("Invitation resent successfully!");
@@ -153,7 +162,7 @@ export default function MembersPage() {
         toast.error("An unexpected error occurred.");
       }
     }
-  };
+  }, []);
 
   const columns = useMemo<ColumnDef<Member | Invitation>[]>(
     () => [
@@ -296,7 +305,13 @@ export default function MembersPage() {
         },
       },
     ],
-    [session?.organisationRole?.role, session?.user?.id]
+    [
+      handleRemoveInvitation,
+      handleRemoveMember,
+      handleUpdateRole,
+      handleResendInvitation,
+      session,
+    ]
   );
 
   const table = useReactTable({

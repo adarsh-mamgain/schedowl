@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Upload,
   Image as ImageIcon,
@@ -174,10 +175,12 @@ export default function MediaPage() {
               }}
             >
               {media.type === "IMAGE" ? (
-                <img
+                <Image
                   src={media.url}
                   alt={media.filename}
-                  className="object-cover w-full h-full"
+                  className="object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
               ) : media.type === "VIDEO" ? (
                 <video
@@ -210,11 +213,16 @@ export default function MediaPage() {
           </button>
           <div className="max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
             {selectedMedia.type === "IMAGE" ? (
-              <img
-                src={selectedMedia.url}
-                alt={selectedMedia.filename}
-                className="w-full h-auto rounded-lg"
-              />
+              <div className="relative w-full aspect-video">
+                <Image
+                  src={selectedMedia.url}
+                  alt={selectedMedia.filename}
+                  className="rounded-lg"
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                  priority
+                />
+              </div>
             ) : selectedMedia.type === "VIDEO" ? (
               <video
                 src={selectedMedia.url}
