@@ -162,9 +162,6 @@ function UnicodeToolbarPlugin() {
               data={data}
               onEmojiSelect={insertEmoji}
               theme="light"
-              set="apple"
-              showPreview={false}
-              showSkinTones={false}
               emojiSize={20}
               emojiButtonSize={28}
             />
