@@ -86,7 +86,7 @@ export default function CalendarPage() {
       await axios.post(`/api/posts/${postId}/cancel`);
       toast.success("Post cancelled successfully");
       fetchPosts();
-    } catch (error) {
+    } catch {
       toast.error("Failed to cancel post");
     }
   };

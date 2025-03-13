@@ -31,6 +31,24 @@ interface LinkedInMediaAttachment extends MediaAttachment {
   buffer?: Buffer;
 }
 
+interface LinkedInPostData {
+  author: string;
+  lifecycleState: string;
+  specificContent: {
+    "com.linkedin.ugc.ShareContent": {
+      shareCommentary: { text: string };
+      shareMediaCategory: "IMAGE" | "NONE";
+      media?: Array<{
+        status: string;
+        media: string;
+      }>;
+    };
+  };
+  visibility: {
+    "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC";
+  };
+}
+
 export class LinkedInService {
   private static instance: LinkedInService;
   private rateLimitDelay = 1000; // 1 second between requests
@@ -196,7 +214,7 @@ export class LinkedInService {
       }
 
       // Prepare post content
-      const postData = {
+      const postData: LinkedInPostData = {
         author: `urn:li:person:${socialAccount.providerAccountId}`,
         lifecycleState: "PUBLISHED",
         specificContent: {
@@ -520,7 +538,7 @@ export class LinkedInService {
         mediaFiles.map((media) => this.uploadMedia(accountId, media))
       );
 
-      const postData: any = {
+      const postData: LinkedInPostData = {
         author: `urn:li:person:${account.identifier}`,
         lifecycleState: "PUBLISHED",
         specificContent: {

@@ -37,12 +37,7 @@ import axios from "axios";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-
-const EMOJI_CATEGORIES = {
-  Smileys: ["😀", "😍", "🤔", "😂", "🥲"],
-  Objects: ["🚀", "💡", "📱", "💻", "🎉"],
-  Symbols: ["❤️", "✨", "🔥", "👍", "🌟"],
-};
+import Image from "next/image";
 
 // Add Unicode support for LinkedIn posts
 const LINKEDIN_UNICODE_SUPPORT = {
@@ -71,6 +66,20 @@ function UnicodeToolbarPlugin() {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const updateToolbar = () => {
     const selection = $getSelection();
@@ -91,11 +100,11 @@ function UnicodeToolbarPlugin() {
     );
   }, [editor]);
 
-  const insertEmoji = (emoji: string) => {
+  const insertEmoji = (emoji: { native: string }) => {
     editor.update(() => {
       const selection = $getSelection();
       if (selection) {
-        selection.insertText(emoji);
+        selection.insertText(emoji.native);
         setShowEmojiPicker(false);
       }
     });
@@ -139,7 +148,7 @@ function UnicodeToolbarPlugin() {
       >
         <List size={16} strokeWidth={4} />
       </button>
-      <div className="relative">
+      <div className="relative" ref={pickerRef}>
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           className="text-xs text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
@@ -148,23 +157,17 @@ function UnicodeToolbarPlugin() {
           😀
         </button>
         {showEmojiPicker && (
-          <div className="absolute z-10 bg-white border rounded shadow-lg p-2">
-            {Object.entries(EMOJI_CATEGORIES).map(([category, emojis]) => (
-              <div key={category} className="mb-2">
-                <div className="text-xs text-gray-500">{category}</div>
-                <div className="flex space-x-1">
-                  {emojis.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => insertEmoji(emoji)}
-                      className="text-xl hover:bg-gray-100 p-1 rounded"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+          <div className="absolute z-10 top-full left-0 mt-1">
+            <Picker
+              data={data}
+              onEmojiSelect={insertEmoji}
+              theme="light"
+              set="apple"
+              showPreview={false}
+              showSkinTones={false}
+              emojiSize={20}
+              emojiButtonSize={28}
+            />
           </div>
         )}
       </div>
@@ -381,25 +384,25 @@ function MediaLibraryModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const fetchMediaLibrary = async () => {
+      try {
+        const response = await axios.get("/api/media");
+        const items = response.data.map((item: MediaLibraryItem) => ({
+          ...item,
+          selected: selectedMedia.some((selected) => selected.id === item.id),
+        }));
+        setMediaItems(items);
+      } catch {
+        toast.error("Failed to fetch media library");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (isOpen) {
       fetchMediaLibrary();
     }
-  }, [isOpen]);
-
-  const fetchMediaLibrary = async () => {
-    try {
-      const response = await axios.get("/api/media");
-      const items = response.data.map((item: MediaLibraryItem) => ({
-        ...item,
-        selected: selectedMedia.some((selected) => selected.id === item.id),
-      }));
-      setMediaItems(items);
-    } catch (error) {
-      toast.error("Failed to fetch media library");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isOpen, selectedMedia]);
 
   const handleMediaUpload = async (files: FileList) => {
     setUploading(true);
@@ -422,7 +425,7 @@ function MediaLibraryModal({
 
       setMediaItems((prev) => [...prev, ...newMedia]);
       toast.success("Media uploaded successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to upload media");
     } finally {
       setUploading(false);
@@ -505,10 +508,12 @@ function MediaLibraryModal({
                     }`}
                     onClick={() => toggleMediaSelection(item.id)}
                   >
-                    <img
+                    <Image
                       src={item.url}
                       alt={item.filename}
-                      className="w-full h-32 object-cover"
+                      className="aspect-video"
+                      width={128}
+                      height={128}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center">
                       {item.selected && (
@@ -605,37 +610,12 @@ export default function LexicalEditor({
         socialAccountIds: selectedAccounts,
         mediaIds: selectedMedia.map((media) => media.id),
       });
+      setIsDraft(true);
       toast.success("Draft saved successfully!");
-    } catch (error) {
+    } catch {
       toast.error("Failed to save draft");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleMediaSelect = async (files: FileList) => {
-    const formData = new FormData();
-    Array.from(files).forEach((file) => {
-      formData.append("files", file);
-    });
-
-    try {
-      const response = await axios.post("/api/media/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      const newMedia = response.data.map((media: MediaAttachment) => ({
-        ...media,
-        preview: URL.createObjectURL(
-          new Blob([media.url], { type: "text/plain" })
-        ),
-      }));
-
-      setSelectedMedia((prev) => [...prev, ...newMedia]);
-    } catch (error) {
-      toast.error("Failed to upload media");
     }
   };
 
@@ -665,6 +645,7 @@ export default function LexicalEditor({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
+        setIsDraft(true);
         toast.success("Post saved as draft and pending approval");
       } else {
         await onPost({
@@ -674,6 +655,7 @@ export default function LexicalEditor({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
+        setIsDraft(false);
       }
 
       // Reset form if not a draft
@@ -683,7 +665,7 @@ export default function LexicalEditor({
         setScheduleTime("");
         setIsScheduling(false);
       }
-    } catch (error) {
+    } catch {
       toast.error(
         isScheduled ? "Failed to schedule post" : "Failed to publish post"
       );
@@ -699,7 +681,7 @@ export default function LexicalEditor({
         if (media.preview) URL.revokeObjectURL(media.preview);
       });
     };
-  }, []);
+  }, [selectedMedia]);
 
   const handleMediaLibrarySelect = (selectedMedia: MediaLibraryItem[]) => {
     setSelectedMedia((prev) => {
@@ -764,10 +746,12 @@ export default function LexicalEditor({
                 <div className="flex flex-wrap gap-2">
                   {selectedMedia.map((media, index) => (
                     <div key={media.id} className="relative group">
-                      <img
+                      <Image
                         src={media.preview || media.url}
                         alt={media.filename}
-                        className="w-20 h-20  rounded"
+                        className="rounded"
+                        width={80}
+                        height={80}
                       />
                       <button
                         onClick={() => handleRemoveMedia(index)}
