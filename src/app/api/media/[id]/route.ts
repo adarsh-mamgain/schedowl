@@ -4,15 +4,17 @@ import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import { minioClient } from "@/src/lib/minio";
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get("id") ?? "";
+    const { id } = await params;
 
     const media = await prisma.mediaAttachment.findUnique({
       where: { id },

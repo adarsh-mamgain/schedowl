@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
   try {
     // Find invitation
-    const searchParams = request.nextUrl.searchParams;
-    const token = searchParams.get("token") ?? "";
+    const { token } = await params;
 
     const invitation = await prisma.invitation.findUnique({
       where: { token },
