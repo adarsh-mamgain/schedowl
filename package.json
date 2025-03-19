@@ -7,7 +7,8 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
-    "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/services/worker.ts"
+    "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/services/worker.ts",
+    "start:prod": "pm2 start ecosystem.config.js"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
@@ -34,6 +35,7 @@
     "next": "15.1.4",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",
+    "pm2": "^6.0.5",
     "prom-client": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
