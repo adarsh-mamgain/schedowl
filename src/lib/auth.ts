@@ -5,7 +5,6 @@ import { LoginSchema } from "@/src/schema";
 import prisma from "@/src/lib/prisma";
 import bcrypt from "bcrypt";
 import { generateUniqueSlug } from "@/src/lib/common";
-import { Organisation, OrganisationRole } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   session: {
