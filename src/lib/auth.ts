@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { LoginSchema } from "@/src/schema";
 import prisma from "@/src/lib/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { generateUniqueSlug } from "@/src/lib/common";
 
 export const authOptions: NextAuthOptions = {
