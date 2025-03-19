@@ -168,20 +168,22 @@ export default function MediaPage() {
               <Trash2 className="w-4 h-4" />
             </button>
             <div
-              className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
+              className="bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
               onClick={() => {
                 setSelectedMedia(media);
                 setIsPreviewOpen(true);
               }}
             >
               {media.type === "IMAGE" ? (
-                <Image
-                  src={media.url}
-                  alt={media.filename}
-                  className="object-cover"
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+                <div className="aspect-video relative w-full h-full">
+                  <Image
+                    src={media.url}
+                    alt={media.filename}
+                    className="object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
               ) : media.type === "VIDEO" ? (
                 <video
                   src={media.url}

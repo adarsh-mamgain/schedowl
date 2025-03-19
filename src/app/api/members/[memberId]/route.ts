@@ -5,15 +5,17 @@ import prisma from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
 import { requirePermission } from "@/src/lib/permissions";
 
-export async function PUT(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ memberId: string }> }
+) {
   const session = await getServerSession(authOptions);
   if (!session?.organisation.id && !session?.organisationRole.role) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId") ?? "";
+    const { memberId } = await params;
     const { role } = await request.json();
 
     // Validate role
@@ -68,15 +70,17 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ memberId: string }> }
+) {
   const session = await getServerSession(authOptions);
   if (!session?.organisation.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const memberId = searchParams.get("memberId") ?? "";
+    const { memberId } = await params;
 
     // Check if the user has permission to manage users
     requirePermission(session.organisationRole.role as Role, "manage_users");

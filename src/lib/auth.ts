@@ -134,12 +134,20 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.name = token.name as string;
         session.user.image = token.image as string;
-        session.organisation = token.organisation as Organisation;
-        session.organisationRole = token.organisationRole as OrganisationRole;
+        session.organisation = token.organisation as {
+          id: string;
+          name: string;
+          slug: string;
+          image?: string | null;
+        };
+        session.organisationRole = token.organisationRole as {
+          id: string;
+          role: string;
+        };
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
 
@@ -176,6 +184,13 @@ export const authOptions: NextAuthOptions = {
           token.organisationRole = null;
         }
       }
+
+      // Handle organization switch
+      if (trigger === "update" && session?.organisation) {
+        token.organisation = session.organisation;
+        token.organisationRole = session.organisationRole;
+      }
+
       return token;
     },
   },

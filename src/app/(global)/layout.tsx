@@ -76,10 +76,20 @@ export default function GlobalLayout({
       if (!response.ok) throw new Error("Failed to switch organisation");
 
       const data = await response.json();
-      await updateSession(data);
+
+      // Update the session with new organization data
+      await updateSession({
+        ...session,
+        organisation: data.organisation,
+        organisationRole: data.organisationRole,
+      });
+
       setDropdownOpen(false);
       toast.success("Successfully switched organisation");
+
+      // Use router.refresh() instead of window.location.reload()
       router.refresh();
+      router.push(pathname);
     } catch (error) {
       console.error("Error switching organisation:", error);
       toast.error("Failed to switch organisation");

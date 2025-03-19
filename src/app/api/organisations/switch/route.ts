@@ -1,17 +1,20 @@
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { z } from "zod";
+import { authOptions } from "@/src/lib/auth";
+import { getToken } from "next-auth/jwt";
 
 const switchSchema = z.object({
   organisationId: z.string(),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
+    const token = await getToken({ req });
 
-    if (!session?.user?.email) {
+    if (!session?.user?.email || !token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,18 +41,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // Return the new session data
+    // Update the token with new organization data
+    token.organisation = {
+      id: organisationRole.organisation.id,
+      name: organisationRole.organisation.name,
+      slug: organisationRole.organisation.slug,
+      image: organisationRole.organisation.image,
+    };
+    token.organisationRole = {
+      id: organisationRole.id,
+      role: organisationRole.role,
+    };
+
+    // Return the complete organization data
     return NextResponse.json({
-      organisation: {
-        id: organisationRole.organisation.id,
-        name: organisationRole.organisation.name,
-        slug: organisationRole.organisation.slug,
-        image: organisationRole.organisation.image,
-      },
-      organisationRole: {
-        id: organisationRole.id,
-        role: organisationRole.role,
-      },
+      organisation: token.organisation,
+      organisationRole: token.organisationRole,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
