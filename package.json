@@ -5,10 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && prisma migrate deploy && next build",
-    "start": "next start",
+    "start": "next start && pnpm worker",
     "lint": "next lint",
-    "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/services/worker.ts",
-    "start:prod": "pm2 start ecosystem.config.js"
+    "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/services/worker.ts"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
