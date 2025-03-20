@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "prisma generate && prisma migrate deploy && next build",
-    "start": "next start && pnpm worker",
+    "start": "next start",
+    "start:prod": "next start & pnpm worker",
     "lint": "next lint",
     "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/services/worker.ts"
   },
