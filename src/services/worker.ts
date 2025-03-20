@@ -8,8 +8,7 @@ const JOB_PREFIX = "post-linkedin-"; // Unique prefix to prevent duplicates
 
 logger.info("STARTING WORKER...");
 
-let isShuttingDown = false;
-let processingInterval: NodeJS.Timeout;
+let processingInterval: NodeJS.Timeout | null = null;
 
 // Handle graceful shutdown
 const shutdown = async () => {
@@ -99,30 +98,35 @@ async function processScheduledPosts() {
 }
 
 async function cleanup() {
-  isShuttingDown = true;
-
   // Clear the processing interval
   if (processingInterval) {
     clearInterval(processingInterval);
+    processingInterval = null;
   }
 
-  console.log("Worker cleanup completed");
+  // Close the queue
+  await postQueue.close();
+
+  logger.info("Worker: cleanup completed");
 }
 
 // Setup graceful shutdown
 setupGracefulShutdown({
   cleanup,
-  logger: console.log,
+  logger: logger.info,
 });
 
-// Notify PM2 that we're ready to accept connections
+// Notify that we're ready to accept connections
 if (process.send) {
   process.send("ready");
 }
 
 // Start the worker with the interval
 processingInterval = setInterval(processScheduledPosts, 60000); // every minute
+
 // Initial processing
-processScheduledPosts().catch(console.error);
+processScheduledPosts().catch((error) => {
+  logger.error("Worker: Error in initial processing:", error);
+});
 
 logger.info("WORKER STARTED...");
