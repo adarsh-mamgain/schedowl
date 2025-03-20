@@ -1,14 +1,11 @@
 import { postQueue } from "@/src/services/queue";
 import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
-import { setupGracefulShutdown } from "../utils/gracefulShutdown";
 
 const BATCH_SIZE = 50; // Process posts in chunks
 const JOB_PREFIX = "post-linkedin-"; // Unique prefix to prevent duplicates
 
 logger.info("STARTING WORKER...");
-
-let processingInterval: NodeJS.Timeout | null = null;
 
 // Handle graceful shutdown
 const shutdown = async () => {
@@ -97,36 +94,19 @@ async function processScheduledPosts() {
   }
 }
 
-async function cleanup() {
-  // Clear the processing interval
-  if (processingInterval) {
-    clearInterval(processingInterval);
-    processingInterval = null;
+// Start processing posts
+setInterval(async () => {
+  try {
+    await processScheduledPosts();
+  } catch (error) {
+    logger.error("Error processing scheduled posts:", error);
   }
+}, 60000); // Check every minute
 
-  // Close the queue
-  await postQueue.close();
-
-  logger.info("Worker: cleanup completed");
-}
-
-// Setup graceful shutdown
-setupGracefulShutdown({
-  cleanup,
-  logger: logger.info,
-});
-
-// Notify that we're ready to accept connections
-if (process.send) {
-  process.send("ready");
-}
-
-// Start the worker with the interval
-processingInterval = setInterval(processScheduledPosts, 60000); // every minute
-
-// Initial processing
+// Initial run
 processScheduledPosts().catch((error) => {
-  logger.error("Worker: Error in initial processing:", error);
+  logger.error("Error in initial post processing:", error);
+  process.exit(1);
 });
 
 logger.info("WORKER STARTED...");

@@ -4,6 +4,7 @@ import "./globals.css";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { SessionProvider } from "@/src/components/SessionProvider";
+import { PostHogProvider } from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,7 +25,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <SessionProvider session={session}>
+          <PostHogProvider>{children}</PostHogProvider>
+        </SessionProvider>
       </body>
     </html>
   );
