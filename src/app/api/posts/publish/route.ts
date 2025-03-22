@@ -1,14 +1,14 @@
+import { authOptions } from "@/src/lib/auth";
 import { LinkedInService } from "@/src/services/linkedin";
 import logger from "@/src/services/logger";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
-  const requestHeaders = new Headers(request.headers);
-  const userId = requestHeaders.get("x-user-id");
-  const organisationId = requestHeaders.get("x-organisation-id");
+  const session = await getServerSession(authOptions);
 
-  if (!userId || !organisationId) {
+  if (!session?.organisation.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
