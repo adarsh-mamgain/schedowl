@@ -7,8 +7,11 @@ const nextConfig: NextConfig = {
       {
         protocol: process.env.NODE_ENV === "production" ? "https" : "http",
         hostname: process.env.MINIO_ENDPOINT || "localhost",
-        port: process.env.NODE_ENV === "production" ? "" : "9000",
-        pathname: "/media/**",
+        port:
+          process.env.NODE_ENV === "production"
+            ? process.env.MINIO_PORT
+            : "9000",
+        pathname: "/**",
       },
     ],
   },
