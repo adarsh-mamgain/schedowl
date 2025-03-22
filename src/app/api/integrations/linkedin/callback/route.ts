@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
 
   try {
     await LinkedInService.handleCallback(code, state);
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(
+      new URL("/dashboard", process.env.NEXT_PUBLIC_BASE_URL)
+    );
   } catch (error) {
     logger.error(`${request.method} ${request.nextUrl.pathname} ${error}`);
     return NextResponse.json(
