@@ -57,7 +57,6 @@ export default function IntegrationsPage() {
   if (loading) {
     return <div>Loading...</div>;
   }
-  console.log("accounts", accounts);
 
   return (
     <div className="relative">
