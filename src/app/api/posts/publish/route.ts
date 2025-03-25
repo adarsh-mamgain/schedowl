@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { content, linkedInAccountIds } = await request.json();
+    const { content, linkedInAccountIds, mediaIds = [] } = await request.json();
 
     if (!content || !linkedInAccountIds) {
       return NextResponse.json(
@@ -41,12 +41,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate media IDs if provided
+    if (mediaIds.length > 0) {
+      const mediaCount = await prisma.mediaAttachment.count({
+        where: {
+          id: { in: mediaIds },
+          organisationId: session.organisation.id,
+        },
+      });
+
+      if (mediaCount !== mediaIds.length) {
+        return NextResponse.json(
+          { error: "Invalid media IDs provided" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Post to LinkedIn and store in database for each account
     const results = await Promise.all(
       socialAccounts.map(async (account: SocialAccount) => {
         try {
           // Post to LinkedIn
-          await LinkedInService.publishPost(account.id, content);
+          await LinkedInService.publishPost(account.id, content, mediaIds);
 
           // Store in database as published
           const post = await prisma.post.create({
@@ -59,6 +76,18 @@ export async function POST(request: NextRequest) {
               socialAccountId: account.id,
               createdById: session.user.id,
               organisationId: session.organisation.id,
+              media: {
+                create: mediaIds.map((mediaId: string) => ({
+                  media: { connect: { id: mediaId } },
+                })),
+              },
+            },
+            include: {
+              media: {
+                include: {
+                  media: true,
+                },
+              },
             },
           });
 

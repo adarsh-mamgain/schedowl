@@ -656,9 +656,9 @@ export default function LexicalEditor({
 
       // Reset form if not a draft
       if (!isDraft) {
-        setPostContent("");
-        setSelectedMedia([]);
-        setScheduleTime("");
+        // setPostContent("");
+        // setSelectedMedia([]);
+        // setScheduleTime("");
         setIsScheduling(false);
       }
     } catch {

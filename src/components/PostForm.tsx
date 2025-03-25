@@ -85,8 +85,6 @@ export default function PostForm() {
             ? "Post scheduled successfully!"
             : "Post published successfully!"
         );
-        setPostContent("");
-        setSelectedAccounts([]);
       }
     } catch (error) {
       console.error("Post error:", error);
