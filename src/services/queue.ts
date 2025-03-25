@@ -50,16 +50,8 @@ postQueue.process(async (job) => {
       });
     }
 
-    // Get media files if any
-    const mediaFiles =
-      mediaIds.length > 0
-        ? await prisma.mediaAttachment.findMany({
-            where: { id: { in: mediaIds } },
-          })
-        : [];
-
     // Publish post with media
-    await LinkedInService.publishPost(socialAccountId, content, mediaFiles);
+    await LinkedInService.publishPost(socialAccountId, content, mediaIds);
 
     // Update post status to published
     await prisma.post.update({
