@@ -13,6 +13,18 @@ const nextConfig: NextConfig = {
             : "9000",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "prod-dodo-backend-live-mode.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.licdn.com",
+      },
     ],
   },
 };
