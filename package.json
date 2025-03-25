@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack & pnpm worker",
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "start:prod": "next start & pnpm worker",
