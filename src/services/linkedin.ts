@@ -456,6 +456,91 @@ export class LinkedInService {
     }
   }
 
+  static async publishPost(
+    accountId: string,
+    content: string,
+    mediaIds: string[] = []
+  ) {
+    const account = await prisma.socialAccount.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account) throw new Error("LinkedIn account not found");
+
+    // Check if the access token is expired
+    if (new Date() >= new Date(account.expiresAt!)) {
+      account.accessToken = await this.refreshAccessToken(accountId);
+    }
+
+    try {
+      // Get media files if any
+      const mediaFiles =
+        mediaIds.length > 0
+          ? await prisma.mediaAttachment.findMany({
+              where: { id: { in: mediaIds } },
+            })
+          : [];
+
+      // Upload media files if any
+      const mediaAssets = await Promise.all(
+        mediaFiles.map(async (media) => {
+          try {
+            const asset = await this.uploadMedia(accountId, media);
+            return {
+              status: "READY",
+              media: asset,
+              originalUrl: media.url,
+            };
+          } catch (error) {
+            console.error(`Failed to upload media ${media.id}:`, error);
+            throw new Error(`Failed to upload media: ${error}`);
+          }
+        })
+      );
+
+      const postData: LinkedInPostData = {
+        author: `urn:li:person:${account.identifier}`,
+        lifecycleState: "PUBLISHED",
+        specificContent: {
+          "com.linkedin.ugc.ShareContent": {
+            shareCommentary: { text: content.trim() },
+            shareMediaCategory: mediaAssets.length > 0 ? "IMAGE" : "NONE",
+            media: mediaAssets,
+          },
+        },
+        visibility: {
+          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+        },
+      };
+
+      const response = await axios.post(
+        `${LINKEDIN_API_URL}/ugcPosts`,
+        postData,
+        {
+          headers: {
+            Authorization: `Bearer ${account.accessToken}`,
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("LinkedIn API Error:", {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+        });
+        throw new Error(
+          `LinkedIn API Error: ${error.response.data.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
   static async uploadMedia(accountId: string, media: MediaAttachment) {
     const account = await prisma.socialAccount.findUnique({
       where: { id: accountId },
@@ -488,6 +573,7 @@ export class LinkedInService {
           headers: {
             Authorization: `Bearer ${account.accessToken}`,
             "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
           },
         }
       );
@@ -503,78 +589,20 @@ export class LinkedInService {
         responseType: "arraybuffer",
       });
 
+      // Step 3: Upload the media file
       await axios.put(uploadUrl, mediaResponse.data, {
         headers: {
-          "Content-Type": media.mimeType,
+          Authorization: `Bearer ${account.accessToken}`,
+          "Content-Type": media.mimeType || "image/jpeg",
         },
       });
+
+      // Step 4: Wait for media to be processed
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       return asset;
     } catch (error) {
       console.error("Error uploading media to LinkedIn:", error);
-      throw error;
-    }
-  }
-
-  static async publishPost(
-    accountId: string,
-    content: string,
-    mediaFiles: MediaAttachment[] = []
-  ) {
-    const account = await prisma.socialAccount.findUnique({
-      where: { id: accountId },
-    });
-
-    if (!account) throw new Error("LinkedIn account not found");
-
-    // Check if the access token is expired
-    if (new Date() >= new Date(account.expiresAt!)) {
-      account.accessToken = await this.refreshAccessToken(accountId);
-    }
-
-    try {
-      // Upload media files if any
-      const mediaAssets = await Promise.all(
-        mediaFiles.map((media) => this.uploadMedia(accountId, media))
-      );
-
-      const postData: LinkedInPostData = {
-        author: `urn:li:person:${account.identifier}`,
-        lifecycleState: "PUBLISHED",
-        specificContent: {
-          "com.linkedin.ugc.ShareContent": {
-            shareCommentary: { text: content },
-            shareMediaCategory: mediaAssets.length > 0 ? "IMAGE" : "NONE",
-          },
-        },
-        visibility: {
-          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-        },
-      };
-
-      // Add media if present
-      if (mediaAssets.length > 0) {
-        postData.specificContent["com.linkedin.ugc.ShareContent"].media =
-          mediaAssets.map((asset) => ({
-            status: "READY",
-            media: asset,
-          }));
-      }
-
-      const response = await axios.post(
-        `${LINKEDIN_API_URL}/ugcPosts`,
-        postData,
-        {
-          headers: {
-            Authorization: `Bearer ${account.accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      return response.data;
-    } catch (error) {
-      console.error("Error publishing to LinkedIn:", error);
       throw error;
     }
   }

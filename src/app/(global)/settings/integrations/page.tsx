@@ -171,15 +171,14 @@ export default function IntegrationsPage() {
                         {account &&
                           account.metadata &&
                           typeof account.metadata === "object" &&
-                          "profileUrl" in account.metadata &&
+                          "picture" in account.metadata &&
                           typeof account.metadata.picture === "string" && (
-                            <div className="relative h-8 w-8">
+                            <div className="relative h-10 w-10">
                               <Image
                                 className="rounded-full"
                                 src={account.metadata.picture}
                                 alt={account.name || "Profile picture"}
                                 fill
-                                sizes="32px"
                               />
                             </div>
                           )}
@@ -219,7 +218,7 @@ export default function IntegrationsPage() {
                         onClick={() => handleDisconnect(account.id)}
                         className="inline-flex items-center"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         Disconnect
                       </Button>
                     </td>

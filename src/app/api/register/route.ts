@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import prisma from "@/src/lib/prisma";
 import { generateUniqueSlug } from "@/src/lib/common";
 import { RegisterSchema } from "@/src/schema";

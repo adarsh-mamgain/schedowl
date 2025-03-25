@@ -80,13 +80,18 @@ export default function PostForm() {
       const response = await axios.post(endpoint, payload);
 
       if (response.data) {
-        toast.success(
-          post.status === "SCHEDULED"
-            ? "Post scheduled successfully!"
-            : "Post published successfully!"
-        );
+        // Clear all form state
         setPostContent("");
         setSelectedAccounts([]);
+
+        // Show success message
+        if (post.status === "DRAFT") {
+          toast.success("Post saved as draft and pending approval");
+        } else if (post.status === "SCHEDULED") {
+          toast.success("Post scheduled successfully!");
+        } else {
+          toast.success("Post published successfully!");
+        }
       }
     } catch (error) {
       console.error("Post error:", error);
