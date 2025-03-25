@@ -513,8 +513,6 @@ export class LinkedInService {
         },
       };
 
-      console.log("postData", JSON.stringify(postData, null, 2));
-
       const response = await axios.post(
         `${LINKEDIN_API_URL}/ugcPosts`,
         postData,

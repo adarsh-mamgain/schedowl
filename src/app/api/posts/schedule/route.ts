@@ -20,11 +20,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { content, linkedInAccountIds, scheduledFor, mediaIds = [] } = body;
 
-    console.log("content", content);
-    console.log("linkedInAccountIds", linkedInAccountIds);
-    console.log("scheduledFor", scheduledFor);
-    console.log("mediaIds", mediaIds);
-
     if (
       !content ||
       !Array.isArray(linkedInAccountIds) ||
@@ -83,7 +78,7 @@ export async function POST(request: NextRequest) {
             type: "LINKEDIN",
             content,
             status: "SCHEDULED",
-            scheduledFor: new Date(scheduledFor),
+            scheduledFor: new Date(scheduledFor + "Z"), // Store in UTC by appending Z
             createdById: session.user.id,
             organisationId: session.organisation.id,
             socialAccountId: account.id,
