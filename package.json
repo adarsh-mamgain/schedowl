@@ -8,7 +8,7 @@
     "start": "next start",
     "start:prod": "next start & pnpm worker",
     "lint": "next lint",
-    "worker": "pnpm exec ts-node -P tsconfig.worker.json -r tsconfig-paths/register src/workers/scheduler.ts"
+    "worker": "pnpm exec ts-node -P tsconfig.scheduler.json -r tsconfig-paths/register src/workers/scheduler.ts"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",
