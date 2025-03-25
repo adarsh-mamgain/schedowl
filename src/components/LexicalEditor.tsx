@@ -588,7 +588,7 @@ function EditorContent({
       preview: "",
     })) || []
   );
-  const [isDraft, setIsDraft] = useState(initialPost?.status === "DRAFT");
+  // const [isDraft, setIsDraft] = useState(initialPost?.status === "DRAFT");
   const [isLoading, setIsLoading] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
 
@@ -607,7 +607,7 @@ function EditorContent({
         socialAccountIds: selectedAccounts,
         mediaIds: selectedMedia.map((media) => media.id),
       });
-      setIsDraft(true);
+      // setIsDraft(true);
       toast.success("Draft saved successfully!");
     } catch {
       toast.error("Failed to save draft");
@@ -642,7 +642,7 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        setIsDraft(true);
+        // setIsDraft(true);
       } else {
         await onPost({
           content: postContent,
@@ -651,7 +651,7 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        setIsDraft(false);
+        // setIsDraft(false);
       }
 
       // Clear the editor
