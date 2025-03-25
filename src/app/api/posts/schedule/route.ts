@@ -1,7 +1,8 @@
+"use server";
+
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
-import { schedulePost } from "@/src/services/queue";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { requirePermission } from "@/src/lib/permissions";
@@ -78,19 +79,6 @@ export async function POST(request: NextRequest) {
             },
           },
         });
-
-        // Schedule the post
-        await schedulePost(
-          {
-            postId: post.id,
-            content: post.content,
-            mediaIds,
-            socialAccountId,
-            createdById: session.user.id,
-          },
-          new Date(scheduledFor)
-        );
-
         return post;
       })
     );
