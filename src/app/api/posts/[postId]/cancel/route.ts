@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
-import { cancelScheduledPost } from "@/src/services/queue";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
+import { PostStatus } from "@prisma/client";
 
 export async function POST(
   request: NextRequest,
@@ -39,8 +39,13 @@ export async function POST(
     }
 
     // Cancel the scheduled post
-    await cancelScheduledPost(postId);
-
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
+        status: PostStatus.DRAFT,
+        jobId: null,
+      },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error(
