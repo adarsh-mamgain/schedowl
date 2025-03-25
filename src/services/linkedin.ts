@@ -491,9 +491,9 @@ export class LinkedInService {
               media: asset,
               originalUrl: media.url,
             };
-          } catch (error: any) {
+          } catch (error) {
             console.error(`Failed to upload media ${media.id}:`, error);
-            throw new Error(`Failed to upload media: ${error.message}`);
+            throw new Error(`Failed to upload media: ${error}`);
           }
         })
       );
