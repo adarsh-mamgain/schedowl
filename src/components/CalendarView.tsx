@@ -198,7 +198,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     size="small"
                     onClick={() => onCancelPost(selectedPost.id)}
                   >
-                    <Trash2 size={16} className="mr-1" />
+                    <Trash2 size={16} />
                     Cancel
                   </Button>
                 )}
@@ -208,7 +208,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                     size="small"
                     onClick={() => onApprovePost(selectedPost.id)}
                   >
-                    <Check size={16} className="mr-1" />
+                    <Check size={16} />
                     Approve
                   </Button>
                 )}
@@ -217,7 +217,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                   size="small"
                   onClick={() => onEditPost(selectedPost.id)}
                 >
-                  <Edit2 size={16} className="mr-1" />
+                  <Edit2 size={16} />
                   Edit
                 </Button>
                 <Button

@@ -218,7 +218,7 @@ export default function IntegrationsPage() {
                         onClick={() => handleDisconnect(account.id)}
                         className="inline-flex items-center"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         Disconnect
                       </Button>
                     </td>
