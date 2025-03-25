@@ -563,7 +563,7 @@ interface LexicalEditorProps {
   requireApproval?: boolean;
 }
 
-export default function LexicalEditor({
+function EditorContent({
   accounts = [],
   selectedAccounts = [],
   onAccountsChange,
@@ -573,6 +573,7 @@ export default function LexicalEditor({
   onDraftSave,
   requireApproval = false,
 }: LexicalEditorProps) {
+  const [editor] = useLexicalComposerContext();
   const [postContent, setPostContent] = useState(initialPost?.content || "");
   const [scheduleTime, setScheduleTime] = useState(
     initialPost?.scheduledFor || ""
@@ -642,7 +643,6 @@ export default function LexicalEditor({
           mediaIds: selectedMedia.map((media) => media.id),
         });
         setIsDraft(true);
-        toast.success("Post saved as draft and pending approval");
       } else {
         await onPost({
           content: postContent,
@@ -654,15 +654,18 @@ export default function LexicalEditor({
         setIsDraft(false);
       }
 
-      // Reset form if not a draft
-      if (!isDraft) {
-        // setPostContent("");
-        // setSelectedMedia([]);
-        // setScheduleTime("");
-        setIsScheduling(false);
-      }
+      // Clear the editor
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+      });
+
+      // Cleanup object URLs
+      setSelectedMedia([]);
+      setScheduleTime("");
+      setIsScheduling(false);
     } catch {
-      toast.error(
+      throw new Error(
         isScheduled ? "Failed to schedule post" : "Failed to publish post"
       );
     } finally {
@@ -698,117 +701,115 @@ export default function LexicalEditor({
   };
 
   return (
-    <LexicalComposer initialConfig={editorConfig}>
-      <div className="border-x border-x-[#EAECF0] rounded-l-lg rounded-r-lg">
-        <UnicodeToolbarPlugin />
-        <RichTextPlugin
-          contentEditable={
-            <ContentEditable
-              className="outline-none border-none p-4 min-h-[150px]"
-              aria-label="Post content"
-            />
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <OnChangePlugin onChange={setPostContent} />
-        <HistoryPlugin />
-        <AutoFocusPlugin />
-        <ListPlugin />
-
-        {/* Account Selection */}
-        <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
-          <InlineAccountSelect
-            accounts={accounts}
-            selectedAccounts={selectedAccounts}
-            onChange={onAccountsChange}
+    <div className="border-x border-x-[#EAECF0] rounded-l-lg rounded-r-lg">
+      <UnicodeToolbarPlugin />
+      <RichTextPlugin
+        contentEditable={
+          <ContentEditable
+            className="outline-none border-none p-4 min-h-[150px]"
+            aria-label="Post content"
           />
-        </div>
+        }
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <OnChangePlugin onChange={setPostContent} />
+      <HistoryPlugin />
+      <AutoFocusPlugin />
+      <ListPlugin />
 
-        {/* Media Section */}
-        <div className="p-2 border-t border-t-[#EAECF0]">
-          <div className="flex items-center gap-4">
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => setShowMediaLibrary(true)}
-              >
-                <ImageIcon size={16} className="mr-1" />
-                Media Library
-              </Button>
-            </div>
-            <div className="flex">
-              {selectedMedia.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedMedia.map((media, index) => (
-                    <div key={media.id} className="relative group">
-                      <Image
-                        src={media.preview || media.url}
-                        alt={media.filename}
-                        className="rounded"
-                        width={80}
-                        height={80}
-                      />
-                      <button
-                        onClick={() => handleRemoveMedia(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Account Selection */}
+      <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
+        <InlineAccountSelect
+          accounts={accounts}
+          selectedAccounts={selectedAccounts}
+          onChange={onAccountsChange}
+        />
+      </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
+      {/* Media Section */}
+      <div className="p-2 border-t border-t-[#EAECF0]">
+        <div className="flex items-center gap-4">
           <div className="flex gap-2">
             <Button
               variant="secondary"
               size="small"
-              onClick={handleDraftSave}
-              disabled={isLoading}
+              onClick={() => setShowMediaLibrary(true)}
             >
-              Save draft
+              <ImageIcon size={16} className="mr-1" />
+              Media Library
             </Button>
           </div>
-          <div className="relative flex gap-2">
-            {isScheduling && (
-              <input
-                type="datetime-local"
-                value={scheduleTime}
-                onChange={(e) => setScheduleTime(e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                className="absolute w-full bottom-full left-0 border p-2 mb-1 rounded shadow-lg"
-              />
+          <div className="flex">
+            {selectedMedia.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedMedia.map((media, index) => (
+                  <div key={media.id} className="relative group">
+                    <Image
+                      src={media.preview || media.url}
+                      alt={media.filename}
+                      className="rounded"
+                      width={80}
+                      height={80}
+                    />
+                    <button
+                      onClick={() => handleRemoveMedia(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (isScheduling && scheduleTime) {
-                  handlePost(true);
-                } else {
-                  setIsScheduling(!isScheduling);
-                }
-              }}
-              size="small"
-              disabled={isLoading}
-            >
-              <Calendar size={16} />
-              {isScheduling ? "Schedule Post" : "Schedule"}
-            </Button>
-            <Button
-              onClick={() => handlePost(false)}
-              size="small"
-              disabled={isLoading}
-            >
-              {requireApproval ? "Submit for Approval" : "Publish"}
-              <SendHorizonal size={16} />
-            </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            size="small"
+            onClick={handleDraftSave}
+            disabled={isLoading}
+          >
+            Save draft
+          </Button>
+        </div>
+        <div className="relative flex gap-2">
+          {isScheduling && (
+            <input
+              type="datetime-local"
+              value={scheduleTime}
+              onChange={(e) => setScheduleTime(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              className="absolute w-full bottom-full left-0 border p-2 mb-1 rounded shadow-lg"
+            />
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (isScheduling && scheduleTime) {
+                handlePost(true);
+              } else {
+                setIsScheduling(!isScheduling);
+              }
+            }}
+            size="small"
+            disabled={isLoading}
+          >
+            <Calendar size={16} />
+            {isScheduling ? "Schedule Post" : "Schedule"}
+          </Button>
+          <Button
+            onClick={() => handlePost(false)}
+            size="small"
+            disabled={isLoading}
+          >
+            {requireApproval ? "Submit for Approval" : "Publish"}
+            <SendHorizonal size={16} />
+          </Button>
         </div>
       </div>
 
@@ -818,6 +819,14 @@ export default function LexicalEditor({
         onSelect={handleMediaLibrarySelect}
         selectedMedia={selectedMedia}
       />
+    </div>
+  );
+}
+
+export default function LexicalEditor(props: LexicalEditorProps) {
+  return (
+    <LexicalComposer initialConfig={editorConfig}>
+      <EditorContent {...props} />
     </LexicalComposer>
   );
 }

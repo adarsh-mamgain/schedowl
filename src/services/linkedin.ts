@@ -467,11 +467,6 @@ export class LinkedInService {
 
     if (!account) throw new Error("LinkedIn account not found");
 
-    // Validate content
-    if (!content || content.trim().length < 2) {
-      throw new Error("Post content must be at least 2 characters long");
-    }
-
     // Check if the access token is expired
     if (new Date() >= new Date(account.expiresAt!)) {
       account.accessToken = await this.refreshAccessToken(accountId);
@@ -495,8 +490,6 @@ export class LinkedInService {
               status: "READY",
               media: asset,
               originalUrl: media.url,
-              originalWidth: 1200,
-              originalHeight: 627,
             };
           } catch (error: any) {
             console.error(`Failed to upload media ${media.id}:`, error);
