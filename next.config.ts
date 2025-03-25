@@ -29,4 +29,6 @@ const nextConfig: NextConfig = {
   },
 };
 
+console.log("----------nextConfig----------", nextConfig.images);
+
 export default nextConfig;
