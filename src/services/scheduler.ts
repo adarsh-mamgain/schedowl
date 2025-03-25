@@ -3,6 +3,13 @@ import prisma from "@/src/lib/prisma";
 import { linkedInService, LinkedInService } from "./linkedin";
 import logger from "./logger";
 import { PostStatus } from "@prisma/client";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Extend dayjs with plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 class SchedulerService {
   private static instance: SchedulerService;
@@ -45,7 +52,7 @@ class SchedulerService {
 
   private async processScheduledPosts() {
     logger.info(`Processing scheduled posts`);
-    const now = new Date();
+    const now = dayjs().utc().toDate();
 
     // Find posts that are scheduled for now or earlier
     const posts = await prisma.post.findMany({
@@ -79,7 +86,7 @@ class SchedulerService {
           where: { id: post.id },
           data: {
             status: PostStatus.PUBLISHED,
-            publishedAt: new Date(),
+            publishedAt: dayjs().utc().toDate(),
           },
         });
 

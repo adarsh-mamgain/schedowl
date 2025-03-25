@@ -7,6 +7,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { requirePermission } from "@/src/lib/permissions";
 import { Role, SocialAccount } from "@prisma/client";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// Extend dayjs with plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export async function POST(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
@@ -69,6 +76,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Convert the scheduled time to UTC
+    const utcScheduledTime = dayjs(scheduledFor).utc().toDate();
+    console.log(utcScheduledTime, "UTC SCHEDULED TIME");
+
     // Create posts for each social account
     const posts = await Promise.all(
       socialAccounts.map(async (account: SocialAccount) => {
@@ -78,7 +89,7 @@ export async function POST(request: NextRequest) {
             type: "LINKEDIN",
             content,
             status: "SCHEDULED",
-            scheduledFor: new Date(scheduledFor),
+            scheduledFor: utcScheduledTime,
             createdById: session.user.id,
             organisationId: session.organisation.id,
             socialAccountId: account.id,

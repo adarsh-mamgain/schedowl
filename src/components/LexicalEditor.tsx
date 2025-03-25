@@ -633,12 +633,17 @@ function EditorContent({
         return;
       }
 
+      // Convert local time to UTC if scheduling
+      const scheduledFor = isScheduled
+        ? new Date(scheduleTime).toISOString()
+        : undefined;
+
       // If approval is required, save as draft
       if (requireApproval) {
         await onPost({
           content: postContent,
           status: "DRAFT",
-          scheduledFor: isScheduled ? scheduleTime : undefined,
+          scheduledFor,
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
@@ -647,7 +652,7 @@ function EditorContent({
         await onPost({
           content: postContent,
           status: isScheduled ? "SCHEDULED" : "PUBLISHED",
-          scheduledFor: isScheduled ? scheduleTime : undefined,
+          scheduledFor,
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
@@ -735,7 +740,7 @@ function EditorContent({
               size="small"
               onClick={() => setShowMediaLibrary(true)}
             >
-              <ImageIcon size={16} className="mr-1" />
+              <ImageIcon size={16} />
               Media Library
             </Button>
           </div>
