@@ -25,7 +25,6 @@ interface Post {
     id: string;
     name: string;
     type: string;
-    profileUrl: string | null;
   };
   createdBy: {
     id: string;
