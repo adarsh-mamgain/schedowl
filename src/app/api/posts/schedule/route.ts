@@ -6,7 +6,7 @@ import logger from "@/src/services/logger";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { requirePermission } from "@/src/lib/permissions";
-import { Role } from "@prisma/client";
+import { Role, SocialAccount } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
@@ -18,12 +18,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { content, socialAccountIds, scheduledFor, mediaIds = [] } = body;
+    const { content, linkedInAccountIds, scheduledFor, mediaIds = [] } = body;
+
+    console.log("content", content);
+    console.log("linkedInAccountIds", linkedInAccountIds);
+    console.log("scheduledFor", scheduledFor);
+    console.log("mediaIds", mediaIds);
 
     if (
       !content ||
-      !Array.isArray(socialAccountIds) ||
-      socialAccountIds.length === 0 ||
+      !Array.isArray(linkedInAccountIds) ||
+      linkedInAccountIds.length === 0 ||
       !scheduledFor
     ) {
       return NextResponse.json(
@@ -34,6 +39,23 @@ export async function POST(request: NextRequest) {
 
     // Check if the user has permission to manage posts
     requirePermission(session.organisationRole.role as Role, "manage_posts");
+
+    /// Get the social accounts
+    const socialAccounts = await prisma.socialAccount.findMany({
+      where: {
+        id: {
+          in: linkedInAccountIds,
+        },
+        organisationId: session.organisation.id,
+      },
+    });
+
+    if (socialAccounts.length !== linkedInAccountIds.length) {
+      return NextResponse.json(
+        { error: "Some social accounts not found" },
+        { status: 400 }
+      );
+    }
 
     // Validate media IDs if provided
     if (mediaIds.length > 0) {
@@ -54,17 +76,17 @@ export async function POST(request: NextRequest) {
 
     // Create posts for each social account
     const posts = await Promise.all(
-      socialAccountIds.map(async (socialAccountId) => {
+      socialAccounts.map(async (account: SocialAccount) => {
         // Create the post
         const post = await prisma.post.create({
           data: {
-            content,
             type: "LINKEDIN",
-            scheduledFor: new Date(scheduledFor),
+            content,
             status: "SCHEDULED",
-            socialAccountId,
+            scheduledFor: new Date(scheduledFor),
             createdById: session.user.id,
             organisationId: session.organisation.id,
+            socialAccountId: account.id,
             media: {
               create: mediaIds.map((mediaId: string) => ({
                 media: { connect: { id: mediaId } },
@@ -79,6 +101,7 @@ export async function POST(request: NextRequest) {
             },
           },
         });
+
         return post;
       })
     );
