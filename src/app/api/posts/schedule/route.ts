@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
             type: "LINKEDIN",
             content,
             status: "SCHEDULED",
-            scheduledFor: new Date(scheduledFor + "Z"), // Store in UTC by appending Z
+            scheduledFor: new Date(scheduledFor),
             createdById: session.user.id,
             organisationId: session.organisation.id,
             socialAccountId: account.id,
