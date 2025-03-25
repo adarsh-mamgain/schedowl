@@ -57,6 +57,7 @@ export default function IntegrationsPage() {
   if (loading) {
     return <div>Loading...</div>;
   }
+  console.log("accounts", accounts);
 
   return (
     <div className="relative">
@@ -171,15 +172,14 @@ export default function IntegrationsPage() {
                         {account &&
                           account.metadata &&
                           typeof account.metadata === "object" &&
-                          "profileUrl" in account.metadata &&
+                          "picture" in account.metadata &&
                           typeof account.metadata.picture === "string" && (
-                            <div className="relative h-8 w-8">
+                            <div className="relative h-10 w-10">
                               <Image
                                 className="rounded-full"
                                 src={account.metadata.picture}
                                 alt={account.name || "Profile picture"}
                                 fill
-                                sizes="32px"
                               />
                             </div>
                           )}

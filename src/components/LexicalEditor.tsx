@@ -215,7 +215,6 @@ interface LinkedInAccount {
   type: string;
   metadata?: {
     picture?: string;
-    profileUrl?: string;
   };
 }
 
