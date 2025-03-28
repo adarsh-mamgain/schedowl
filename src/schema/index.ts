@@ -55,3 +55,25 @@ export const ProfileSchema = z.object({
     ),
   image: z.any().nullable(),
 });
+
+export const CreateSubscriptionSchema = z.object({
+  billing: z.object({
+    city: z.string().min(1, "City is required"),
+    country: z.string().length(2, "Country must be 2 characters"),
+    state: z.string().min(1, "State is required"),
+    street: z.string().min(1, "Street is required"),
+    zipcode: z.string().min(1, "Zipcode is required"),
+  }),
+  customer: z.object({
+    email: z.string().email("Invalid email address"),
+    name: z.string().min(1, "Name is required"),
+  }),
+  product_id: z.string(),
+  quantity: z.number().default(1),
+  discount_code: z.string().nullable().optional(),
+  metadata: z.record(z.string()).optional(),
+  payment_link: z.boolean().default(true),
+  return_url: z.string().nullable().optional(),
+  tax_id: z.string().nullable().optional(),
+  trial_period_days: z.number().min(0).max(10000).nullable().optional(),
+});

@@ -13,14 +13,15 @@ datasource db {
 
 // Represents application users who can be members of multiple organisations
 model User {
-  id            String    @id @default(cuid())
-  name          String    @db.VarChar(255)
-  email         String    @unique @db.VarChar(255)
+  id            String         @id @default(cuid())
+  name          String         @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
   password      String? // Hashed password
   emailVerified DateTime? // Timestamp of email verification
-  image         String?   @db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  image         String?        @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  payments      Payment[]
 
   // Relations
   organisations OrganisationRole[]
@@ -218,4 +219,76 @@ enum Role {
   OWNER // Full control
   ADMIN // Management access
   MEMBER // Basic access
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  RENEWED
+  ON_HOLD
+  PAUSED
+  CANCELLED
+  FAILED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  SUCCEEDED
+  FAILED
+  PROCESSING
+  CANCELLED
+}
+
+enum DisputeStatus {
+  OPENED
+  EXPIRED
+  ACCEPTED
+  CANCELLED
+  CHALLENGED
+  WON
+  LOST
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  subscriptionId     String             @unique // dodo subscription_id
+  customerId         String // dodo customer_id
+  productId          String // dodo product_id
+  subscriptionStatus SubscriptionStatus
+  currency        String
+  recurringAmount Int // Amount in cents
+  quantity        Int       @default(1)
+  taxInclusive    Boolean   @default(true)
+  trialPeriodDays Int       @default(0)
+  periodInterval  String // Year, Month, etc.
+  periodCount     Int // Number of periods
+  nextBillingDate DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  cancelledAt     DateTime?
+  customerName    String
+  customerEmail   String
+  metadata        Json? // For any additional metadata
+  payments        Payment[]
+
+  @@index([subscriptionId])
+  @@index([customerId])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  paymentId         String        @unique // dodo payment_id
+  subscriptionId    String? // Optional as it might be a one-time payment
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [subscriptionId])
+  status            PaymentStatus
+  customerId        String // dodo customer_id
+  metadata          Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  userId          String // Reference to your app's user
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([paymentId])
+  @@index([customerId])
 }
