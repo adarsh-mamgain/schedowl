@@ -5,7 +5,6 @@ import {
   Check,
   Clock,
   User,
-  Image as ImageIcon,
   AlertCircle,
 } from "lucide-react";
 import Button from "@/src/components/Button";
@@ -61,7 +60,7 @@ export default function PostDialog({
   post,
   onClose,
   onCancelPost,
-  onEditPost,
+  // onEditPost,
   onApprovePost,
   onUpdatePost,
 }: PostDialogProps) {

@@ -1,5 +1,11 @@
 ## Todo
 
+- add ELK
+- create the highest prod version
+- logo update
+- input field, buttons colors
+- forgot password
+
 - change the LinkedIn product APIs
 
 - [x] build the whole available UI
