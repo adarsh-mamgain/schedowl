@@ -12,9 +12,6 @@ import {
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import { PostStatus } from "@prisma/client";
-import PostDialog from "./PostDialog";
-import axios from "axios";
-import { toast } from "react-toastify";
 
 interface Post {
   id: string;
@@ -122,15 +119,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
-  const handleUpdatePost = async (postId: string, content: string) => {
-    try {
-      await axios.patch(`/api/posts/${postId}`, { content });
-      toast.success("Post updated successfully");
-    } catch (error) {
-      toast.error("Failed to update post");
-      throw error;
-    }
-  };
+  // const handleUpdatePost = async (postId: string, content: string) => {
+  //   try {
+  //     await axios.patch(`/api/posts/${postId}`, { content });
+  //     toast.success("Post updated successfully");
+  //   } catch (error) {
+  //     toast.error("Failed to update post");
+  //     throw error;
+  //   }
+  // };
 
   return (
     <div className="space-y-4">

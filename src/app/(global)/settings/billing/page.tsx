@@ -28,7 +28,11 @@ export default function BillingPage() {
   const [isMonthly, setIsMonthly] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<
+    | (typeof MONTHLY_SUBSCRIPTION_PLANS)[0]
+    | (typeof YEARLY_SUBSCRIPTION_PLANS)[0]
+    | null
+  >(null);
   const [supportedCountries, setSupportedCountries] = useState<string[]>([]);
   const [isLoadingCountries, setIsLoadingCountries] = useState(true);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
@@ -78,7 +82,6 @@ export default function BillingPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(CreateSubscriptionSchema),
@@ -99,13 +102,11 @@ export default function BillingPage() {
     },
   });
 
-  // Watch form values
-  const formValues = watch();
-  useEffect(() => {
-    console.log("Current form values:", formValues);
-  }, [formValues]);
-
-  const handleChoosePlan = (plan: any) => {
+  const handleChoosePlan = (
+    plan:
+      | (typeof MONTHLY_SUBSCRIPTION_PLANS)[0]
+      | (typeof YEARLY_SUBSCRIPTION_PLANS)[0]
+  ) => {
     setSelectedPlan(plan);
     setValue("product_id", plan.id); // Set the product_id in the form
     setShowSubscriptionForm(true);
@@ -132,7 +133,7 @@ export default function BillingPage() {
       }
 
       router.push(responseData.payment_link);
-    } catch (error) {
+    } catch {
       toast.error("Failed to create subscription");
     } finally {
       setIsLoading(false);

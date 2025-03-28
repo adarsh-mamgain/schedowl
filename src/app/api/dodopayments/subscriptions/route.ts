@@ -65,7 +65,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   const subscriptions = await dodopayments.subscriptions.list();
   return NextResponse.json(subscriptions);
 }
