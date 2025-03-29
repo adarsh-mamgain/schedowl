@@ -1,10 +1,29 @@
 ## Todo
 
 - add ELK
-- create the highest prod version
 - logo update
 - input field, buttons colors
 - forgot password
+
+- company page scheduling
+- ⁠basic analytics in dashboard page
+- ⁠bug fixes
+- create the highest prod account setup https://app.schedowl.com
+- ⁠billing and restrictions for the product
+- ⁠emailing service
+
+- calendar day and week view
+- allow PDF for media
+- remove unwanted UIs while loading
+
+SchedOwl
+SnapUI
+EventHQ Connect
+EventHQ Checkin
+Typill
+Pikaboo
+Poker-Go
+Battle-Game
 
 - change the LinkedIn product APIs
 
