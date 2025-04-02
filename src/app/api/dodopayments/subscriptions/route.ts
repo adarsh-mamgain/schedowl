@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       discount_code,
       metadata,
       payment_link,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
+      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings/billing`,
       tax_id,
       trial_period_days,
     });
