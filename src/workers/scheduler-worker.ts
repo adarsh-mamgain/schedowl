@@ -1,57 +1,35 @@
-import cron from "node-cron";
 import prisma from "@/src/lib/prisma";
-import { linkedInService, LinkedInService } from "./linkedin";
-import logger from "./logger";
+import { linkedInService, LinkedInService } from "@/src/services/linkedin";
+import logger from "@/src/services/logger";
 import { PostStatus } from "@prisma/client";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import { BaseWorker } from "./base-worker";
 
 // Extend dayjs with plugins
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-class SchedulerService {
-  private static instance: SchedulerService;
-  private cronJob: cron.ScheduledTask | null = null;
+export class SchedulerWorker extends BaseWorker {
+  private static _instance: SchedulerWorker;
 
-  private constructor() {}
-
-  public static getInstance(): SchedulerService {
-    if (!SchedulerService.instance) {
-      SchedulerService.instance = new SchedulerService();
-    }
-    return SchedulerService.instance;
+  private constructor() {
+    super("Scheduler Worker");
   }
 
-  public start() {
-    if (this.cronJob) {
-      logger.info("Scheduler is already running");
-      return;
+  public static getInstance(): SchedulerWorker {
+    if (!SchedulerWorker._instance) {
+      SchedulerWorker._instance = new SchedulerWorker();
     }
-
-    // Run every minute to check for scheduled posts
-    this.cronJob = cron.schedule("* * * * *", async () => {
-      try {
-        await this.processScheduledPosts();
-      } catch (error) {
-        logger.error("Error processing scheduled posts:", error);
-      }
-    });
-
-    logger.info("Scheduler started successfully");
+    return SchedulerWorker._instance;
   }
 
-  public stop() {
-    if (this.cronJob) {
-      this.cronJob.stop();
-      this.cronJob = null;
-      logger.info("Scheduler stopped successfully");
-    }
+  protected getSchedule(): string {
+    return "* * * * *"; // Every minute in both dev and prod
   }
 
-  private async processScheduledPosts() {
-    logger.info(`Processing scheduled posts`);
+  protected async process(): Promise<void> {
     const now = dayjs().utc().toDate();
 
     // Find posts that are scheduled for now or earlier
@@ -101,5 +79,3 @@ class SchedulerService {
     }
   }
 }
-
-export const schedulerService = SchedulerService.getInstance();
