@@ -4,16 +4,26 @@ import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
 import logger from "@/src/services/logger";
 import prisma from "@/src/lib/prisma";
-import { sendSubscriptionEmail } from "@/src/services/email";
-import { addDays } from "date-fns";
-// import { WebhookPayload } from "@/types/api-types";
-// import {
-//   handleOneTimePayment,
-//   handleSubscription,
-//   updateSubscriptionInDatabase,
-// } from "@/lib/api-functions";
+import { sendEmail } from "@/src/services/email";
+import { PaymentStatus, SubscriptionStatus } from "@prisma/client";
 
 const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
+
+// Helper functions for feature management
+function getFeaturesFromAmount(amount: number, currency: string) {
+  // Convert amount to USD if needed for consistent comparison
+  const amountInUSD = currency === "INR" ? amount / 83 : amount;
+
+  return {
+    maxWorkspaces: amountInUSD >= 79000 ? 10 : amountInUSD >= 49000 ? 5 : 1,
+    maxSocialAccounts:
+      amountInUSD >= 79000 ? 50 : amountInUSD >= 49000 ? 20 : 5,
+    aiTokens: amountInUSD >= 79000 ? 1000 : amountInUSD >= 49000 ? 500 : 100,
+    canSchedule: true,
+    canUseAI: amountInUSD >= 49000,
+    canUseAnalytics: amountInUSD >= 79000,
+  };
+}
 
 export async function POST(request: Request) {
   const headersList = await headers();
@@ -44,190 +54,180 @@ export async function POST(request: Request) {
       );
     }
 
+    const features = getFeaturesFromAmount(
+      payload.data.total_amount || payload.data.recurring_pre_tax_amount,
+      payload.data.currency
+    );
+
     switch (payload.type) {
       case "payment.succeeded": {
         // Create payment record
-        const payment = await prisma.payment.create({
-          data: {
-            paymentId: payload.data.payment_id,
-            subscriptionId: payload.data.subscription_id,
-            status: "SUCCEEDED",
-            customerId: payload.data.customer.customer_id,
-            metadata: payload.data,
-            userId: user.id,
-          },
-        });
-
-        // If this is a subscription payment, update subscription status
-        if (payload.data.subscription_id) {
-          await prisma.subscription.update({
-            where: { subscriptionId: payload.data.subscription_id },
-            data: {
-              subscriptionStatus: "ACTIVE",
-              nextBillingDate: new Date(payload.data.next_billing_date),
-              updatedAt: new Date(),
-            },
-          });
-
-          // Send success email
-          await sendSubscriptionEmail({
-            type: "SUBSCRIPTION_RENEWED",
-            user,
-            subscription: {
-              nextBillingDate: new Date(payload.data.next_billing_date),
-              amount: payload.data.total_amount / 100, // Convert from cents
-              currency: payload.data.currency,
-            },
-          });
-        } else {
-          // Handle one-time payment
-          // Update user's billing status and features
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              billingStatus: "ACTIVE",
-              trialEndsAt: null,
-              features: {
-                maxWorkspaces: getMaxWorkspaces(payload.data.total_amount),
-                maxSocialAccounts: getMaxSocialAccounts(
-                  payload.data.total_amount
-                ),
-                canSchedule: true,
-              },
-            },
-          });
-
-          // Send success email for one-time payment
-          await sendSubscriptionEmail({
-            type: "PAYMENT_SUCCESS",
-            user,
-            payment: {
-              amount: payload.data.total_amount / 100,
-              currency: payload.data.currency,
-            },
-          });
-        }
-        break;
-      }
-
-      case "payment.failed": {
         await prisma.payment.create({
           data: {
             paymentId: payload.data.payment_id,
             subscriptionId: payload.data.subscription_id,
-            status: "FAILED",
-            customerId: payload.data.customer.customer_id,
-            metadata: payload.data,
+            status: PaymentStatus.SUCCEEDED,
+            payload: payload,
             userId: user.id,
           },
         });
 
-        if (payload.data.subscription_id) {
-          // Update subscription status
-          await prisma.subscription.update({
-            where: { subscriptionId: payload.data.subscription_id },
-            data: {
-              subscriptionStatus: "FAILED",
-              updatedAt: new Date(),
-            },
-          });
+        // Update user features
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            features: features,
+          },
+        });
 
-          // Send failure email
-          await sendSubscriptionEmail({
-            type: "PAYMENT_FAILED",
-            user,
-            subscription: {
-              nextBillingDate: new Date(payload.data.next_billing_date),
-              amount: payload.data.total_amount / 100,
-              currency: payload.data.currency,
-            },
-          });
-        }
+        // Send success email
+        await sendEmail({
+          to: user.email,
+          subject: "Payment Successful - SchedOwl",
+          html: `
+            <h1>Payment Successful</h1>
+            <p>Your payment of ${payload.data.total_amount / 100} ${
+            payload.data.currency
+          } has been processed successfully.</p>
+            <p>Your account features have been updated:</p>
+            <ul>
+              <li>Workspaces: ${features.maxWorkspaces}</li>
+              <li>Social Accounts: ${features.maxSocialAccounts}</li>
+              <li>AI Tokens: ${features.aiTokens}</li>
+              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+            </ul>
+            <p>Thank you for your business!</p>
+          `,
+        });
         break;
       }
 
       case "subscription.active": {
-        const subscription = await prisma.subscription.create({
+        // Create subscription record
+        await prisma.subscription.create({
           data: {
             subscriptionId: payload.data.subscription_id,
-            customerId: payload.data.customer.customer_id,
-            productId: payload.data.product_id,
-            subscriptionStatus: "ACTIVE",
-            currency: payload.data.currency,
-            recurringAmount: payload.data.recurring_pre_tax_amount,
-            quantity: payload.data.quantity,
-            taxInclusive: payload.data.tax_inclusive,
-            trialPeriodDays: payload.data.trial_period_days,
-            periodInterval: payload.data.subscription_period_interval,
-            periodCount: payload.data.subscription_period_count,
+            subscriptionStatus: SubscriptionStatus.ACTIVE,
             nextBillingDate: new Date(payload.data.next_billing_date),
-            customerName: payload.data.customer.name,
-            customerEmail: payload.data.customer.email,
-            metadata: payload.data.metadata,
+            payload: payload,
           },
         });
 
-        // Update user's billing status and features
+        // Update user features
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            billingStatus: "ACTIVE",
-            trialEndsAt: null,
-            features: {
-              maxWorkspaces: getMaxWorkspaces(
-                payload.data.recurring_pre_tax_amount
-              ),
-              maxSocialAccounts: getMaxSocialAccounts(
-                payload.data.recurring_pre_tax_amount
-              ),
-              canSchedule: true,
-            },
+            features: features,
           },
         });
 
         // Send welcome email
-        await sendSubscriptionEmail({
-          type: "SUBSCRIPTION_ACTIVE",
-          user,
-          subscription: {
+        await sendEmail({
+          to: user.email,
+          subject: "Welcome to SchedOwl! Your subscription is active",
+          html: `
+            <h1>Welcome to SchedOwl!</h1>
+            <p>Thank you for subscribing to SchedOwl. Your subscription is now active.</p>
+            <p>Next billing date: ${new Date(
+              payload.data.next_billing_date
+            ).toLocaleDateString()}</p>
+            <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
+            payload.data.currency
+          }</p>
+            <p>Your account features:</p>
+            <ul>
+              <li>Workspaces: ${features.maxWorkspaces}</li>
+              <li>Social Accounts: ${features.maxSocialAccounts}</li>
+              <li>AI Tokens: ${features.aiTokens}</li>
+              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+            </ul>
+          `,
+        });
+        break;
+      }
+
+      case "subscription.renewed": {
+        // Update subscription record
+        await prisma.subscription.update({
+          where: { subscriptionId: payload.data.subscription_id },
+          data: {
+            subscriptionStatus: SubscriptionStatus.RENEWED,
             nextBillingDate: new Date(payload.data.next_billing_date),
-            amount: payload.data.recurring_pre_tax_amount / 100,
-            currency: payload.data.currency,
+            updatedAt: new Date(),
           },
+        });
+
+        // Update user features
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            features: features,
+          },
+        });
+
+        // Send renewal email
+        await sendEmail({
+          to: user.email,
+          subject: "Subscription Renewed - SchedOwl",
+          html: `
+            <h1>Subscription Renewed</h1>
+            <p>Your SchedOwl subscription has been successfully renewed.</p>
+            <p>Next billing date: ${new Date(
+              payload.data.next_billing_date
+            ).toLocaleDateString()}</p>
+            <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
+            payload.data.currency
+          }</p>
+            <p>Your account features:</p>
+            <ul>
+              <li>Workspaces: ${features.maxWorkspaces}</li>
+              <li>Social Accounts: ${features.maxSocialAccounts}</li>
+              <li>AI Tokens: ${features.aiTokens}</li>
+              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+            </ul>
+          `,
         });
         break;
       }
 
       case "subscription.cancelled": {
+        // Update subscription record
         await prisma.subscription.update({
           where: { subscriptionId: payload.data.subscription_id },
           data: {
-            subscriptionStatus: "CANCELLED",
-            cancelledAt: new Date(payload.data.cancelled_at),
+            subscriptionStatus: SubscriptionStatus.CANCELLED,
             updatedAt: new Date(),
           },
         });
 
-        // Update user's billing status
+        // Reset user features to basic
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            billingStatus: "CANCELLED",
             features: {
               maxWorkspaces: 1,
               maxSocialAccounts: 1,
-              canSchedule: false,
+              aiTokens: 100,
+              canSchedule: true,
+              canUseAI: false,
+              canUseAnalytics: false,
             },
           },
         });
 
         // Send cancellation email
-        await sendSubscriptionEmail({
-          type: "SUBSCRIPTION_CANCELLED",
-          user,
-          subscription: {
-            cancelledAt: new Date(payload.data.cancelled_at),
-          },
+        await sendEmail({
+          to: user.email,
+          subject: "Subscription Cancelled - SchedOwl",
+          html: `
+            <h1>Subscription Cancelled</h1>
+            <p>Your SchedOwl subscription has been cancelled.</p>
+            <p>You can still use your account until the end of your billing period.</p>
+            <p>To reactivate your subscription, please visit our billing page.</p>
+          `,
         });
         break;
       }
@@ -251,19 +251,4 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-}
-
-// Helper functions
-function getMaxWorkspaces(amount: number): number {
-  // Define workspace limits based on subscription amount
-  if (amount >= 79000) return 10; // Super plan
-  if (amount >= 49000) return 5; // Pro plan
-  return 1; // Basic plan
-}
-
-function getMaxSocialAccounts(amount: number): number {
-  // Define social account limits based on subscription amount
-  if (amount >= 79000) return 50; // Super plan
-  if (amount >= 49000) return 20; // Pro plan
-  return 5; // Basic plan
 }
