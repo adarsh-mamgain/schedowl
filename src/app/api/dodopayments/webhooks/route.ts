@@ -172,7 +172,6 @@ export async function POST(request: Request) {
           data: {
             subscriptionStatus: SubscriptionStatus.RENEWED,
             nextBillingDate: new Date(payload.data.next_billing_date),
-            updatedAt: new Date(),
           },
         });
 
@@ -223,7 +222,6 @@ export async function POST(request: Request) {
           where: { subscriptionId: payload.data.subscription_id },
           data: {
             subscriptionStatus: SubscriptionStatus.CANCELLED,
-            updatedAt: new Date(),
           },
         });
 
