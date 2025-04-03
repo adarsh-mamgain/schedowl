@@ -4,7 +4,7 @@ import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
 import { requirePermission } from "@/src/lib/permissions";
-import { sendEmail } from "@/src/lib/mailer";
+import { sendEmail } from "@/src/services/email";
 
 export async function POST(
   request: NextRequest,
