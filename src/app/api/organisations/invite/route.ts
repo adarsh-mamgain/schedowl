@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import crypto from "crypto";
-import { sendEmail } from "@/src/lib/mailer";
+import { sendEmail } from "@/src/services/email";
 
 const inviteSchema = z.object({
   email: z.string().email(),

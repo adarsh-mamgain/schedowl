@@ -35,6 +35,34 @@ const protectedRoutes: Record<
   "/api/ai": [{ method: "POST", permission: "use_ai_tools" }],
 };
 
+// Security headers configuration
+const securityHeaders = {
+  "Content-Security-Policy": `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    block-all-mixed-content;
+  `
+    .replace(/\s+/g, " ")
+    .trim(),
+  "X-DNS-Prefetch-Control": "on",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Frame-Options": "SAMEORIGIN",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
+  "Cross-Origin-Opener-Policy": "same-origin",
+};
+
 export async function middleware(request: NextRequest) {
   const token = (await getToken({ req: request })) as CustomToken;
   const isAuthPage =
@@ -43,51 +71,63 @@ export async function middleware(request: NextRequest) {
   const isInvitationPage = request.nextUrl.pathname.startsWith("/invitations");
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
 
+  let response: NextResponse;
+
   if (isAuthPage) {
     if (token) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      response = NextResponse.redirect(new URL("/dashboard", request.url));
+    } else {
+      response = NextResponse.next();
     }
-    return NextResponse.next();
-  }
+  } else if (isInvitationPage) {
+    response = NextResponse.next();
+  } else if (!token && !isApiRoute) {
+    response = NextResponse.redirect(new URL("/login", request.url));
+  } else {
+    // Check API route permissions
+    if (isApiRoute && token) {
+      const path = request.nextUrl.pathname;
+      const method = request.method;
+      const route = Object.keys(protectedRoutes).find((route) =>
+        path.startsWith(route)
+      );
 
-  if (isInvitationPage) {
-    return NextResponse.next();
-  }
+      if (route && protectedRoutes[route]) {
+        const requiredPermission = protectedRoutes[route].find(
+          (r) => r.method === method
+        )?.permission;
 
-  if (!token && !isApiRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // Check API route permissions
-  if (isApiRoute && token) {
-    const path = request.nextUrl.pathname;
-    const method = request.method;
-    const route = Object.keys(protectedRoutes).find((route) =>
-      path.startsWith(route)
-    );
-
-    if (route && protectedRoutes[route]) {
-      const requiredPermission = protectedRoutes[route].find(
-        (r) => r.method === method
-      )?.permission;
-
-      if (requiredPermission) {
-        const userRole = token.organisationRole?.role as Role;
-        const hasAccess = rolePermissions[userRole].includes(
-          requiredPermission as Permission
-        );
-
-        if (!hasAccess) {
-          return NextResponse.json(
-            { error: "Insufficient permissions" },
-            { status: 403 }
+        if (requiredPermission) {
+          const userRole = token.organisationRole?.role as Role;
+          const hasAccess = rolePermissions[userRole].includes(
+            requiredPermission as Permission
           );
+
+          if (!hasAccess) {
+            response = NextResponse.json(
+              { error: "Insufficient permissions" },
+              { status: 403 }
+            );
+          } else {
+            response = NextResponse.next();
+          }
+        } else {
+          response = NextResponse.next();
         }
+      } else {
+        response = NextResponse.next();
       }
+    } else {
+      response = NextResponse.next();
     }
   }
 
-  return NextResponse.next();
+  // Add security headers to the response
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
 }
 
 export const config = {
