@@ -4,7 +4,7 @@ import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
 import logger from "@/src/services/logger";
 import prisma from "@/src/lib/prisma";
-import { sendEmail } from "@/src/services/email";
+import { sendSubscriptionEmail } from "@/src/services/email";
 import { PaymentStatus, SubscriptionStatus } from "@prisma/client";
 
 const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
@@ -81,25 +81,33 @@ export async function POST(request: Request) {
         });
 
         // Send success email
-        await sendEmail({
-          to: user.email,
-          subject: "Payment Successful - SchedOwl",
-          html: `
-            <h1>Payment Successful</h1>
-            <p>Your payment of ${payload.data.total_amount / 100} ${
-            payload.data.currency
-          } has been processed successfully.</p>
-            <p>Your account features have been updated:</p>
-            <ul>
-              <li>Workspaces: ${features.maxWorkspaces}</li>
-              <li>Social Accounts: ${features.maxSocialAccounts}</li>
-              <li>AI Tokens: ${features.aiTokens}</li>
-              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
-              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
-            </ul>
-            <p>Thank you for your business!</p>
-          `,
+        await sendSubscriptionEmail({
+          type: "PAYMENT_SUCCESS",
+          user: user,
+          payment: {
+            amount: payload.data.total_amount / 100,
+            currency: payload.data.currency,
+          },
         });
+        // sendEmail({
+        //   to: user.email,
+        //   subject: "Payment Successful - SchedOwl",
+        //   html: `
+        //     <h1>Payment Successful</h1>
+        //     <p>Your payment of ${payload.data.total_amount / 100} ${
+        //     payload.data.currency
+        //   } has been processed successfully.</p>
+        //     <p>Your account features have been updated:</p>
+        //     <ul>
+        //       <li>Workspaces: ${features.maxWorkspaces}</li>
+        //       <li>Social Accounts: ${features.maxSocialAccounts}</li>
+        //       <li>AI Tokens: ${features.aiTokens}</li>
+        //       ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+        //       ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+        //     </ul>
+        //     <p>Thank you for your business!</p>
+        //   `,
+        // });
         break;
       }
 
@@ -123,28 +131,37 @@ export async function POST(request: Request) {
         });
 
         // Send welcome email
-        await sendEmail({
-          to: user.email,
-          subject: "Welcome to SchedOwl! Your subscription is active",
-          html: `
-            <h1>Welcome to SchedOwl!</h1>
-            <p>Thank you for subscribing to SchedOwl. Your subscription is now active.</p>
-            <p>Next billing date: ${new Date(
-              payload.data.next_billing_date
-            ).toLocaleDateString()}</p>
-            <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
-            payload.data.currency
-          }</p>
-            <p>Your account features:</p>
-            <ul>
-              <li>Workspaces: ${features.maxWorkspaces}</li>
-              <li>Social Accounts: ${features.maxSocialAccounts}</li>
-              <li>AI Tokens: ${features.aiTokens}</li>
-              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
-              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
-            </ul>
-          `,
+        await sendSubscriptionEmail({
+          type: "SUBSCRIPTION_ACTIVE",
+          user: user,
+          subscription: {
+            nextBillingDate: new Date(payload.data.next_billing_date),
+            amount: payload.data.recurring_pre_tax_amount / 100,
+            currency: payload.data.currency,
+          },
         });
+        // sendEmail({
+        //   to: user.email,
+        //   subject: "Welcome to SchedOwl! Your subscription is active",
+        //   html: `
+        //     <h1>Welcome to SchedOwl!</h1>
+        //     <p>Thank you for subscribing to SchedOwl. Your subscription is now active.</p>
+        //     <p>Next billing date: ${new Date(
+        //       payload.data.next_billing_date
+        //     ).toLocaleDateString()}</p>
+        //     <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
+        //     payload.data.currency
+        //   }</p>
+        //     <p>Your account features:</p>
+        //     <ul>
+        //       <li>Workspaces: ${features.maxWorkspaces}</li>
+        //       <li>Social Accounts: ${features.maxSocialAccounts}</li>
+        //       <li>AI Tokens: ${features.aiTokens}</li>
+        //       ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+        //       ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+        //     </ul>
+        //   `,
+        // });
         break;
       }
 
@@ -168,28 +185,35 @@ export async function POST(request: Request) {
         });
 
         // Send renewal email
-        await sendEmail({
-          to: user.email,
-          subject: "Subscription Renewed - SchedOwl",
-          html: `
-            <h1>Subscription Renewed</h1>
-            <p>Your SchedOwl subscription has been successfully renewed.</p>
-            <p>Next billing date: ${new Date(
-              payload.data.next_billing_date
-            ).toLocaleDateString()}</p>
-            <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
-            payload.data.currency
-          }</p>
-            <p>Your account features:</p>
-            <ul>
-              <li>Workspaces: ${features.maxWorkspaces}</li>
-              <li>Social Accounts: ${features.maxSocialAccounts}</li>
-              <li>AI Tokens: ${features.aiTokens}</li>
-              ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
-              ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
-            </ul>
-          `,
+        await sendSubscriptionEmail({
+          type: "SUBSCRIPTION_RENEWED",
+          user: user,
+          subscription: {
+            nextBillingDate: new Date(payload.data.next_billing_date),
+          },
         });
+        // sendEmail({
+        //   to: user.email,
+        //   subject: "Subscription Renewed - SchedOwl",
+        //   html: `
+        //     <h1>Subscription Renewed</h1>
+        //     <p>Your SchedOwl subscription has been successfully renewed.</p>
+        //     <p>Next billing date: ${new Date(
+        //       payload.data.next_billing_date
+        //     ).toLocaleDateString()}</p>
+        //     <p>Amount: ${payload.data.recurring_pre_tax_amount / 100} ${
+        //     payload.data.currency
+        //   }</p>
+        //     <p>Your account features:</p>
+        //     <ul>
+        //       <li>Workspaces: ${features.maxWorkspaces}</li>
+        //       <li>Social Accounts: ${features.maxSocialAccounts}</li>
+        //       <li>AI Tokens: ${features.aiTokens}</li>
+        //       ${features.canUseAI ? "<li>AI Features: Enabled</li>" : ""}
+        //       ${features.canUseAnalytics ? "<li>Analytics: Enabled</li>" : ""}
+        //     </ul>
+        //   `,
+        // });
         break;
       }
 
@@ -219,16 +243,23 @@ export async function POST(request: Request) {
         });
 
         // Send cancellation email
-        await sendEmail({
-          to: user.email,
-          subject: "Subscription Cancelled - SchedOwl",
-          html: `
-            <h1>Subscription Cancelled</h1>
-            <p>Your SchedOwl subscription has been cancelled.</p>
-            <p>You can still use your account until the end of your billing period.</p>
-            <p>To reactivate your subscription, please visit our billing page.</p>
-          `,
+        await sendSubscriptionEmail({
+          type: "SUBSCRIPTION_CANCELLED",
+          user: user,
+          subscription: {
+            cancelledAt: new Date(),
+          },
         });
+        // sendEmail({
+        //   to: user.email,
+        //   subject: "Subscription Cancelled - SchedOwl",
+        //   html: `
+        //     <h1>Subscription Cancelled</h1>
+        //     <p>Your SchedOwl subscription has been cancelled.</p>
+        //     <p>You can still use your account until the end of your billing period.</p>
+        //     <p>To reactivate your subscription, please visit our billing page.</p>
+        //   `,
+        // });
         break;
       }
 
