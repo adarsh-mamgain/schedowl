@@ -6,6 +6,12 @@
     "noEmit": false,
     "isolatedModules": false
   },
-  "include": ["src/workers/**/*", "src/services/**/*", "src/lib/**/*"],
+  "include": [
+    "src/workers/**/*",
+    "src/scripts/**/*",
+    "src/services/**/*",
+    "src/lib/**/*",
+    "src/types/**/*"
+  ],
   "exclude": ["node_modules"]
 }

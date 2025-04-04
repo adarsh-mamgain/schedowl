@@ -3,7 +3,7 @@ import axios from "axios";
 import { MediaAttachment, SocialAccount, Post } from "@prisma/client";
 import { PostStatus } from "@prisma/client";
 import logger from "@/src/services/logger";
-import { sendEmail } from "@/src/lib/mailer";
+import { sendEmail, templates } from "@/src/services/email";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
 
@@ -340,12 +340,11 @@ export class LinkedInService {
         await sendEmail({
           to: user.email,
           subject: "Post Failed to Publish",
-          template: "post-failed",
-          context: {
+          html: templates.POST_FAILED({
             postContent: post.content,
             errorMessage: error.message,
             retryCount: (post.retryCount || 0) + 1,
-          },
+          }),
         });
       }
     } catch (error) {

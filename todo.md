@@ -1,19 +1,38 @@
 ## Todo
 
+- add ELK
+- logo update
+- input field, buttons colors
+- forgot password
+
+- company page scheduling
+- ⁠basic analytics in dashboard page
+- ⁠bug fixes
+- create the highest prod account setup https://app.schedowl.com
+- ⁠billing and restrictions for the product
+- ⁠emailing service
+  For a SaaS application, I'd recommend starting with Nodemailer for sending emails (paired with an SMTP server like Postfix) and either Postal or Mailcow for a complete solution if you need both sending and receiving capabilities.
+
+- calendar day and week view
+- allow PDF for media
+- remove unwanted UIs while loading
+
+SchedOwl
+SnapUI
+EventHQ Connect
+EventHQ Checkin
+Typill
+Pikaboo
+Poker-Go
+Battle-Game
+
 - change the LinkedIn product APIs
 
-- [x] build the whole available UI
 - [ ] uses open source for marketing emails
 
   - support@schedowl.com
   - adarsh@schedowl.com
   - noreply@schedowl.com
-
-- create hetzner + coolify
-
-  - [x] setup stage account
-  - [ ] move to prod account
-  - add data persistence
 
 - create subscriptions (WITH A LOT OF DIALOG BOXES)
   - only owner can pay?

@@ -1,11 +1,11 @@
 export const MONTHLY_SUBSCRIPTION_PLANS = [
   {
-    id: "pdt_QsOa1DXWzX7j1gpoFqeCV",
-    title: "Basic",
+    id: "pdt_xnnN4OqShvoUqbALQ2w3h",
+    title: "Basic (Monthly)",
     price: 19.0,
     popular: false,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_QsOa1DXWzX7j1gpoFqeCV/8a8510c5-9733-4f5f-93bf-124d1a526d86",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },
@@ -28,12 +28,12 @@ export const MONTHLY_SUBSCRIPTION_PLANS = [
     trialDays: 0,
   },
   {
-    id: "pdt_E9pl7XcBTqmmKrjvCFsWP",
-    title: "Pro",
+    id: "pdt_IMmzmIxIZjfBynfDofZsW",
+    title: "Pro (Monthly)",
     price: 49.0,
     popular: true,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_OLP93DRSm87erHfuev0iF/790cc780-200d-4f00-9180-cf56eb8c58ca",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },
@@ -56,12 +56,12 @@ export const MONTHLY_SUBSCRIPTION_PLANS = [
     trialDays: 0,
   },
   {
-    id: "pdt_1JfkKq48HtY76a0Lya1Jp",
-    title: "Super",
+    id: "pdt_WTtT3nff6Rg7J7k3AZLNr",
+    title: "Super (Monthly)",
     price: 79.0,
     popular: false,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_Pu9Kndq1ieERSHHG5yZY4/2749c892-ba87-4a73-8f48-3b7622f758c4",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },
@@ -87,12 +87,12 @@ export const MONTHLY_SUBSCRIPTION_PLANS = [
 
 export const YEARLY_SUBSCRIPTION_PLANS = [
   {
-    id: "pdt_RHVD3hhaZTSx37dYxqMS2",
-    title: "Basic",
+    id: "pdt_KXl5n920EJTY0dKUFZs8S",
+    title: "Basic (Yearly)",
     price: 190.0,
     popular: false,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_QsOa1DXWzX7j1gpoFqeCV/8a8510c5-9733-4f5f-93bf-124d1a526d86",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },
@@ -115,12 +115,12 @@ export const YEARLY_SUBSCRIPTION_PLANS = [
     trialDays: 0,
   },
   {
-    id: "pdt_OLP93DRSm87erHfuev0iF",
-    title: "Pro",
+    id: "pdt_rp0qQXyldU6PAwYofF6Kc",
+    title: "Pro (Yearly)",
     price: 490.0,
     popular: true,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_OLP93DRSm87erHfuev0iF/790cc780-200d-4f00-9180-cf56eb8c58ca",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },
@@ -143,12 +143,12 @@ export const YEARLY_SUBSCRIPTION_PLANS = [
     trialDays: 0,
   },
   {
-    id: "pdt_Pu9Kndq1ieERSHHG5yZY4",
-    title: "Super",
+    id: "pdt_SBri6FzWKA4CvUfF8PPsi",
+    title: "Super (Yearly)",
     price: 790.0,
     popular: false,
     image: {
-      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_UBFQWMwUOlJd86nDAjsfl/products/pdt_Pu9Kndq1ieERSHHG5yZY4/2749c892-ba87-4a73-8f48-3b7622f758c4",
+      src: "https://prod-dodo-backend-test-mode.s3.ap-south-1.amazonaws.com/businesses/bus_ceLckD961daGStI1QEHBQ/products/pdt_xnnN4OqShvoUqbALQ2w3h/638539c3-a442-42b5-a44e-23dfa6cae57d",
     },
     features: [
       { name: "Scheduler", available: true },

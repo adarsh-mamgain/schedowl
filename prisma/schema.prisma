@@ -21,6 +21,8 @@ model User {
   image         String?   @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  features      Json      @default("{\"maxWorkspaces\":1,\"maxSocialAccounts\":1,\"aiTokens\":200,\"canSchedule\":true,\"canUseAI\":false,\"canUseAnalytics\":false}")
+  payments      Payment[]
 
   // Relations
   organisations OrganisationRole[]
@@ -218,4 +220,59 @@ enum Role {
   OWNER // Full control
   ADMIN // Management access
   MEMBER // Basic access
+}
+
+// Payment status
+enum PaymentStatus {
+  SUCCEEDED
+  FAILED
+  PROCESSING
+  CANCELLED
+}
+
+// Subscription status
+enum SubscriptionStatus {
+  ACTIVE
+  RENEWED
+  ON_HOLD
+  PAUSED
+  CANCELLED
+  FAILED
+  EXPIRED
+}
+
+// Represents a subscription to a product
+model Subscription {
+  id                 String             @id @default(cuid())
+  subscriptionId     String             @unique // dodo subscription_id
+  subscriptionStatus SubscriptionStatus
+  nextBillingDate    DateTime
+  payload            Json
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  // Relations
+  payments Payment[]
+
+  @@index([subscriptionId])
+  @@map("subscriptions")
+}
+
+// Represents a payment made by a customer
+model Payment {
+  id             String        @id @default(cuid())
+  paymentId      String        @unique // dodo payment_id
+  subscriptionId String? // Optional as it might be a one-time payment
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [subscriptionId])
+  status         PaymentStatus
+  payload        Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  userId String // Reference to your app's user
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([paymentId])
+  @@map("payments")
 }
