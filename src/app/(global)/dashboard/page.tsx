@@ -73,11 +73,6 @@ export default function DashboardPage() {
             Schedule posts, view analytics and see account overview.
           </p>
         </div>
-        {/* <div>
-          <Button size="small" onClick={() => setShowPostForm((prev) => !prev)}>
-            Write Post
-          </Button>
-        </div> */}
       </div>
       <div className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
         {TODOS.map((todo) => (

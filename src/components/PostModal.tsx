@@ -17,7 +17,9 @@ interface PostPayload {
   mediaIds?: string[];
 }
 
-export default function PostDialog() {
+export default function PostModal(props: {
+  setPostModalOpen: (value: boolean) => void;
+}) {
   const { data: session } = useSession();
   const [postContent, setPostContent] = useState("");
   const [accounts, setAccounts] = useState([]);
@@ -135,7 +137,7 @@ export default function PostDialog() {
           <h1 className="text-[#161B26] font-medium">Write Post</h1>
           <button
             className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1"
-            // onClick={() => setShowInviteForm(false)}
+            onClick={() => props.setPostModalOpen(false)}
           >
             <XIcon size={16} color="#61646C" />
           </button>
