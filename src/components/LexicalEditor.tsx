@@ -711,7 +711,7 @@ function EditorContent({
       <RichTextPlugin
         contentEditable={
           <ContentEditable
-            className="outline-none border-none p-4 min-h-[150px]"
+            className="outline-none border-none p-4 min-h-[350px]"
             aria-label="Post content"
           />
         }

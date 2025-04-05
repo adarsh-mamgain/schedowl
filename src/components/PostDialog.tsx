@@ -130,7 +130,7 @@ export default function PostDialog() {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl max-w-5xl w-full overflow-y-auto p-4">
+      <div className="bg-white rounded-xl max-w-6xl w-full overflow-y-auto p-4">
         <div className="flex justify-between mb-4">
           <h1 className="text-[#161B26] font-medium">Write Post</h1>
           <button
@@ -195,7 +195,7 @@ export default function PostDialog() {
                   {postContent || "Write something..."}
                 </div>
                 <div className="flex justify-between items-center">
-                  <div className="flex">
+                  <div className="flex items-center">
                     <Image
                       width={60}
                       height={20}
@@ -212,10 +212,42 @@ export default function PostDialog() {
                 </div>
                 <div className="h-0.5 bg-[#ECECED]"></div>
                 <div className="flex justify-between text-sm text-[#61646C] font-semibold">
-                  <span>Like</span>
-                  <span>Comment</span>
-                  <span>Repost</span>
-                  <span>Send</span>
+                  <div className="flex gap-1 items-center">
+                    <Image
+                      width={16}
+                      height={16}
+                      src={"/like.svg"}
+                      alt="like"
+                    />
+                    <span>Like</span>
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <Image
+                      width={16}
+                      height={16}
+                      src={"/comment.svg"}
+                      alt="like"
+                    />
+                    <span>Comment</span>
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <Image
+                      width={16}
+                      height={16}
+                      src={"/repost.svg"}
+                      alt="like"
+                    />
+                    <span>Repost</span>
+                  </div>
+                  <div className="flex gap-1 items-center">
+                    <Image
+                      width={16}
+                      height={16}
+                      src={"/send.svg"}
+                      alt="like"
+                    />
+                    <span>Send</span>
+                  </div>
                 </div>
               </div>
             </div>
