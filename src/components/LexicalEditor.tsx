@@ -120,10 +120,10 @@ function UnicodeToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-lg">
+    <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-xl">
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        className={`p-2 hover:bg-gray-200 rounded ${
+        className={`p-2 hover:bg-gray-100 rounded ${
           isBold ? "text-blue-500" : "text-[#98A2B3]"
         }`}
         title="Bold"
@@ -132,7 +132,7 @@ function UnicodeToolbarPlugin() {
       </button>
       <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        className={`p-2 hover:bg-gray-200 rounded ${
+        className={`p-2 hover:bg-gray-100 rounded ${
           isItalic ? "text-blue-500" : "text-[#98A2B3]"
         }`}
         title="Italic"
@@ -143,7 +143,7 @@ function UnicodeToolbarPlugin() {
         onClick={() =>
           editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
         }
-        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
         title="Bullet List"
       >
         <List size={16} strokeWidth={4} />
@@ -151,7 +151,7 @@ function UnicodeToolbarPlugin() {
       <div className="relative" ref={pickerRef}>
         <button
           onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
           title="Insert Emoji"
         >
           😀
@@ -171,21 +171,21 @@ function UnicodeToolbarPlugin() {
       <div className="h-4 w-px bg-gray-300 mx-1" />
       <button
         onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
         title="Bullet Point"
       >
         •
       </button>
       <button
         onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
         title="Arrow"
       >
         →
       </button>
       <button
         onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-200 rounded"
+        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
         title="Checkmark"
       >
         ✓
@@ -277,12 +277,12 @@ function InlineAccountSelect({
   );
 
   return (
-    <div className="relative flex-1" ref={dropdownRef}>
+    <div className="relative flex-1">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Account:</span>
 
         {/* Selected account chips */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap" ref={dropdownRef}>
           {selectedAccounts.map((accountId) => {
             const account = accounts.find((a) => a.id === accountId);
             if (!account) return null;
@@ -316,15 +316,15 @@ function InlineAccountSelect({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg">
+        <div className="absolute bottom-full left-0 mb-1 w-64 bg-white border border-[#ECECED] rounded-xl shadow-lg overflow-hidden">
           {/* Search input */}
-          <div className="p-2 border-b border-gray-200">
+          <div className="">
             <input
               type="text"
               placeholder="Search accounts..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border-b border-[#ECECED] focus:outline-none focus:bg-[#ECECED]"
             />
           </div>
 
@@ -446,8 +446,8 @@ function MediaLibraryModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-[800px] h-[600px] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
+      <div className="bg-white rounded-xl w-[800px] h-[600px] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-[#ECECED]">
           <h2 className="text-lg font-semibold">Media Library</h2>
           <button
             onClick={onClose}
@@ -459,7 +459,7 @@ function MediaLibraryModal({
 
         <div className="flex-1 overflow-hidden flex">
           {/* Sidebar */}
-          <div className="w-64 border-r p-4">
+          <div className="w-64 border-r border-[#ECECED] p-4">
             <div className="space-y-4">
               <div>
                 <input
@@ -523,7 +523,7 @@ function MediaLibraryModal({
           </div>
         </div>
 
-        <div className="p-4 border-t flex justify-end gap-2">
+        <div className="p-4 border-t border-[#ECECED] flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
@@ -706,7 +706,7 @@ function EditorContent({
   };
 
   return (
-    <div className="border-x border-x-[#EAECF0] rounded-l-lg rounded-r-lg">
+    <div className="border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
       <UnicodeToolbarPlugin />
       <RichTextPlugin
         contentEditable={
@@ -771,7 +771,7 @@ function EditorContent({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-lg">
+      <div className="flex items-center justify-between p-2 border-y border-y-[#EAECF0] rounded-b-xl">
         <div className="flex gap-2">
           <Button
             variant="secondary"
@@ -789,7 +789,7 @@ function EditorContent({
               value={scheduleTime}
               onChange={(e) => setScheduleTime(e.target.value)}
               min={new Date().toISOString().slice(0, 16)}
-              className="absolute w-full bottom-full left-0 border p-2 mb-1 rounded shadow-lg"
+              className="absolute w-full bottom-full left-0 border border-[#ECECED] p-2 mb-1 rounded shadow-lg"
             />
           )}
           <Button

@@ -1,270 +1,225 @@
-import {
-  X,
-  Edit2,
-  Trash2,
-  Check,
-  Clock,
-  User,
-  AlertCircle,
-} from "lucide-react";
-import Button from "@/src/components/Button";
-import { PostStatus } from "@prisma/client";
-import dayjs from "dayjs";
-import { useState } from "react";
-import LexicalEditor from "./LexicalEditor";
+"use client";
+
+import { Monitor, Tablet, XIcon } from "lucide-react";
+import LexicalEditor from "@/src/components/LexicalEditor";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { Role } from "@prisma/client";
+import { hasPermission } from "@/src/lib/permissions";
 import Image from "next/image";
 
-interface Post {
-  id: string;
-  type: string;
+interface PostPayload {
   content: string;
-  scheduledFor: string;
-  status: PostStatus;
-  createdById: string;
+  linkedInAccountIds: string[];
+  scheduledFor?: string;
   mediaIds?: string[];
-  socialAccount: {
-    id: string;
-    name: string;
-    type: string;
-    metadata: {
-      picture: string | null;
-    };
-  };
-  createdBy: {
-    id: string;
-    name: string;
-    image: string | null;
-  };
-  errorMessage?: string | null;
-  retryCount?: number;
-  media?: Array<{
-    media: {
-      id: string;
-      type: string;
-      url: string;
-      filename: string;
-    };
-  }>;
 }
 
-interface PostDialogProps {
-  post: Post;
-  onClose: () => void;
-  onCancelPost: (postId: string) => Promise<void>;
-  onEditPost: (postId: string) => void;
-  onApprovePost?: (postId: string) => Promise<void>;
-  onUpdatePost: (postId: string, content: string) => Promise<void>;
-}
+export default function PostDialog() {
+  const { data: session } = useSession();
+  const [postContent, setPostContent] = useState("");
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+  const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">(
+    "desktop"
+  );
 
-export default function PostDialog({
-  post,
-  onClose,
-  onCancelPost,
-  // onEditPost,
-  onApprovePost,
-  onUpdatePost,
-}: PostDialogProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(post.content);
-  const [isUpdating, setIsUpdating] = useState(false);
+  useEffect(() => {
+    fetchLinkedInAccounts();
+  }, []);
 
-  const handleUpdate = async () => {
-    setIsUpdating(true);
+  const fetchLinkedInAccounts = async () => {
     try {
-      await onUpdatePost(post.id, editedContent);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Failed to update post:", error);
-    } finally {
-      setIsUpdating(false);
+      const response = await axios.get("/api/integrations/linkedin/accounts");
+      setAccounts(response.data);
+    } catch {
+      toast.error("Failed to fetch LinkedIn accounts");
     }
   };
 
-  const getStatusColor = (status: PostStatus) => {
-    switch (status) {
-      case "PUBLISHED":
-        return "bg-green-100 text-green-800";
-      case "SCHEDULED":
-        return "bg-blue-100 text-blue-800";
-      case "DRAFT":
-        return "bg-gray-100 text-gray-800";
-      case "FAILED":
-        return "bg-red-100 text-red-800";
-      case "RETRYING":
-        return "bg-yellow-100 text-yellow-800";
-      case "CANCELLED":
-        return "bg-gray-100 text-gray-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const handlePost = async (post: {
+    content: string;
+    status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+    scheduledFor?: string;
+    mediaIds?: string[];
+    socialAccountIds: string[];
+  }) => {
+    if (!post.content) {
+      toast.error("Post content cannot be empty");
+      return;
+    }
+
+    if (post.socialAccountIds.length === 0) {
+      toast.error("Please select at least one LinkedIn account");
+      return;
+    }
+
+    try {
+      let endpoint = "/api/posts/publish";
+      let payload: PostPayload = {
+        content: post.content,
+        linkedInAccountIds: post.socialAccountIds,
+      };
+
+      if (post.status === "SCHEDULED" && post.scheduledFor) {
+        endpoint = "/api/posts/schedule";
+        payload = {
+          ...payload,
+          scheduledFor: post.scheduledFor,
+        };
+      }
+
+      if (post.mediaIds && post.mediaIds.length > 0) {
+        payload = {
+          ...payload,
+          mediaIds: post.mediaIds,
+        };
+      }
+
+      const response = await axios.post(endpoint, payload);
+
+      if (response.data) {
+        // Clear all form state
+        setPostContent("");
+        setSelectedAccounts([]);
+
+        // Show success message
+        if (post.status === "DRAFT") {
+          toast.success("Post saved as draft and pending approval");
+        } else if (post.status === "SCHEDULED") {
+          toast.success("Post scheduled successfully!");
+        } else {
+          toast.success("Post published successfully!");
+        }
+      }
+    } catch (error) {
+      console.error("Post error:", error);
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.error || "Failed to publish post");
+      } else {
+        toast.error(
+          post.status === "SCHEDULED"
+            ? "Failed to schedule post"
+            : "Failed to publish post"
+        );
+      }
     }
   };
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
+
+  // If user can't manage posts, show a message
+  if (!canManagePosts) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-600">
+          You don&apos;t have permission to create or manage posts.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-start p-6 border-b">
-          <div className="flex items-center gap-4">
-            {post.socialAccount.metadata.picture && (
-              <Image
-                src={post.socialAccount.metadata.picture}
-                alt={post.socialAccount.name}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            )}
-            <div>
-              <h3 className="text-lg font-semibold">
-                {post.socialAccount.name}
-              </h3>
-              <p className="text-sm text-gray-600">{post.type}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {post.status === "SCHEDULED" && (
-              <Button
-                variant="danger"
-                size="small"
-                onClick={() => onCancelPost(post.id)}
-              >
-                <Trash2 size={16} className="mr-1" />
-                Cancel
-              </Button>
-            )}
-            {post.status === "DRAFT" && onApprovePost && (
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => onApprovePost(post.id)}
-              >
-                <Check size={16} className="mr-1" />
-                Approve
-              </Button>
-            )}
-            {post.status !== "PUBLISHED" && (
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                <Edit2 size={16} className="mr-1" />
-                {isEditing ? "Cancel Edit" : "Edit"}
-              </Button>
-            )}
-            <Button variant="secondary" size="small" onClick={onClose}>
-              <X size={16} />
-            </Button>
-          </div>
+      <div className="bg-white rounded-xl max-w-5xl w-full overflow-y-auto p-4">
+        <div className="flex justify-between mb-4">
+          <h1 className="text-[#161B26] font-medium">Write Post</h1>
+          <button
+            className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1"
+            // onClick={() => setShowInviteForm(false)}
+          >
+            <XIcon size={16} color="#61646C" />
+          </button>
         </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Status and Schedule */}
-          <div className="flex items-center gap-4">
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                post.status
-              )}`}
-            >
-              {post.status}
-            </span>
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock size={16} className="mr-1" />
-              {dayjs(post.scheduledFor).format("MMMM D, YYYY h:mm A")}
+        <div className="grid grid-cols-12 gap-4">
+          <div className="col-span-7">
+            <LexicalEditor
+              accounts={accounts}
+              selectedAccounts={selectedAccounts}
+              onChange={setPostContent}
+              onAccountsChange={setSelectedAccounts}
+              onPost={handlePost}
+              requireApproval={!canApprovePosts}
+            />
+          </div>
+          <div className="bg-[#FAFAFA] col-span-5 border border-[#EAECF0] rounded-xl">
+            <div className="bg-white flex justify-end p-1 border-b border-[#EAECF0] rounded-t-xl">
+              <button
+                className={`p-2 ${
+                  previewMode === "mobile" ? "text-blue-600" : "text-[#475467]"
+                }`}
+                onClick={() => setPreviewMode("mobile")}
+              >
+                <Tablet size={16} />
+              </button>
+              <button
+                className={`p-2 ${
+                  previewMode === "desktop" ? "text-blue-600" : "text-[#475467]"
+                }`}
+                onClick={() => setPreviewMode("desktop")}
+              >
+                <Monitor size={16} />
+              </button>
             </div>
-          </div>
-
-          {/* Author */}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <User size={16} />
-            <span>Posted by {post.createdBy.name}</span>
-          </div>
-
-          {/* Content */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Content</h4>
-            {isEditing ? (
-              <div className="space-y-4">
-                <LexicalEditor
-                  accounts={[]}
-                  selectedAccounts={[]}
-                  onChange={setEditedContent}
-                  onAccountsChange={() => {}}
-                  onPost={handleUpdate}
-                  initialPost={{
-                    ...post,
-                    content: editedContent,
-                    socialAccountIds: [post.socialAccount.id],
-                    status:
-                      post.status === "PUBLISHED"
-                        ? "PUBLISHED"
-                        : post.status === "SCHEDULED"
-                        ? "SCHEDULED"
-                        : "DRAFT",
-                  }}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="small"
-                    onClick={handleUpdate}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? "Updating..." : "Update"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-800 whitespace-pre-wrap">
-                {post.content}
-              </p>
-            )}
-          </div>
-
-          {/* Media */}
-          {post.media && post.media.length > 0 && (
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Media</h4>
-              <div className="grid grid-cols-4 gap-4">
-                {post.media.map(({ media }) => (
-                  <div key={media.id} className="relative aspect-square">
-                    <Image
-                      src={media.url}
-                      alt={media.filename}
-                      fill
-                      className="object-cover rounded-lg"
-                    />
+            <div className="p-4">
+              <div
+                className={`flex flex-col gap-4 bg-white p-4 shadow rounded-2xl overflow-hidden ${
+                  previewMode === "mobile" ? "max-w-[375px] mx-auto" : ""
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <Image
+                    width={48}
+                    height={48}
+                    src="/john-doe.png"
+                    alt="john-doe"
+                    className="w-12 h-12 bg-gray-100 border rounded-full"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-[#101828]">
+                      John Doe
+                    </span>
+                    <span className="text-12 text-[#667085]">Now </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Error Information */}
-          {post.errorMessage && (
-            <div className="bg-red-50 p-4 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle size={20} className="text-red-500 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-medium text-red-800">Error</h4>
-                  <p className="text-sm text-red-700">{post.errorMessage}</p>
-                  {post.retryCount && post.retryCount > 0 && (
-                    <p className="text-sm text-red-600 mt-1">
-                      Retry attempts: {post.retryCount}/5
-                    </p>
-                  )}
+                </div>
+                <div className="text-sm text-[#161B26] whitespace-pre-wrap">
+                  {postContent || "Write something..."}
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex">
+                    <Image
+                      width={60}
+                      height={20}
+                      src={"/post-reactions.svg"}
+                      alt="post-reactions"
+                    />
+                    <span className="text-xs text-[#667085] ml-2">136</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-xs text-[#667085] ml-2">
+                      4 comments · 1 repost
+                    </span>
+                  </div>
+                </div>
+                <div className="h-0.5 bg-[#ECECED]"></div>
+                <div className="flex justify-between text-sm text-[#61646C] font-semibold">
+                  <span>Like</span>
+                  <span>Comment</span>
+                  <span>Repost</span>
+                  <span>Send</span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
