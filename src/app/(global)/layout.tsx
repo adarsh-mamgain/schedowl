@@ -272,6 +272,11 @@ export default function GlobalLayout({
             </button>
           ))}
         </nav>
+        <div className="p-4">
+          <a href="mailto:support@schedowl.com">
+            <Button variant="secondary">support@schedowl.com</Button>
+          </a>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
