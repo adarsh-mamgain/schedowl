@@ -31,8 +31,8 @@ const Button: FC<ButtonProps> = ({
   const baseStyles =
     "font-semibold border-2 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] flex items-center justify-center transition-all duration-200";
   const variants = {
-    primary: `bg-[#1570EF] text-white ${
-      loading ? "opacity-90" : "hover:bg-[#1256c4] active:bg-[#0e3e9a]"
+    primary: `bg-[#444CE7] text-white ${
+      loading ? "opacity-90" : "hover:bg-[#3036AB] active:bg-[#0e3e9a]"
     }`,
     secondary: `bg-white text-[#344054] ${
       loading ? "opacity-90" : "hover:bg-[#f0f0f0] active:bg-[#e0e0e0]"
@@ -94,7 +94,7 @@ const Button: FC<ButtonProps> = ({
       {...props}
     >
       <div
-        className="flex items-center justify-center gap-3"
+        className="flex items-center justify-center gap-1"
         style={{ visibility: loading ? "hidden" : "visible" }}
       >
         {children}

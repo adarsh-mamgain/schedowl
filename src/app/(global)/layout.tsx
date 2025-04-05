@@ -265,33 +265,41 @@ export default function GlobalLayout({
         </div>
         <div className="px-4 py-6">
           {canManagePosts && (
-            <button
+            <Button
+              size="small"
+              className="w-full"
               onClick={() => setPostModalOpen((prev) => !prev)}
-              className="w-full flex justify-center items-center bg-[#444CE7] hover:bg-[#444CE7]/95 text-white text-sm font-medium p-2 rounded-lg"
             >
               <PlusIcon />
               Write Post
-            </button>
+            </Button>
           )}
         </div>
         <nav className="flex-1 pt-0 p-4">
           {TABS.map((tab) => (
-            <button
-              key={tab.path}
-              className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
-                pathname.startsWith(tab.path)
-                  ? "bg-[#F5F5F6] text-[#0C111D]"
-                  : "text-[#85888E]"
-              }`}
-              onClick={() => router.push(tab.path)}
-            >
-              <tab.icon
-                size={16}
-                color={pathname.startsWith(tab.path) ? "#444CE7" : "#85888E"}
-                className="flex-shrink-0"
-              />
-              <span className="truncate">{tab.title}</span>
-            </button>
+            <>
+              <div
+                className={`absolute ${
+                  pathname.startsWith(tab.path) ? "bg-[#444CE7]" : "bg-none"
+                } w-1 h-9 rounded-r-lg left-0`}
+              ></div>
+              <button
+                key={tab.path}
+                className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
+                  pathname.startsWith(tab.path)
+                    ? "bg-[#F5F5F6] text-[#0C111D]"
+                    : "text-[#85888E]"
+                }`}
+                onClick={() => router.push(tab.path)}
+              >
+                <tab.icon
+                  size={16}
+                  color={pathname.startsWith(tab.path) ? "#444CE7" : "#85888E"}
+                  className="flex-shrink-0"
+                />
+                <span className="truncate">{tab.title}</span>
+              </button>
+            </>
           ))}
         </nav>
         <div className="p-4">
