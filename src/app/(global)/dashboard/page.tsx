@@ -3,37 +3,13 @@
 import { SocialPlatform } from "@/src/enums/social-platoform";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { Link, FileText, Gift } from "lucide-react";
+import { LinkIcon, FileTextIcon } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
-import PostForm from "@/src/components/PostForm";
-
-const TODOS = [
-  {
-    title: "Connect your LinkedIn account",
-    description: "Connect your LinkedIn account to start using the app",
-    icon: Link,
-    done: true,
-  },
-  {
-    title: "Publish your first post",
-    description:
-      "Use the magic of AI and your imagination to create and publish your first post.",
-    icon: FileText,
-    done: false,
-  },
-  {
-    title: "Unlock your gift",
-    description:
-      "We have something special for you. complete the above steps and claim your special gift.",
-    icon: Gift,
-    done: false,
-  },
-];
+import LinkedInAnalytics from "@/src/components/LinkedInAnalytics";
 
 export default function DashboardPage() {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
-  // const [showPostForm, setShowPostForm] = useState(false);
 
   useEffect(() => {
     const checkLinkedInIntegration = async () => {
@@ -74,34 +50,54 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-4 border border-[#EAECF0] rounded-[16px] p-6 text-sm mb-6">
-        {TODOS.map((todo) => (
-          <div key={todo.title} className="flex gap-3 items-center">
-            <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded shadow">
-              <todo.icon size={16} color={"#344054"} />
+
+      {!linkedInConnected ? (
+        <div className="flex flex-col gap-2 border border-[#EAECF0] rounded-[16px] p-4 text-sm mb-6">
+          <div className="flex gap-3 items-center">
+            <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded-full shadow">
+              <LinkIcon size={16} color={"#444CE7"} />
             </div>
             <div className="flex flex-col">
               <h2
                 className={`font-semibold ${
-                  todo.done ? "text-[#101828]" : "text-[#475467]"
+                  true ? "text-[#101828]" : "text-[#475467]"
                 }`}
               >
-                {todo.title}
+                Connect your LinkedIn account
               </h2>
-              <p className="text-[#475467]">{todo.description}</p>
+              <p className="text-[#475467]">
+                Connect your LinkedIn account to start using the app
+              </p>
             </div>
           </div>
-        ))}
-        {!linkedInConnected && (
-          <div>
+          <div className="w-0.5 h-4 bg-[#ECECED] top-10 ml-5"></div>
+          <div className="flex gap-3 items-center">
+            <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded-full shadow">
+              <FileTextIcon size={16} color={"#444CE7"} />
+            </div>
+            <div className="flex flex-col">
+              <h2
+                className={`font-semibold ${
+                  false ? "text-[#101828]" : "text-[#475467]"
+                }`}
+              >
+                Publish your first post
+              </h2>
+              <p className="text-[#475467]">
+                Create and publish with AI and imagination.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-2">
             <Button variant="secondary" size="small" onClick={handleGetStarted}>
               Get Started
             </Button>
           </div>
-        )}
-      </div>
-      {/* {showPostForm && <PostForm />} */}
-      <PostForm />
+        </div>
+      ) : (
+        <LinkedInAnalytics />
+      )}
     </section>
   );
 }

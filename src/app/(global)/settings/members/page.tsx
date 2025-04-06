@@ -10,7 +10,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { z } from "zod";
-import { Trash2, UserPlus, X, SendHorizonal } from "lucide-react";
+import { Trash2, UserPlus, X, SendHorizonal, PlusIcon } from "lucide-react";
 import axios from "axios";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
@@ -348,6 +348,7 @@ export default function MembersPage() {
         {(canManageUsers || canAssignUsers) && (
           <div>
             <Button size="small" onClick={() => setShowInviteForm(true)}>
+              <PlusIcon size={20} />
               Add user
             </Button>
           </div>

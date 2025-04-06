@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { PenIcon } from "lucide-react";
 
 export default function OrganisationSettingsPage() {
   const { data: session, update: updateSession } = useSession();
@@ -118,6 +119,7 @@ export default function OrganisationSettingsPage() {
                 size="small"
                 onClick={() => setIsEditing(true)}
               >
+                <PenIcon size={16} />
                 Edit
               </Button>
             )}
