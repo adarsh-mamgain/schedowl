@@ -7,7 +7,7 @@ import prisma from "@/src/lib/prisma";
 import { sendSubscriptionEmail } from "@/src/services/email";
 import { PaymentStatus, SubscriptionStatus } from "@prisma/client";
 
-const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
+const webhook = new Webhook(process.env.DODO_WEBHOOK_KEY!);
 
 // Helper functions for feature management
 function getFeaturesFromAmount(amount: number, currency: string) {
