@@ -11,6 +11,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { PenIcon } from "lucide-react";
 
 type ProfileFormValues = z.infer<typeof ProfileSchema>;
 
@@ -114,6 +115,7 @@ export default function ProfilePage() {
                 size="small"
                 onClick={() => setIsEditing(true)}
               >
+                <PenIcon size={16} />
                 Edit
               </Button>
             )}

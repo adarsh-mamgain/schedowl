@@ -163,7 +163,7 @@ export default function BillingPage() {
           <div className="inline-flex items-center p-1 bg-gray-100 rounded-lg">
             <button
               className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none ${
-                isMonthly ? "bg-[#1570EF] text-white" : "text-gray-600"
+                isMonthly ? "bg-[#444CE7] text-white" : "text-gray-600"
               }`}
               onClick={() => setIsMonthly(true)}
             >
@@ -171,7 +171,7 @@ export default function BillingPage() {
             </button>
             <button
               className={`relative px-4 py-2 text-sm font-medium rounded-md focus:outline-none ${
-                !isMonthly ? "bg-[#1570EF] text-white" : "text-gray-600"
+                !isMonthly ? "bg-[#444CE7] text-white" : "text-gray-600"
               }`}
               onClick={() => setIsMonthly(false)}
             >
@@ -191,11 +191,11 @@ export default function BillingPage() {
             <div
               key={plan.id}
               className={`relative w-max flex flex-col border rounded-[16px] p-6 transition-all duration-300 shadow-lg transform hover:-translate-y-1 ${
-                plan.popular ? "border-[#1570EF]" : "border-[#EAECF0]"
+                plan.popular ? "border-[#444CE7]" : "border-[#EAECF0]"
               }`}
             >
               {plan.popular && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1570EF] text-white text-xs px-3 py-1.5 rounded-[16px]">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#444CE7] text-white text-xs px-3 py-1.5 rounded-[16px]">
                   Popular
                 </div>
               )}
@@ -237,7 +237,7 @@ export default function BillingPage() {
                       }`}
                     >
                       {feature.available ? (
-                        <Check size={16} className="text-[#1570EF]" />
+                        <Check size={16} className="text-[#444CE7]" />
                       ) : (
                         <X size={16} className="text-[#98A2B3]" />
                       )}
