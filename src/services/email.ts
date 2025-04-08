@@ -44,7 +44,13 @@ interface EmailOptions {
   html: string;
 }
 
-interface Context {
+interface InvitationContext {
+  organisationName: string;
+  organisationRole: string;
+  invitationLink: string;
+}
+
+interface PostFailedContext {
   postContent: string;
   errorMessage: string;
   retryCount: number;
@@ -118,7 +124,7 @@ const BASE_TEMPLATE = (content: string) => `
 `;
 
 export const templates = {
-  POST_FAILED: (context: Context) =>
+  POST_FAILED: (context: PostFailedContext) =>
     BASE_TEMPLATE(`
     <h2>Post Failed</h2>
     <p>Your scheduled post has failed to publish.</p>
@@ -126,6 +132,17 @@ export const templates = {
     <p><strong>Error:</strong> ${context.errorMessage}</p>
     <p><strong>Retry Count:</strong> ${context.retryCount}/5</p>
     <p>Please check your post settings and try again.</p>
+  `),
+  WELCOME_EMAIL: () =>
+    BASE_TEMPLATE(`
+    <h2>Welcome to SchedOwl</h2>
+    <p>Thank you for signing up. We're excited to have you on board.</p>
+  `),
+  INVITATION_EMAIL: (context: InvitationContext) =>
+    BASE_TEMPLATE(`
+    <h2>Invitation to SchedOwl</h2>
+    <p>You've been invited to join ${context.organisationName} as a ${context.organisationRole}. Click the link below to accept the invitation.</p>
+    <a href="${context.invitationLink}" target="_blank" class="button">Accept Invitation</a>
   `),
 };
 
@@ -153,16 +170,20 @@ export async function sendSubscriptionEmail(data: EmailData) {
       html: BASE_TEMPLATE(`
         <h2>Welcome to SchedOwl!</h2>
         <p>Thank you for subscribing to SchedOwl. Your subscription is now active.</p>
-        <p><strong>Next billing date:</strong> ${format(
-          subscription?.nextBillingDate || new Date(),
-          "MMMM d, yyyy"
-        )}</p>
+        ${
+          subscription?.nextBillingDate
+            ? `<p><strong>Next billing date:</strong> ${format(
+                subscription?.nextBillingDate,
+                "MMMM d, yyyy"
+              )}</p>`
+            : ""
+        }
         <p><strong>Amount:</strong> ${subscription?.amount} ${
         subscription?.currency
       }</p>
         <a href="${
-          process.env.NEXT_PUBLIC_APP_URL
-        }/dashboard" class="button">Go to Dashboard</a>
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/dashboard" target="_blank" class="button">Go to Dashboard</a>
       `),
     },
     SUBSCRIPTION_RENEWED: {
@@ -170,30 +191,36 @@ export async function sendSubscriptionEmail(data: EmailData) {
       html: BASE_TEMPLATE(`
         <h2>Subscription Renewed</h2>
         <p>Your SchedOwl subscription has been successfully renewed.</p>
-        <p><strong>Next billing date:</strong> ${format(
-          subscription?.nextBillingDate || new Date(),
-          "MMMM d, yyyy"
-        )}</p>
+        ${
+          subscription?.nextBillingDate
+            ? `<p><strong>Next billing date:</strong> ${new Date(
+                subscription?.nextBillingDate
+              ).toLocaleDateString()}</p>`
+            : ""
+        }
         <p><strong>Amount:</strong> ${subscription?.amount} ${
         subscription?.currency
       }</p>
         <a href="${
-          process.env.NEXT_PUBLIC_APP_URL
-        }/dashboard" class="button">Go to Dashboard</a>
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/dashboard" target="_blank" class="button">Go to Dashboard</a>
       `),
     },
     SUBSCRIPTION_CANCELLED: {
       subject: "Your SchedOwl subscription has been cancelled",
       html: BASE_TEMPLATE(`
         <h2>Subscription Cancelled</h2>
-        <p>Your SchedOwl subscription has been cancelled as of ${format(
-          subscription?.cancelledAt || new Date(),
-          "MMMM d, yyyy"
-        )}.</p>
+        <p>Your SchedOwl subscription has been cancelled as of ${
+          subscription?.cancelledAt
+            ? `<p><strong>Next billing date:</strong> ${new Date(
+                subscription?.cancelledAt
+              ).toLocaleDateString()}</p>`
+            : ""
+        }.</p>
         <p>You can still use your account until the end of your billing period.</p>
         <a href="${
-          process.env.NEXT_PUBLIC_APP_URL
-        }/billing" class="button">Manage Subscription</a>
+          process.env.NEXT_PUBLIC_BASE_URL
+        }/settings/billing" target="_blank" class="button">Manage Subscription</a>
       `),
     },
     PAYMENT_SUCCESS: {
@@ -202,7 +229,7 @@ export async function sendSubscriptionEmail(data: EmailData) {
         <h2>Payment Successful</h2>
         <p>Your payment of ${payment?.amount} ${payment?.currency} has been processed successfully.</p>
         <p>Thank you for your business!</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" class="button">Go to Dashboard</a>
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard" target="_blank" class="button">Go to Dashboard</a>
       `),
     },
     PAYMENT_FAILED: {
@@ -211,7 +238,7 @@ export async function sendSubscriptionEmail(data: EmailData) {
         <h2>Payment Failed</h2>
         <p>We were unable to process your payment for your SchedOwl subscription.</p>
         <p>Please update your payment information to continue using our service.</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" class="button">Update Payment Method</a>
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/settings/billing" target="_blank" class="button">Update Payment Method</a>
       `),
     },
     TRIAL_ENDING: {
@@ -220,7 +247,7 @@ export async function sendSubscriptionEmail(data: EmailData) {
         <h2>Trial Period Ending Soon</h2>
         <p>Your SchedOwl trial period will end in 7 days.</p>
         <p>To continue using our service, please subscribe to one of our plans.</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" class="button">Choose a Plan</a>
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/settings/billing" target="_blank" class="button">Choose a Plan</a>
       `),
     },
     TRIAL_EXPIRED: {
@@ -229,7 +256,7 @@ export async function sendSubscriptionEmail(data: EmailData) {
         <h2>Trial Period Expired</h2>
         <p>Your SchedOwl trial period has expired.</p>
         <p>To continue using our service, please subscribe to one of our plans.</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/billing" class="button">Choose a Plan</a>
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/settings/billing" target="_blank" class="button">Choose a Plan</a>
       `),
     },
   };

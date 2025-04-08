@@ -5,7 +5,6 @@ import { PostStatus } from "@prisma/client";
 import CalendarView from "@/src/components/CalendarView";
 import { toast } from "react-toastify";
 import axios from "axios";
-import Button from "@/src/components/Button";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
@@ -111,18 +110,10 @@ export default function CalendarPage() {
     router.push(`/posts/${postId}/edit`);
   };
 
-  const handleCreatePost = () => {
-    router.push("/dashboard");
-  };
-
   const handleMonthChange = (newMonth: dayjs.Dayjs) => {
     setCurrentMonth(newMonth);
   };
 
-  const canManagePosts = hasPermission(
-    session?.organisationRole?.role as Role,
-    "manage_posts"
-  );
   const canApprovePosts = hasPermission(
     session?.organisationRole?.role as Role,
     "approve_posts"
@@ -152,13 +143,6 @@ export default function CalendarPage() {
               Manage your content calendar from here.
             </p>
           </div>
-          {canManagePosts && (
-            <div>
-              <Button size="small" onClick={handleCreatePost}>
-                Write Post
-              </Button>
-            </div>
-          )}
         </div>
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-gray-500">Loading posts...</div>
@@ -176,13 +160,6 @@ export default function CalendarPage() {
             Manage your content calendar from here.
           </p>
         </div>
-        {canManagePosts && (
-          <div>
-            <Button size="small" onClick={handleCreatePost}>
-              Write Post
-            </Button>
-          </div>
-        )}
       </div>
       <CalendarView
         posts={mappedPosts}

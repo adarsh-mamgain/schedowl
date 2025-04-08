@@ -4,7 +4,7 @@ import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import { Role } from "@prisma/client";
 import { requirePermission } from "@/src/lib/permissions";
-import { sendEmail } from "@/src/services/email";
+import { sendEmail, templates } from "@/src/services/email";
 
 export async function POST(
   request: NextRequest,
@@ -48,19 +48,28 @@ export async function POST(
     await sendEmail({
       to: invitation.email,
       subject: `You've been invited to join ${session.organisation.name}`,
-      html: `
-          <h1>You've been invited to join ${session.organisation.name} as a ${invitation.role}.</h1>
-          <p>Click the link below to accept the invitation:</p>
-          <a
-            type="button"
-            target="_blank"
-            href=${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${invitation.token}
-          >
-            Accept Invite
-          </a>
-          <p>This invitation will expire in 7 days.</p>
-        `,
+      html: templates.INVITATION_EMAIL({
+        organisationName: session.organisation.name,
+        organisationRole: invitation.role,
+        invitationLink: `${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${invitation.token}`,
+      }),
     });
+    // sendEmail({
+    //   to: invitation.email,
+    //   subject: `You've been invited to join ${session.organisation.name}`,
+    //   html: `
+    //       <h1>You've been invited to join ${session.organisation.name} as a ${invitation.role}.</h1>
+    //       <p>Click the link below to accept the invitation:</p>
+    //       <a
+    //         type="button"
+    //         target="_blank"
+    //         href=${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${invitation.token}
+    //       >
+    //         Accept Invite
+    //       </a>
+    //       <p>This invitation will expire in 7 days.</p>
+    //     `,
+    // });
 
     return NextResponse.json({ success: true });
   } catch (error) {

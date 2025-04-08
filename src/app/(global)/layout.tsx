@@ -1,15 +1,18 @@
 "use client";
 
 import Button from "@/src/components/Button";
+import PostModal from "@/src/components/PostModal";
 import Toaster from "@/src/components/ui/Toaster";
+import { hasPermission } from "@/src/lib/permissions";
+import { Role } from "@prisma/client";
 import {
   BarChart3,
   Calendar,
-  ChevronDown,
-  ChevronUp,
   Settings,
   Image,
   Upload,
+  PlusIcon,
+  ChevronsUpDownIcon,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -39,6 +42,7 @@ export default function GlobalLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [postModalOpen, setPostModalOpen] = useState(false);
   const { data: session, update: updateSession } = useSession();
   const [isUploading, setIsUploading] = useState(false);
   const [userOrganisations, setUserOrganisations] = useState<
@@ -127,23 +131,28 @@ export default function GlobalLayout({
     }
   };
 
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+
   return (
     <div className="h-screen flex">
-      <aside className="w-[240px] border-r border-[#EAECF0] flex flex-col">
+      <aside className="w-[240px] border-r border-[#EAECF0] rounded-2xl flex flex-col">
         <div className="pt-6 px-4">
           <div className="relative">
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
-              className="w-full flex items-center justify-between"
+              className="bg-[#FAFAFA] w-full flex items-center justify-between rounded-lg p-2"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
+                <div className="w-8 h-8 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
                   {session?.organisation?.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={session.organisation.image}
                       alt={session.organisation.name}
-                      className="w-full h-full object-cover"
+                      className="w-8 h-8 object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -153,11 +162,9 @@ export default function GlobalLayout({
                 </div>
                 <span className="truncate">{session?.organisation?.name}</span>
               </div>
-              {dropdownOpen ? (
-                <ChevronUp color="#344054" className="flex-shrink-0" />
-              ) : (
-                <ChevronDown color="#344054" className="flex-shrink-0" />
-              )}
+              <button className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1 flex-shrink-0">
+                <ChevronsUpDownIcon size={16} color="#61646C" />
+              </button>
             </button>
             {dropdownOpen && (
               <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg z-50">
@@ -256,28 +263,57 @@ export default function GlobalLayout({
             )}
           </div>
         </div>
-        <nav className="flex-1 p-4">
-          {TABS.map((tab) => (
-            <button
-              key={tab.path}
-              className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
-                pathname.startsWith(tab.path)
-                  ? "bg-gray-200 text-[#182230]"
-                  : "text-[#344054]"
-              }`}
-              onClick={() => router.push(tab.path)}
+        <div className="px-4 py-6">
+          {canManagePosts && (
+            <Button
+              size="small"
+              className="w-full"
+              onClick={() => setPostModalOpen((prev) => !prev)}
             >
-              <tab.icon size={16} color={"#344054"} className="flex-shrink-0" />
-              <span className="truncate">{tab.title}</span>
-            </button>
+              <PlusIcon />
+              Write Post
+            </Button>
+          )}
+        </div>
+        <nav className="flex-1 pt-0 p-4">
+          {TABS.map((tab) => (
+            <>
+              <div
+                className={`absolute ${
+                  pathname.startsWith(tab.path) ? "bg-[#444CE7]" : "bg-none"
+                } w-1 h-9 rounded-r-lg left-0`}
+              ></div>
+              <button
+                key={tab.path}
+                className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
+                  pathname.startsWith(tab.path)
+                    ? "bg-[#F5F5F6] text-[#0C111D]"
+                    : "text-[#85888E]"
+                }`}
+                onClick={() => router.push(tab.path)}
+              >
+                <tab.icon
+                  size={16}
+                  color={pathname.startsWith(tab.path) ? "#444CE7" : "#85888E"}
+                  className="flex-shrink-0"
+                />
+                <span className="truncate">{tab.title}</span>
+              </button>
+            </>
           ))}
         </nav>
+        <div className="p-4">
+          <a href="mailto:support@schedowl.com">
+            <Button variant="secondary">support@schedowl.com</Button>
+          </a>
+        </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
         <div className="p-6">
           {children}
           <Toaster />
+          {postModalOpen && <PostModal setPostModalOpen={setPostModalOpen} />}
         </div>
       </main>
     </div>

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import crypto from "crypto";
-import { sendEmail } from "@/src/services/email";
+import { sendEmail, templates } from "@/src/services/email";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -85,19 +85,28 @@ export async function POST(req: Request) {
     await sendEmail({
       to: email,
       subject: `You've been invited to join ${organisation.name}`,
-      html: `
-        <h1>You've been invited to join ${organisation.name} as a ${role}.</h1>
-        <p>Click the link below to accept the invitation:</p>
-        <a
-          type="button"
-          target="_blank"
-          href=${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${token}
-        >
-          Accept Invite
-        </a>
-        <p>This invitation will expire in 7 days.</p>
-      `,
+      html: templates.INVITATION_EMAIL({
+        organisationName: organisation.name,
+        organisationRole: role,
+        invitationLink: `${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${token}`,
+      }),
     });
+    // sendEmail({
+    //   to: email,
+    //   subject: `You've been invited to join ${organisation.name}`,
+    //   html: `
+    //     <h1>You've been invited to join ${organisation.name} as a ${role}.</h1>
+    //     <p>Click the link below to accept the invitation:</p>
+    //     <a
+    //       type="button"
+    //       target="_blank"
+    //       href=${process.env.NEXT_PUBLIC_BASE_URL}/invitations/${token}
+    //     >
+    //       Accept Invite
+    //     </a>
+    //     <p>This invitation will expire in 7 days.</p>
+    //   `,
+    // });
 
     return NextResponse.json(
       {

@@ -5,6 +5,7 @@ import { LoginSchema } from "@/src/schema";
 import prisma from "@/src/lib/prisma";
 import bcrypt from "bcryptjs";
 import { generateUniqueSlug } from "@/src/lib/common";
+import { sendEmail, templates } from "../services/email";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -118,6 +119,13 @@ export const authOptions: NextAuthOptions = {
             });
 
             return newUser;
+          });
+
+          // Send welcome email
+          await sendEmail({
+            to: result.email,
+            subject: "Welcome to SchedOwl",
+            html: templates.WELCOME_EMAIL(),
           });
 
           user.id = result.id;
