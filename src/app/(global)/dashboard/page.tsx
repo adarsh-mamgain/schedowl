@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { LinkIcon, FileTextIcon } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
-import LinkedInAnalytics from "@/src/components/LinkedInAnalytics";
+// import LinkedInAnalytics from "@/src/components/LinkedInAnalytics";
 
 export default function DashboardPage() {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
@@ -96,7 +96,8 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <LinkedInAnalytics />
+        // <LinkedInAnalytics />
+        <div>LinkedInAnalytics</div>
       )}
     </section>
   );
