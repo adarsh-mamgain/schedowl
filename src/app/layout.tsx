@@ -25,6 +25,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
+        <div id="0cred.com" className="hidden">
+          0791629a-dbb3-4785-bb88-c85d3105ae03
+        </div>
         <SessionProvider session={session}>
           <PostHogProvider>{children}</PostHogProvider>
         </SessionProvider>
