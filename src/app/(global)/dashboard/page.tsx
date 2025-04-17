@@ -5,8 +5,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { LinkIcon, FileTextIcon } from "lucide-react";
 import Button from "@/src/components/Button";
-import { toast } from "react-toastify";
-// import LinkedInAnalytics from "@/src/components/LinkedInAnalytics";
+import AnalyticsLineChart from "@/src/components/AnalyticsLineChart";
 
 export default function DashboardPage() {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
@@ -46,12 +45,12 @@ export default function DashboardPage() {
         <div>
           <h1 className="font-semibold text-[#101828]">Your Dashboard</h1>
           <p className="text-sm text-[#475467]">
-            Schedule posts, view analytics and see account overview.
+            Track your top-performing content and optimize your social strategy
           </p>
         </div>
       </div>
 
-      {!linkedInConnected ? (
+      {!linkedInConnected && (
         <div className="flex flex-col gap-2 border border-[#EAECF0] rounded-[16px] p-4 text-sm mb-6">
           <div className="flex gap-3 items-center">
             <div className="w-10 h-10 flex items-center justify-center border border-[#EAECF0] rounded-full shadow">
@@ -95,10 +94,22 @@ export default function DashboardPage() {
             </Button>
           </div>
         </div>
-      ) : (
-        // <LinkedInAnalytics />
-        <div>LinkedInAnalytics</div>
       )}
+
+      <div className="space-y-6">
+        <div className="rounded-2xl border p-6">
+          <h3 className="text-sm font-medium text-[#475467] mb-1">
+            Followers Growth
+          </h3>
+          <AnalyticsLineChart />
+        </div>
+        <div className="rounded-xl border p-4">
+          <h3 className="text-sm font-medium text-[#475467] mb-1">
+            Reactions Growth
+          </h3>
+          <AnalyticsLineChart />
+        </div>
+      </div>
     </section>
   );
 }

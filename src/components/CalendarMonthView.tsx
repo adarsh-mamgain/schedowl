@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
 import {
   ChevronLeft,
@@ -43,7 +43,7 @@ interface Post {
   }>;
 }
 
-interface CalendarViewProps {
+interface CalendarMonthViewProps {
   setSelectedDateTime?: (datetime: string) => void;
   posts: Post[];
   onCancelPost: (postId: string) => Promise<void>;
@@ -53,7 +53,7 @@ interface CalendarViewProps {
   onMonthChange: (month: Dayjs) => void;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({
+const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
   setSelectedDateTime,
   posts,
   onCancelPost,
@@ -93,12 +93,16 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     setSelectedPost(post);
   };
 
-  const getPostsForDate = (day: number): Post[] => {
-    const date = currentMonth.date(day).format("YYYY-MM-DD");
-    return posts.filter(
-      (post) => dayjs(post.scheduledFor).format("YYYY-MM-DD") === date
-    );
-  };
+  const getPostsForDate = useMemo(
+    () =>
+      (day: number): Post[] => {
+        const date = currentMonth.date(day).format("YYYY-MM-DD");
+        return posts.filter(
+          (post) => dayjs(post.scheduledFor).format("YYYY-MM-DD") === date
+        );
+      },
+    [currentMonth, posts]
+  );
 
   const getStatusColor = (status: PostStatus) => {
     switch (status) {
@@ -301,4 +305,4 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   );
 };
 
-export default CalendarView;
+export default CalendarMonthView;

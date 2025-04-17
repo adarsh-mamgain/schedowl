@@ -6,13 +6,13 @@ import Toaster from "@/src/components/ui/Toaster";
 import { hasPermission } from "@/src/lib/permissions";
 import { Role } from "@prisma/client";
 import {
-  BarChart3,
   Calendar,
   Settings,
   Image,
   Upload,
   PlusIcon,
   ChevronsUpDownIcon,
+  Grid2x2,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -28,7 +28,7 @@ interface UserOrganisation {
 }
 
 const TABS = [
-  { title: "Dashboard", path: "/dashboard", icon: BarChart3 },
+  { title: "Dashboard", path: "/dashboard", icon: Grid2x2 },
   { title: "Calendar", path: "/calendar", icon: Calendar },
   { title: "Media", path: "/media", icon: Image },
   { title: "Settings", path: "/settings", icon: Settings },
