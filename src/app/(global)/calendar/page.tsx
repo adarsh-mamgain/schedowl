@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PostStatus } from "@prisma/client";
-import CalendarView from "@/src/components/CalendarView";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -10,6 +9,7 @@ import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import { Role } from "@prisma/client";
 import { hasPermission } from "@/src/lib/permissions";
+import CalendarMonthView from "@/src/components/CalendarMonthView";
 
 interface Post {
   id: string;
@@ -161,7 +161,7 @@ export default function CalendarPage() {
           </p>
         </div>
       </div>
-      <CalendarView
+      <CalendarMonthView
         posts={mappedPosts}
         onCancelPost={handleCancelPost}
         onEditPost={handleEditPost}
