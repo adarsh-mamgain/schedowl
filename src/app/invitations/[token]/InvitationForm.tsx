@@ -133,7 +133,7 @@ export default function InvitationForm({
   };
 
   const handleExistingUser = async () => {
-    router.push(`/login?callbackUrl=/invitations/token/${params.token}/accept`);
+    router.push(`/?callbackUrl=/invitations/token/${params.token}/accept`);
   };
 
   if (isLoading) {
