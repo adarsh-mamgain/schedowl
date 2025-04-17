@@ -14,6 +14,18 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Schedowl",
   description: "An all-in-one LinkedIn content management solution",
+  icons: [
+    {
+      rel: "icon",
+      url: "http://localhost:3000/favicon-light.svg",
+      media: "(prefers-color-scheme: light)",
+    },
+    {
+      rel: "icon",
+      url: "http://localhost:3000/favicon-dark.svg",
+      media: "(prefers-color-scheme: dark)",
+    },
+  ],
 };
 
 export default async function RootLayout({
