@@ -257,9 +257,15 @@ function InlineAccountSelect({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const toggleAccount = (accountId: string) => {
     const newSelected = selectedAccounts.includes(accountId)
@@ -277,12 +283,12 @@ function InlineAccountSelect({
   );
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1" ref={dropdownRef}>
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Account:</span>
 
         {/* Selected account chips */}
-        <div className="flex items-center gap-2 flex-wrap" ref={dropdownRef}>
+        <div className="flex items-center gap-2 flex-wrap">
           {selectedAccounts.map((accountId) => {
             const account = accounts.find((a) => a.id === accountId);
             if (!account) return null;
