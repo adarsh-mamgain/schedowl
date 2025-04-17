@@ -77,14 +77,13 @@ function LoginForm() {
           <Image
             src="/SchedOwl Logo.svg"
             alt="SchedOwl Logo"
-            width={48}
-            height={48}
-            className="mb-4"
+            width={80}
+            height={80}
           />
           <h1 className="text-2xl font-semibold text-[#101828]">
             Welcome back
           </h1>
-          <p className="text-[#475467] mt-2">
+          <p className="text-[#475467] mt-1">
             Sign in to your account to continue
           </p>
         </div>

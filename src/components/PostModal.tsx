@@ -131,7 +131,7 @@ export default function PostModal(props: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl max-w-6xl w-full overflow-y-auto p-4">
         <div className="flex justify-between mb-4">
           <h1 className="text-[#161B26] font-medium">Write Post</h1>

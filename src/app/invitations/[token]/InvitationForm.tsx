@@ -167,14 +167,13 @@ export default function InvitationForm({
           <Image
             src="/SchedOwl Logo.svg"
             alt="SchedOwl Logo"
-            width={48}
-            height={48}
-            className="mb-4"
+            width={80}
+            height={80}
           />
           <h1 className="text-2xl font-semibold text-[#101828]">
             You&apos;ve been invited to join {invitation.organisation.name}
           </h1>
-          <p className="text-[#475467] mt-2">Role: {invitation.role}</p>
+          <p className="text-[#475467] mt-1">Role: {invitation.role}</p>
         </div>
 
         <div className="space-y-6">
