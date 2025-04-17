@@ -136,7 +136,7 @@ export const templates = {
   WELCOME_EMAIL: () =>
     BASE_TEMPLATE(`
     <h2>Welcome to SchedOwl</h2>
-    <p>Thank you for signing up. We're excited to have you on board.</p>
+    <p>We're excited to have you on board</p>
   `),
   INVITATION_EMAIL: (context: InvitationContext) =>
     BASE_TEMPLATE(`

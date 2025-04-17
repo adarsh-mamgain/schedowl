@@ -66,7 +66,7 @@ const securityHeaders = {
 export async function middleware(request: NextRequest) {
   const token = (await getToken({ req: request })) as CustomToken;
   const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname === "/" ||
     request.nextUrl.pathname.startsWith("/register");
   const isInvitationPage = request.nextUrl.pathname.startsWith("/invitations");
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
   } else if (isInvitationPage) {
     response = NextResponse.next();
   } else if (!token && !isApiRoute) {
-    response = NextResponse.redirect(new URL("/login", request.url));
+    response = NextResponse.redirect(new URL("/", request.url));
   } else {
     // Check API route permissions
     if (isApiRoute && token) {
@@ -133,7 +133,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/login",
+    "/",
     "/register",
     "/api/:path*",
     "/invitations/:path*",

@@ -40,7 +40,7 @@ function RegisterForm() {
         throw new Error(error.error || "Registration failed");
       }
 
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Registration failed");
     }
@@ -179,7 +179,7 @@ function RegisterForm() {
             <p>
               Already have an account?{" "}
               <Link
-                href="/login"
+                href="/"
                 className="font-semibold underline hover:text-[#475467] hover:no-underline"
               >
                 Login
