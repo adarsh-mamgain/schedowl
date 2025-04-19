@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || "https://app.schedowl.com"
   ),
-  title: "SchedOwl: AI-Powered LinkedIn Content Creation &amp; Scheduling Tool",
+  title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
   description:
     "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
   icons: [
@@ -46,8 +46,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://schedowl.com",
-    title:
-      "SchedOwl: AI-Powered LinkedIn Content Creation &amp; Scheduling Tool",
+    title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
     description:
       "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
     siteName: "SchedOwl",
@@ -56,14 +55,13 @@ export const metadata: Metadata = {
         url: "/og-image.svg",
         width: 1200,
         height: 630,
-        alt: "SchedOwl: AI-Powered LinkedIn Content Creation &amp; Scheduling Tool",
+        alt: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title:
-      "SchedOwl: AI-Powered LinkedIn Content Creation &amp; Scheduling Tool",
+    title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
     description:
       "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
     images: ["/og-image.svg"],

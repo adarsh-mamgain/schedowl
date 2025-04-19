@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { Role } from "@prisma/client";
 import { hasPermission } from "@/src/lib/permissions";
 import Image from "next/image";
+import useCalendarStore from "@/src/store/calendarStore";
 
 interface PostPayload {
   content: string;
@@ -17,16 +18,29 @@ interface PostPayload {
   mediaIds?: string[];
 }
 
-export default function PostModal(props: {
+interface PostModalProps {
   setPostModalOpen: (value: boolean) => void;
-}) {
+  postId?: string;
+  initialContent?: string;
+  initialAccounts?: string[];
+}
+
+export default function PostModal({
+  setPostModalOpen,
+  postId,
+  initialContent,
+  initialAccounts,
+}: PostModalProps) {
   const { data: session } = useSession();
-  const [postContent, setPostContent] = useState("");
+  const [postContent, setPostContent] = useState(initialContent || "");
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(
+    initialAccounts || []
+  );
   const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">(
     "desktop"
   );
+  const { isEditing, setIsEditing, resetState } = useCalendarStore();
 
   useEffect(() => {
     fetchLinkedInAccounts();
@@ -80,20 +94,31 @@ export default function PostModal(props: {
         };
       }
 
-      const response = await axios.post(endpoint, payload);
+      if (isEditing && postId) {
+        // Update existing post
+        const response = await axios.put(`/api/posts/${postId}`, payload);
+        if (response.data) {
+          toast.success("Post updated successfully!");
+          resetState();
+          setPostModalOpen(false);
+        }
+      } else {
+        // Create new post
+        const response = await axios.post(endpoint, payload);
+        if (response.data) {
+          // Clear all form state
+          setPostContent("");
+          setSelectedAccounts([]);
 
-      if (response.data) {
-        // Clear all form state
-        setPostContent("");
-        setSelectedAccounts([]);
-
-        // Show success message
-        if (post.status === "DRAFT") {
-          toast.success("Post saved as draft and pending approval");
-        } else if (post.status === "SCHEDULED") {
-          toast.success("Post scheduled successfully!");
-        } else {
-          toast.success("Post published successfully!");
+          // Show success message
+          if (post.status === "DRAFT") {
+            toast.success("Post saved as draft and pending approval");
+          } else if (post.status === "SCHEDULED") {
+            toast.success("Post scheduled successfully!");
+          } else {
+            toast.success("Post published successfully!");
+          }
+          setPostModalOpen(false);
         }
       }
     } catch (error) {
@@ -134,10 +159,15 @@ export default function PostModal(props: {
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl max-w-6xl w-full overflow-y-auto p-4">
         <div className="flex justify-between mb-4">
-          <h1 className="text-[#161B26] font-medium">Write Post</h1>
+          <h1 className="text-[#161B26] font-medium">
+            {isEditing ? "Edit Post" : "Write Post"}
+          </h1>
           <button
             className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1"
-            onClick={() => props.setPostModalOpen(false)}
+            onClick={() => {
+              resetState();
+              setPostModalOpen(false);
+            }}
           >
             <XIcon size={16} color="#61646C" />
           </button>
@@ -151,6 +181,7 @@ export default function PostModal(props: {
               onAccountsChange={setSelectedAccounts}
               onPost={handlePost}
               requireApproval={!canApprovePosts}
+              initialContent={initialContent}
             />
           </div>
           <div className="bg-[#FAFAFA] col-span-5 border border-[#EAECF0] rounded-xl">
@@ -194,7 +225,9 @@ export default function PostModal(props: {
                   </div>
                 </div>
                 <div className="text-sm text-[#161B26] whitespace-pre-wrap">
-                  {postContent || "Write something..."}
+                  {postContent.length > 200
+                    ? postContent.slice(0, 200) + " ...more"
+                    : postContent || "Write something..."}
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">

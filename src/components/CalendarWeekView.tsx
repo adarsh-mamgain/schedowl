@@ -1,15 +1,6 @@
-"use client";
-
 import React, { useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  X,
-  Edit2,
-  Trash2,
-  Check,
-  ArrowLeftIcon,
-  ArrowRightIcon,
-} from "lucide-react";
+import { X, Edit2, Trash2, Check } from "lucide-react";
 import Button from "@/src/components/Button";
 import { PostStatus } from "@prisma/client";
 
@@ -43,63 +34,57 @@ interface Post {
   }>;
 }
 
-interface CalendarMonthViewProps {
+interface CalendarWeeklyViewProps {
   setSelectedDateTime?: (datetime: string) => void;
   posts: Post[];
   onCancelPost: (postId: string) => Promise<void>;
   onEditPost: (postId: string) => void;
   onApprovePost?: (postId: string) => Promise<void>;
-  currentMonth: Dayjs;
-  onMonthChange: (month: Dayjs) => void;
+  currentWeek: Dayjs;
+  onWeekChange: (week: Dayjs) => void;
 }
 
-const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 9); // 9 AM to 11 PM
+
+const CalendarWeeklyView: React.FC<CalendarWeeklyViewProps> = ({
   setSelectedDateTime,
   posts,
   onCancelPost,
   onEditPost,
   onApprovePost,
-  currentMonth,
-  onMonthChange,
+  currentWeek,
+  onWeekChange,
 }) => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
-  const daysInMonth = currentMonth.daysInMonth();
-  const startDay = currentMonth.startOf("month").day();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  // Get the days of the current week
+  const weekDays = useMemo(() => {
+    const startOfWeek = currentWeek.startOf("week");
+    return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, "day"));
+  }, [currentWeek]);
 
-  // Calculate previous and next month's days
-  const prevMonthDays = Array.from(
-    { length: startDay },
-    (_, i) => currentMonth.subtract(1, "month").daysInMonth() - startDay + i + 1
+  const goToPrevWeek = () => onWeekChange(currentWeek.subtract(1, "week"));
+  const goToNextWeek = () => onWeekChange(currentWeek.add(1, "week"));
+
+  const getPostsForDateAndHour = useMemo(
+    () =>
+      (date: Dayjs, hour: number): Post[] => {
+        const dateString = date.format("YYYY-MM-DD");
+        return posts.filter((post) => {
+          const postDate = dayjs(post.scheduledFor);
+          return (
+            postDate.format("YYYY-MM-DD") === dateString &&
+            postDate.hour() === hour
+          );
+        });
+      },
+    [posts]
   );
-
-  // Calculate next month's days
-  const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
-  const remainingDays = totalCells - (startDay + daysInMonth);
-  const nextMonthDays = Array.from({ length: remainingDays }, (_, i) => i + 1);
-
-  const handleDateClick = (day: number, isCurrentMonth: boolean = true) => {
-    if (!isCurrentMonth) return;
-    const selectedDate = currentMonth.date(day).format("YYYY-MM-DDTHH:mm");
-    setSelectedDateTime?.(selectedDate);
-  };
 
   const handlePostClick = (e: React.MouseEvent, post: Post) => {
     e.stopPropagation();
     setSelectedPost(post);
   };
-
-  const getPostsForDate = useMemo(
-    () =>
-      (day: number): Post[] => {
-        const date = currentMonth.date(day).format("YYYY-MM-DD");
-        return posts.filter(
-          (post) => dayjs(post.scheduledFor).format("YYYY-MM-DD") === date
-        );
-      },
-    [currentMonth, posts]
-  );
 
   const getStatusColor = (status: PostStatus) => {
     switch (status) {
@@ -120,69 +105,83 @@ const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
     }
   };
 
-  // const handleUpdatePost = async (postId: string, content: string) => {
-  //   try {
-  //     await axios.patch(`/api/posts/${postId}`, { content });
-  //     toast.success("Post updated successfully");
-  //   } catch (error) {
-  //     toast.error("Failed to update post");
-  //     throw error;
-  //   }
-  // };
+  const handleCellClick = (date: Dayjs, hour: number) => {
+    const selectedDate = date.hour(hour).minute(0).format("YYYY-MM-DDTHH:mm");
+    setSelectedDateTime?.(selectedDate);
+  };
+
+  const startDate = weekDays[0];
+  const endDate = weekDays[6];
+  const monthDisplay =
+    startDate.month() === endDate.month()
+      ? startDate.format("MMMM YYYY")
+      : `${startDate.format("MMM")} - ${endDate.format("MMM YYYY")}`;
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-7 border border-[#EAECF0] rounded-lg">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div
-            key={day}
-            className="text-xs font-medium text-gray-600 p-2 border-b border-r border-[#EAECF0]"
-          >
-            {day}
-          </div>
-        ))}
-
-        {/* Previous month days */}
-        {prevMonthDays.map((day) => (
-          <div
-            key={`prev-${day}`}
-            className="h-32 bg-[#FCFCFD] p-2 border-b border-r border-[#EAECF0] last:border-r-0"
-          >
-            <div className="text-sm font-medium text-[#667085]">{day}</div>
-          </div>
-        ))}
-
-        {/* Current month days */}
-        {days.map((day) => (
-          <div
-            key={`current-${day}`}
-            onClick={() => handleDateClick(day)}
-            className="h-32 bg-white p-2 hover:bg-gray-50 cursor-pointer border-b border-r border-[#EAECF0]"
-          >
-            <div className="text-sm font-semibold mb-1">{day}</div>
-            <div className="space-y-1">
-              {getPostsForDate(day).map((post) => (
-                <div
-                  key={post.id}
-                  onClick={(e) => handlePostClick(e, post)}
-                  className={`text-xs ${getStatusColor(
-                    post.status
-                  )} p-1 rounded truncate cursor-pointer hover:opacity-80`}
-                >
-                  {post.content}
-                </div>
-              ))}
+      <div className="grid grid-cols-8 border border-[#EAECF0] rounded-lg overflow-hidden">
+        {/* Time column */}
+        <div className="border-r border-[#EAECF0]">
+          <div className="h-8 border-b border-[#EAECF0]"></div>
+          {HOURS.map((hour) => (
+            <div
+              key={`hour-${hour}`}
+              className="h-16 border-b border-[#EAECF0] flex items-center justify-end pr-2"
+            >
+              <span className="text-sm text-gray-500">
+                {hour === 12
+                  ? "12 PM"
+                  : hour > 12
+                  ? `${hour - 12} PM`
+                  : `${hour} AM`}
+              </span>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
 
-        {/* Next month days */}
-        {nextMonthDays.map((day) => (
+        {/* Days columns */}
+        {weekDays.map((day) => (
           <div
-            key={`next-${day}`}
-            className="h-32 bg-[#FCFCFD] p-2 border-b border-r border-[#EAECF0] last:border-r-0"
+            key={day.format("YYYY-MM-DD")}
+            className="border-r border-[#EAECF0] last:border-r-0"
           >
-            <div className="text-sm font-medium text-[#667085]">{day}</div>
+            {/* Header */}
+            <div className="border-b border-[#EAECF0] text-xs font-medium text-[#85888E] flex items-center justify-center py-2">
+              <span>
+                {day.format("ddd")} {day.format("D")}
+              </span>
+            </div>
+
+            {/* Hours cells */}
+            {HOURS.map((hour) => {
+              const cellPosts = getPostsForDateAndHour(day, hour);
+              return (
+                <div
+                  key={`${day.format("YYYY-MM-DD")}-${hour}`}
+                  className="h-16 border-b border-[#EAECF0] p-1 hover:bg-gray-50 cursor-pointer relative"
+                  onClick={() => handleCellClick(day, hour)}
+                >
+                  {cellPosts.length > 0 && (
+                    <div className="space-y-1">
+                      {cellPosts.map((post) => (
+                        <div
+                          key={post.id}
+                          onClick={(e) => handlePostClick(e, post)}
+                          className={`text-xs ${getStatusColor(
+                            post.status
+                          )} p-1 rounded truncate cursor-pointer hover:opacity-80`}
+                        >
+                          <div className="font-semibold">{post.content}</div>
+                          <div className="text-xs">
+                            {dayjs(post.scheduledFor).format("h:mm A")}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -288,4 +287,4 @@ const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
   );
 };
 
-export default CalendarMonthView;
+export default CalendarWeeklyView;
