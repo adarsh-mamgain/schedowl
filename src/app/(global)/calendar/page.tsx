@@ -6,10 +6,19 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import weekOfYear from "dayjs/plugin/weekOfYear";
 import { useSession } from "next-auth/react";
 import { Role } from "@prisma/client";
 import { hasPermission } from "@/src/lib/permissions";
 import CalendarMonthView from "@/src/components/CalendarMonthView";
+import CalendarWeekView from "@/src/components/CalendarWeekView";
+import CalendarDayView from "@/src/components/CalendarDayView";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
+
+// Initialize dayjs plugins
+dayjs.extend(weekOfYear);
+
+type CalendarViewType = "month" | "week" | "day";
 
 interface Post {
   id: string;
@@ -48,14 +57,35 @@ export default function CalendarPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(dayjs().startOf("month"));
+  const [currentDate, setCurrentDate] = useState(dayjs());
+  const [viewType, setViewType] = useState<CalendarViewType>("month");
   const router = useRouter();
+
+  // Calculate date range based on view type
+  const getDateRange = useCallback(() => {
+    if (viewType === "month") {
+      return {
+        startDate: currentDate.startOf("month").toISOString(),
+        endDate: currentDate.endOf("month").toISOString(),
+      };
+    } else if (viewType === "week") {
+      return {
+        startDate: currentDate.startOf("week").toISOString(),
+        endDate: currentDate.endOf("week").toISOString(),
+      };
+    } else {
+      // Day view - extend the range slightly to ensure we get all posts
+      return {
+        startDate: currentDate.startOf("day").toISOString(),
+        endDate: currentDate.endOf("day").toISOString(),
+      };
+    }
+  }, [currentDate, viewType]);
 
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
-      const startDate = currentMonth.startOf("month").toISOString();
-      const endDate = currentMonth.endOf("month").toISOString();
+      const { startDate, endDate } = getDateRange();
 
       const result = await axios.get("/api/posts", {
         params: {
@@ -76,7 +106,7 @@ export default function CalendarPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth]);
+  }, [getDateRange]);
 
   useEffect(() => {
     fetchPosts();
@@ -110,8 +140,41 @@ export default function CalendarPage() {
     router.push(`/posts/${postId}/edit`);
   };
 
-  const handleMonthChange = (newMonth: dayjs.Dayjs) => {
-    setCurrentMonth(newMonth);
+  const handleDateChange = (newDate: dayjs.Dayjs) => {
+    setCurrentDate(newDate);
+  };
+
+  const handleNavigatePrev = () => {
+    if (viewType === "month") {
+      setCurrentDate(currentDate.subtract(1, "month"));
+    } else if (viewType === "week") {
+      setCurrentDate(currentDate.subtract(1, "week"));
+    } else {
+      setCurrentDate(currentDate.subtract(1, "day"));
+    }
+  };
+
+  const handleNavigateNext = () => {
+    if (viewType === "month") {
+      setCurrentDate(currentDate.add(1, "month"));
+    } else if (viewType === "week") {
+      setCurrentDate(currentDate.add(1, "week"));
+    } else {
+      setCurrentDate(currentDate.add(1, "day"));
+    }
+  };
+
+  const handleNavigateToday = () => {
+    setCurrentDate(dayjs());
+  };
+
+  const handleViewTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setViewType(e.target.value as CalendarViewType);
+  };
+
+  const handleSetSelectedDateTime = (dateTime: string) => {
+    // Function to handle when user selects a time slot to create a new post
+    router.push(`/posts/new?scheduledFor=${dateTime}`);
   };
 
   const canApprovePosts = hasPermission(
@@ -132,6 +195,38 @@ export default function CalendarPage() {
     errorMessage: post.errorMessage,
     retryCount: post.retryCount,
   }));
+
+  // Helper to format the date header based on view type
+  const getHeaderText = () => {
+    if (viewType === "month") {
+      return (
+        <h2 className="text-lg font-semibold">
+          {currentDate.format("MMMM YYYY")}
+        </h2>
+      );
+    } else if (viewType === "week") {
+      const startOfWeek = currentDate.startOf("week");
+      const endOfWeek = currentDate.endOf("week");
+      return (
+        <h2 className="text-lg font-semibold">
+          {currentDate.format("MMMM YYYY")} ·{" "}
+          <span className="text-[#85888E] font-normal">
+            {startOfWeek.format("MMM D, YYYY")} -{" "}
+            {endOfWeek.format("MMM D, YYYY")} · Week {currentDate.week()}
+          </span>
+        </h2>
+      );
+    } else {
+      return (
+        <h2 className="text-lg font-semibold">
+          {currentDate.format("MMMM D, YYYY")} ·{" "}
+          <span className="text-[#85888E] font-normal">
+            {currentDate.format("dddd")}
+          </span>
+        </h2>
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -161,14 +256,81 @@ export default function CalendarPage() {
           </p>
         </div>
       </div>
-      <CalendarMonthView
-        posts={mappedPosts}
-        onCancelPost={handleCancelPost}
-        onEditPost={handleEditPost}
-        onApprovePost={canApprovePosts ? handleApprovePost : undefined}
-        currentMonth={currentMonth}
-        onMonthChange={handleMonthChange}
-      />
+
+      <div className="flex justify-between items-center mb-4">
+        {getHeaderText()}
+
+        <div className="flex gap-4">
+          <div className="flex">
+            <button
+              className="w-8 h-8 inline-flex items-center justify-center border-y border-l rounded-l-lg"
+              onClick={handleNavigatePrev}
+            >
+              <ArrowLeftIcon size={16} />
+            </button>
+            <button
+              className="w-8 h-8 inline-flex items-center justify-center border"
+              onClick={handleNavigateToday}
+            >
+              <span className="block w-2 h-2 bg-black rounded-full"></span>
+            </button>
+            <button
+              className="w-8 h-8 inline-flex items-center justify-center border-y border-r rounded-r-lg"
+              onClick={handleNavigateNext}
+            >
+              <ArrowRightIcon size={16} />
+            </button>
+          </div>
+          <div className="text-[#61646C] font-medium border rounded-lg px-1.5 py-1 text-sm">
+            <select
+              name="view"
+              id="view"
+              value={viewType}
+              onChange={handleViewTypeChange}
+            >
+              <option value="month">Month View</option>
+              <option value="week">Week View</option>
+              <option value="day">Day View</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {viewType === "month" && (
+        <CalendarMonthView
+          posts={mappedPosts}
+          onCancelPost={handleCancelPost}
+          onEditPost={handleEditPost}
+          onApprovePost={canApprovePosts ? handleApprovePost : undefined}
+          currentMonth={currentDate}
+          onMonthChange={handleDateChange}
+          setSelectedDateTime={handleSetSelectedDateTime}
+        />
+      )}
+
+      {viewType === "week" && (
+        <CalendarWeekView
+          posts={mappedPosts}
+          onCancelPost={handleCancelPost}
+          onEditPost={handleEditPost}
+          onApprovePost={canApprovePosts ? handleApprovePost : undefined}
+          currentWeek={currentDate}
+          onWeekChange={handleDateChange}
+          setSelectedDateTime={handleSetSelectedDateTime}
+        />
+      )}
+
+      {viewType === "day" && (
+        <CalendarDayView
+          posts={mappedPosts}
+          onCancelPost={handleCancelPost}
+          onEditPost={handleEditPost}
+          onApprovePost={canApprovePosts ? handleApprovePost : undefined}
+          currentDay={currentDate}
+          onDayChange={handleDateChange}
+          setSelectedDateTime={handleSetSelectedDateTime}
+        />
+      )}
     </section>
   );
 }
