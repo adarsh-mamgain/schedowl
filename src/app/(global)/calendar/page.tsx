@@ -303,7 +303,6 @@ export default function CalendarPage() {
           onEditPost={handleEditPost}
           onApprovePost={canApprovePosts ? handleApprovePost : undefined}
           currentMonth={currentDate}
-          onMonthChange={handleDateChange}
           setSelectedDateTime={handleSetSelectedDateTime}
         />
       )}
@@ -315,7 +314,6 @@ export default function CalendarPage() {
           onEditPost={handleEditPost}
           onApprovePost={canApprovePosts ? handleApprovePost : undefined}
           currentWeek={currentDate}
-          onWeekChange={handleDateChange}
           setSelectedDateTime={handleSetSelectedDateTime}
         />
       )}

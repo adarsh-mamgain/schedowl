@@ -1,13 +1,6 @@
 import React, { useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  X,
-  Edit2,
-  Trash2,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Edit2, Trash2, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/src/components/Button";
 import { PostStatus, Role } from "@prisma/client";
 import useCalendarStore from "@/src/store/calendarStore";
@@ -243,7 +236,7 @@ const CalendarDayView: React.FC<CalendarDayViewProps> = ({
       await onCancelPost(post.id);
       toast.success("Post deleted successfully");
       resetState();
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete post");
     } finally {
       setIsDeleting(false);
@@ -261,7 +254,7 @@ const CalendarDayView: React.FC<CalendarDayViewProps> = ({
       await onApprovePost?.(post.id);
       toast.success("Post approved successfully");
       resetState();
-    } catch (error) {
+    } catch {
       toast.error("Failed to approve post");
     } finally {
       setIsApproving(false);

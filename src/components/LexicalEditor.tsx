@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -404,7 +404,7 @@ function MediaLibraryModal({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchMediaLibrary = async () => {
+  const fetchMediaLibrary = useCallback(async () => {
     try {
       const response = await axios.get("/api/media");
       const items = response.data.map((item: MediaLibraryItem) => ({
@@ -417,13 +417,13 @@ function MediaLibraryModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMedia]);
 
   useEffect(() => {
     if (isOpen) {
       fetchMediaLibrary();
     }
-  }, [isOpen, selectedMedia]);
+  }, [isOpen, fetchMediaLibrary]);
 
   const handleMediaUpload = async (files: FileList) => {
     setUploading(true);
