@@ -2,14 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import dayjs, { Dayjs } from "dayjs";
-import {
-  X,
-  Edit2,
-  Trash2,
-  Check,
-  ArrowLeftIcon,
-  ArrowRightIcon,
-} from "lucide-react";
+import { X, Edit2, Trash2, Check } from "lucide-react";
 import Button from "@/src/components/Button";
 import { PostStatus } from "@prisma/client";
 
@@ -50,7 +43,6 @@ interface CalendarMonthViewProps {
   onEditPost: (postId: string) => void;
   onApprovePost?: (postId: string) => Promise<void>;
   currentMonth: Dayjs;
-  onMonthChange: (month: Dayjs) => void;
 }
 
 const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
@@ -60,7 +52,6 @@ const CalendarMonthView: React.FC<CalendarMonthViewProps> = ({
   onEditPost,
   onApprovePost,
   currentMonth,
-  onMonthChange,
 }) => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 

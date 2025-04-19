@@ -40,7 +40,7 @@ export default function PostModal({
   const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">(
     "desktop"
   );
-  const { isEditing, setIsEditing, resetState } = useCalendarStore();
+  const { isEditing, resetState } = useCalendarStore();
 
   useEffect(() => {
     fetchLinkedInAccounts();

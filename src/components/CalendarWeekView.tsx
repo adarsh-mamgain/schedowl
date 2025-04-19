@@ -41,7 +41,6 @@ interface CalendarWeeklyViewProps {
   onEditPost: (postId: string) => void;
   onApprovePost?: (postId: string) => Promise<void>;
   currentWeek: Dayjs;
-  onWeekChange: (week: Dayjs) => void;
 }
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 9); // 9 AM to 11 PM
@@ -53,7 +52,6 @@ const CalendarWeeklyView: React.FC<CalendarWeeklyViewProps> = ({
   onEditPost,
   onApprovePost,
   currentWeek,
-  onWeekChange,
 }) => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
@@ -62,9 +60,6 @@ const CalendarWeeklyView: React.FC<CalendarWeeklyViewProps> = ({
     const startOfWeek = currentWeek.startOf("week");
     return Array.from({ length: 7 }, (_, i) => startOfWeek.add(i, "day"));
   }, [currentWeek]);
-
-  const goToPrevWeek = () => onWeekChange(currentWeek.subtract(1, "week"));
-  const goToNextWeek = () => onWeekChange(currentWeek.add(1, "week"));
 
   const getPostsForDateAndHour = useMemo(
     () =>
@@ -109,13 +104,6 @@ const CalendarWeeklyView: React.FC<CalendarWeeklyViewProps> = ({
     const selectedDate = date.hour(hour).minute(0).format("YYYY-MM-DDTHH:mm");
     setSelectedDateTime?.(selectedDate);
   };
-
-  const startDate = weekDays[0];
-  const endDate = weekDays[6];
-  const monthDisplay =
-    startDate.month() === endDate.month()
-      ? startDate.format("MMMM YYYY")
-      : `${startDate.format("MMM")} - ${endDate.format("MMM YYYY")}`;
 
   return (
     <div className="space-y-4">
