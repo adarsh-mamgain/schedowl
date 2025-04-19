@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     siteName: "SchedOwl",
     images: [
       {
-        url: "/og-image.svg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
     description:
       "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -88,9 +88,6 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <div id="0cred.com" className="hidden">
-          0791629a-dbb3-4785-bb88-c85d3105ae03
-        </div>
         <SessionProvider session={session}>
           <PostHogProvider>{children}</PostHogProvider>
         </SessionProvider>
