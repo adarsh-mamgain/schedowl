@@ -16,6 +16,8 @@ import {
   FORMAT_TEXT_COMMAND,
   COMMAND_PRIORITY_LOW,
   $getRoot,
+  $createParagraphNode,
+  $createTextNode,
 } from "lexical";
 import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import {
@@ -567,6 +569,7 @@ interface LexicalEditorProps {
   initialPost?: Post;
   onDraftSave?: (post: Post) => Promise<void>;
   requireApproval?: boolean;
+  initialContent?: string;
 }
 
 function EditorContent({
@@ -578,6 +581,7 @@ function EditorContent({
   initialPost,
   onDraftSave,
   requireApproval = false,
+  initialContent,
 }: LexicalEditorProps) {
   const [editor] = useLexicalComposerContext();
   const [postContent, setPostContent] = useState(initialPost?.content || "");
@@ -601,6 +605,18 @@ function EditorContent({
   useEffect(() => {
     onChange(postContent);
   }, [postContent, onChange]);
+
+  useEffect(() => {
+    if (initialContent) {
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(initialContent));
+        root.append(paragraph);
+      });
+    }
+  }, [initialContent, editor]);
 
   const handleDraftSave = async () => {
     if (!onDraftSave) return;
@@ -712,7 +728,7 @@ function EditorContent({
   };
 
   return (
-    <div className="border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
+    <div className="relative border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
       <UnicodeToolbarPlugin />
       <RichTextPlugin
         contentEditable={
@@ -720,6 +736,11 @@ function EditorContent({
             className="outline-none border-none p-4 min-h-[350px]"
             aria-label="Post content"
           />
+        }
+        placeholder={
+          <div className="absolute top-16 left-4 text-gray-400 pointer-events-none">
+            Write something...
+          </div>
         }
         ErrorBoundary={LexicalErrorBoundary}
       />

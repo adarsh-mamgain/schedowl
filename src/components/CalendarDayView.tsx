@@ -9,7 +9,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import Button from "@/src/components/Button";
-import { PostStatus } from "@prisma/client";
+import { PostStatus, Role } from "@prisma/client";
+import useCalendarStore from "@/src/store/calendarStore";
+import { useSession } from "next-auth/react";
+import { hasPermission } from "@/src/lib/permissions";
+import { toast } from "react-toastify";
 
 interface Post {
   id: string;
@@ -62,7 +66,28 @@ const CalendarDayView: React.FC<CalendarDayViewProps> = ({
   currentDay,
   onDayChange,
 }) => {
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const { data: session } = useSession();
+  const {
+    selectedPost,
+    setSelectedPost,
+    isEditing,
+    setIsEditing,
+    isApproving,
+    setIsApproving,
+    isDeleting,
+    setIsDeleting,
+    resetState,
+  } = useCalendarStore();
+
+  const canManagePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "manage_posts"
+  );
+  const canApprovePosts = hasPermission(
+    session?.organisationRole?.role as Role,
+    "approve_posts"
+  );
+
   const [viewDate, setViewDate] = useState(currentDay.startOf("month"));
 
   // Get mini calendar weeks
@@ -201,6 +226,80 @@ const CalendarDayView: React.FC<CalendarDayViewProps> = ({
     }
   };
 
+  const handleEditClick = (post: Post) => {
+    setSelectedPost(post);
+    setIsEditing(true);
+    onEditPost(post.id);
+  };
+
+  const handleDeleteClick = async (post: Post) => {
+    if (!canManagePosts) {
+      toast.error("You don't have permission to delete posts");
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await onCancelPost(post.id);
+      toast.success("Post deleted successfully");
+      resetState();
+    } catch (error) {
+      toast.error("Failed to delete post");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleApproveClick = async (post: Post) => {
+    if (!canApprovePosts) {
+      toast.error("You don't have permission to approve posts");
+      return;
+    }
+
+    try {
+      setIsApproving(true);
+      await onApprovePost?.(post.id);
+      toast.success("Post approved successfully");
+      resetState();
+    } catch (error) {
+      toast.error("Failed to approve post");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const renderPostActions = (post: Post) => {
+    if (!canManagePosts) return null;
+
+    return (
+      <div className="flex items-center gap-2">
+        {post.status === PostStatus.DRAFT && canApprovePosts && (
+          <button
+            onClick={() => handleApproveClick(post)}
+            className="p-1 hover:bg-gray-100 rounded"
+            disabled={isApproving}
+          >
+            <Check size={16} className="text-green-600" />
+          </button>
+        )}
+        <button
+          onClick={() => handleEditClick(post)}
+          className="p-1 hover:bg-gray-100 rounded"
+          disabled={isEditing}
+        >
+          <Edit2 size={16} className="text-blue-600" />
+        </button>
+        <button
+          onClick={() => handleDeleteClick(post)}
+          className="p-1 hover:bg-gray-100 rounded"
+          disabled={isDeleting}
+        >
+          <Trash2 size={16} className="text-red-600" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="flex gap-4">
       {/* Main day view */}
@@ -247,9 +346,12 @@ const CalendarDayView: React.FC<CalendarDayViewProps> = ({
                             post.status
                           )} p-2 rounded cursor-pointer hover:opacity-80`}
                         >
-                          <div className="font-semibold">{post.content}</div>
-                          <div className="text-xs">
-                            {dayjs(post.scheduledFor).format("h:mm A")}
+                          <div className="flex justify-between items-start">
+                            <div className="font-semibold">{post.content}</div>
+                            {renderPostActions(post)}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {post.socialAccount.name}
                           </div>
                         </div>
                       ))}
