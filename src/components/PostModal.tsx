@@ -225,7 +225,9 @@ export default function PostModal({
                   </div>
                 </div>
                 <div className="text-sm text-[#161B26] whitespace-pre-wrap">
-                  {postContent || "Write something..."}
+                  {postContent.length > 200
+                    ? postContent.slice(0, 200) + " ...more"
+                    : postContent || "Write something..."}
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">

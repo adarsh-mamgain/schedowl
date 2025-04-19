@@ -29,9 +29,9 @@ import {
   Plus,
   SendHorizonal,
   X,
-  Image as ImageIcon,
   Upload,
   Loader2,
+  ImagePlusIcon,
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
@@ -63,7 +63,13 @@ const LINKEDIN_UNICODE_SUPPORT = {
   calendar: "\u{1F4C5}", // Calendar
 };
 
-function UnicodeToolbarPlugin() {
+interface UnicodeToolbarPluginProps {
+  setShowMediaLibrary: (show: boolean) => void;
+}
+
+function UnicodeToolbarPlugin({
+  setShowMediaLibrary,
+}: UnicodeToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -122,76 +128,87 @@ function UnicodeToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-xl">
-      <button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        className={`p-2 hover:bg-gray-100 rounded ${
-          isBold ? "text-blue-500" : "text-[#98A2B3]"
-        }`}
-        title="Bold"
-      >
-        <Bold size={16} strokeWidth={4} />
-      </button>
-      <button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        className={`p-2 hover:bg-gray-100 rounded ${
-          isItalic ? "text-blue-500" : "text-[#98A2B3]"
-        }`}
-        title="Italic"
-      >
-        <Italic size={16} strokeWidth={4} />
-      </button>
-      <button
-        onClick={() =>
-          editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
-        }
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Bullet List"
-      >
-        <List size={16} strokeWidth={4} />
-      </button>
-      <div className="relative" ref={pickerRef}>
+    <div className="flex items-center justify-between space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-xl">
+      <div className="flex items-center space-x-1">
         <button
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-          title="Insert Emoji"
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+          className={`p-2 hover:bg-gray-100 rounded ${
+            isBold ? "text-blue-500" : "text-[#98A2B3]"
+          }`}
+          title="Bold"
         >
-          😀
+          <Bold size={16} strokeWidth={4} />
         </button>
-        {showEmojiPicker && (
-          <div className="absolute z-10 top-full left-0 mt-1">
-            <Picker
-              data={data}
-              onEmojiSelect={insertEmoji}
-              theme="light"
-              emojiSize={20}
-              emojiButtonSize={28}
-            />
-          </div>
-        )}
+        <button
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
+          className={`p-2 hover:bg-gray-100 rounded ${
+            isItalic ? "text-blue-500" : "text-[#98A2B3]"
+          }`}
+          title="Italic"
+        >
+          <Italic size={16} strokeWidth={4} />
+        </button>
+        <button
+          onClick={() =>
+            editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+          }
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Bullet List"
+        >
+          <List size={16} strokeWidth={4} />
+        </button>
+        <div className="relative" ref={pickerRef}>
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="text-xs text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+            title="Insert Emoji"
+          >
+            😀
+          </button>
+          {showEmojiPicker && (
+            <div className="absolute z-10 top-full left-0 mt-1">
+              <Picker
+                data={data}
+                onEmojiSelect={insertEmoji}
+                theme="light"
+                emojiSize={20}
+                emojiButtonSize={28}
+              />
+            </div>
+          )}
+        </div>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Bullet Point"
+        >
+          •
+        </button>
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Arrow"
+        >
+          →
+        </button>
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Checkmark"
+        >
+          ✓
+        </button>
       </div>
-      <div className="h-4 w-px bg-gray-300 mx-1" />
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Bullet Point"
-      >
-        •
-      </button>
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Arrow"
-      >
-        →
-      </button>
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Checkmark"
-      >
-        ✓
-      </button>
+      <div>
+        <button
+          onClick={() => setShowMediaLibrary(true)}
+          className="p-2 hover:bg-gray-100 rounded text-[#98A2B3]"
+          title="Add Media"
+        >
+          <ImagePlusIcon size={16} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -387,22 +404,22 @@ function MediaLibraryModal({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchMediaLibrary = async () => {
-      try {
-        const response = await axios.get("/api/media");
-        const items = response.data.map((item: MediaLibraryItem) => ({
-          ...item,
-          selected: selectedMedia.some((selected) => selected.id === item.id),
-        }));
-        setMediaItems(items);
-      } catch {
-        toast.error("Failed to fetch media library");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchMediaLibrary = async () => {
+    try {
+      const response = await axios.get("/api/media");
+      const items = response.data.map((item: MediaLibraryItem) => ({
+        ...item,
+        selected: selectedMedia.some((selected) => selected.id === item.id),
+      }));
+      setMediaItems(items);
+    } catch {
+      toast.error("Failed to fetch media library");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (isOpen) {
       fetchMediaLibrary();
     }
@@ -412,22 +429,18 @@ function MediaLibraryModal({
     setUploading(true);
     const formData = new FormData();
     Array.from(files).forEach((file) => {
-      formData.append("files", file);
+      formData.append("file", file);
     });
 
     try {
-      const response = await axios.post("/api/media/upload", formData, {
+      await axios.post("/api/media/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      const newMedia = response.data.map((media: MediaLibraryItem) => ({
-        ...media,
-        selected: false,
-      }));
-
-      setMediaItems((prev) => [...prev, ...newMedia]);
+      // Fetch media again after successful upload
+      await fetchMediaLibrary();
       toast.success("Media uploaded successfully!");
     } catch {
       toast.error("Failed to upload media");
@@ -598,7 +611,6 @@ function EditorContent({
       preview: "",
     })) || []
   );
-  // const [isDraft, setIsDraft] = useState(initialPost?.status === "DRAFT");
   const [isLoading, setIsLoading] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
 
@@ -629,7 +641,6 @@ function EditorContent({
         socialAccountIds: selectedAccounts,
         mediaIds: selectedMedia.map((media) => media.id),
       });
-      // setIsDraft(true);
       toast.success("Draft saved successfully!");
     } catch {
       toast.error("Failed to save draft");
@@ -669,7 +680,6 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        // setIsDraft(true);
       } else {
         await onPost({
           content: postContent,
@@ -678,7 +688,6 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        // setIsDraft(false);
       }
 
       // Clear the editor
@@ -729,11 +738,11 @@ function EditorContent({
 
   return (
     <div className="relative border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
-      <UnicodeToolbarPlugin />
+      <UnicodeToolbarPlugin setShowMediaLibrary={setShowMediaLibrary} />
       <RichTextPlugin
         contentEditable={
           <ContentEditable
-            className="outline-none border-none p-4 min-h-[350px]"
+            className="outline-none border-none p-4 h-[350px] overflow-scroll"
             aria-label="Post content"
           />
         }
@@ -749,6 +758,34 @@ function EditorContent({
       <AutoFocusPlugin />
       <ListPlugin />
 
+      {/* Media Preview Section */}
+      {selectedMedia.length > 0 && (
+        <div className="p-4">
+          <div className="flex flex-wrap gap-4">
+            {selectedMedia.map((media, index) => (
+              <div key={media.id} className="relative group">
+                <div className="w-32 h-32 rounded-lg overflow-hidden border border-[#EAECF0]">
+                  <Image
+                    src={media.preview || media.url}
+                    alt={media.filename}
+                    // className="object-contain w-full h-full"
+                    className="object-cover w-full h-full"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+                <button
+                  onClick={() => handleRemoveMedia(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Account Selection */}
       <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
         <InlineAccountSelect
@@ -756,45 +793,6 @@ function EditorContent({
           selectedAccounts={selectedAccounts}
           onChange={onAccountsChange}
         />
-      </div>
-
-      {/* Media Section */}
-      <div className="p-2 border-t border-t-[#EAECF0]">
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => setShowMediaLibrary(true)}
-            >
-              <ImageIcon size={16} />
-              Media Library
-            </Button>
-          </div>
-          <div className="flex">
-            {selectedMedia.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedMedia.map((media, index) => (
-                  <div key={media.id} className="relative group">
-                    <Image
-                      src={media.preview || media.url}
-                      alt={media.filename}
-                      className="rounded"
-                      width={80}
-                      height={80}
-                    />
-                    <button
-                      onClick={() => handleRemoveMedia(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Action Buttons */}
