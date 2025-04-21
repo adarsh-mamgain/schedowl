@@ -1,25 +1,27 @@
 ## Todo
 
-- company page scheduling
-- ⁠basic analytics in dashboard page
-- create the highest prod account setup https://app.schedowl.com
+- Google Signin and emailing for signup
+- dodopayments webhook and features validator
 
-- add ELK
-- input field, buttons colors
-- forgot password
-- ⁠bug fixes
-- ⁠billing and restrictions for the product
-- allow PDF for media
-- remove unwanted UIs while loading
-
-- change the LinkedIn product APIs
-
-  - support@schedowl.com
-
-- create subscriptions (WITH A LOT OF DIALOG BOXES)
   - cancel the next subscription only
   - see past payments and invoices
   - allow upgrading and downgrading (careful)
+
+- add members and switch organisation
+- please allow to editing any post using the PostModal and create all the respective apis if not present (from the Calendar).
+- allow drafting a post by clicking on 'Draft' button
+- The scheduling button and selecting time should be much better UX/UI.
+- also show the preview of the media inside the Sidebar Preview like the LinkedIn post.
+
+- company page scheduling
+- ⁠basic analytics in dashboard page
+- add ELK
+- input field, buttons colors
+- forgot password
+- allow PDF for media
+- remove unwanted UIs while loading
+- change the LinkedIn product APIs
+- support@schedowl.com
 
 I have a doc from my CEO stating what all needs to be done.
 
