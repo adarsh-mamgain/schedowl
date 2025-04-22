@@ -1,56 +1,27 @@
 ## Todo
 
-- company page scheduling
-- ⁠basic analytics in dashboard page
-- create the highest prod account setup https://app.schedowl.com
+- Google Signin and emailing for signup
+- dodopayments webhook and features validator
 
-- add ELK
-- logo update
-- input field, buttons colors
-- forgot password
-- ⁠bug fixes
-- ⁠billing and restrictions for the product
-- ⁠emailing service
-  For a SaaS application, I'd recommend starting with Nodemailer for sending emails (paired with an SMTP server like Postfix) and either Postal or Mailcow for a complete solution if you need both sending and receiving capabilities.
-- calendar day and week view
-- allow PDF for media
-- remove unwanted UIs while loading
-
-SchedOwl
-SnapUI
-EventHQ Connect
-EventHQ Checkin
-Typill
-Pikaboo
-Poker-Go
-Battle-Game
-
-- change the LinkedIn product APIs
-
-- [ ] uses open source for marketing emails
-
-  - support@schedowl.com
-  - adarsh@schedowl.com
-  - noreply@schedowl.com
-
-- create subscriptions (WITH A LOT OF DIALOG BOXES)
-  - only owner can pay?
   - cancel the next subscription only
   - see past payments and invoices
   - allow upgrading and downgrading (careful)
 
-## Research
+- add members and switch organisation
+- please allow to editing any post using the PostModal and create all the respective apis if not present (from the Calendar).
+- allow drafting a post by clicking on 'Draft' button
+- The scheduling button and selecting time should be much better UX/UI.
+- also show the preview of the media inside the Sidebar Preview like the LinkedIn post.
 
-- unicode bold
-- unicode italics
-- unicode bullets
-- unicode emojis
-
-# Authorization
-
-Now let's work on adding user roles and permissions to my schedowl project. Go through the whole project and 'THINK HARD'.
-
-There are three roles Owner, Admin and Member.
+- company page scheduling
+- ⁠basic analytics in dashboard page
+- add ELK
+- input field, buttons colors
+- forgot password
+- allow PDF for media
+- remove unwanted UIs while loading
+- change the LinkedIn product APIs
+- support@schedowl.com
 
 I have a doc from my CEO stating what all needs to be done.
 

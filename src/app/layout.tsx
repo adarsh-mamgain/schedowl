@@ -91,6 +91,11 @@ export default async function RootLayout({
         <SessionProvider session={session}>
           <PostHogProvider>{children}</PostHogProvider>
         </SessionProvider>
+        {/* simpleanalytics.com */}
+        <script
+          async
+          src="https://scripts.simpleanalyticscdn.com/latest.js"
+        ></script>
       </body>
     </html>
   );
