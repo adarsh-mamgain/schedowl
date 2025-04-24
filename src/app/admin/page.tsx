@@ -148,7 +148,10 @@ export default async function AdminPage() {
 
     // Calculate derived metrics
     const churnRateValue =
-      subscriptionData[1][0]?.churned / subscriptionData[1][0]?.total || 0;
+      subscriptionData[1][0]?.total > 0
+        ? Number(subscriptionData[1][0]?.churned || 0) /
+          Number(subscriptionData[1][0]?.total)
+        : 0;
 
     return (
       <div className="min-h-screen bg-gray-50 p-8">
@@ -163,15 +166,17 @@ export default async function AdminPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {totalStats[0]}
+                {totalStats[0] || 0}
               </p>
               <div className="mt-4 space-y-2">
                 <p className="text-sm text-gray-500">
-                  Last 24h: {timeStats[0]}
+                  Last 24h: {timeStats[0] || 0}
                 </p>
-                <p className="text-sm text-gray-500">Last 7d: {timeStats[2]}</p>
                 <p className="text-sm text-gray-500">
-                  Last 30d: {timeStats[4]}
+                  Last 7d: {timeStats[2] || 0}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last 30d: {timeStats[4] || 0}
                 </p>
               </div>
             </div>
@@ -182,7 +187,7 @@ export default async function AdminPage() {
                 Total Organisations
               </h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {totalStats[1]}
+                {totalStats[1] || 0}
               </p>
             </div>
 
@@ -190,18 +195,20 @@ export default async function AdminPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-medium text-gray-900">Total Posts</h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {totalStats[2]}
+                {totalStats[2] || 0}
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                Published: {totalStats[3]}
+                Published: {totalStats[3] || 0}
               </p>
               <div className="mt-4 space-y-2">
                 <p className="text-sm text-gray-500">
-                  Last 24h: {timeStats[1]}
+                  Last 24h: {timeStats[1] || 0}
                 </p>
-                <p className="text-sm text-gray-500">Last 7d: {timeStats[3]}</p>
                 <p className="text-sm text-gray-500">
-                  Last 30d: {timeStats[5]}
+                  Last 7d: {timeStats[3] || 0}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Last 30d: {timeStats[5] || 0}
                 </p>
               </div>
             </div>
@@ -212,7 +219,7 @@ export default async function AdminPage() {
                 Active Subscriptions
               </h3>
               <p className="text-3xl font-bold text-gray-900 mt-2">
-                {subscriptionData[0]}
+                {subscriptionData[0] || 0}
               </p>
               <p className="text-sm text-gray-500">
                 Churn Rate: {(churnRateValue * 100).toFixed(1)}%
@@ -229,19 +236,25 @@ export default async function AdminPage() {
               </h3>
               <div className="h-64">
                 <div className="flex items-end h-full space-x-2">
-                  {userGrowthData.map((data) => (
-                    <div
-                      key={data.date}
-                      className="flex-1 bg-blue-500 rounded-t"
-                      style={{
-                        height: `${
-                          (data.count /
-                            Math.max(...userGrowthData.map((d) => d.count))) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  ))}
+                  {userGrowthData.length > 0 ? (
+                    userGrowthData.map((data) => (
+                      <div
+                        key={data.date}
+                        className="flex-1 bg-blue-500 rounded-t"
+                        style={{
+                          height: `${
+                            (data.count /
+                              Math.max(...userGrowthData.map((d) => d.count))) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="w-full text-center text-gray-500">
+                      No data available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -253,19 +266,25 @@ export default async function AdminPage() {
               </h3>
               <div className="h-64">
                 <div className="flex items-end h-full space-x-2">
-                  {postGrowthData.map((data) => (
-                    <div
-                      key={data.date}
-                      className="flex-1 bg-green-500 rounded-t"
-                      style={{
-                        height: `${
-                          (data.count /
-                            Math.max(...postGrowthData.map((d) => d.count))) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  ))}
+                  {postGrowthData.length > 0 ? (
+                    postGrowthData.map((data) => (
+                      <div
+                        key={data.date}
+                        className="flex-1 bg-green-500 rounded-t"
+                        style={{
+                          height: `${
+                            (data.count /
+                              Math.max(...postGrowthData.map((d) => d.count))) *
+                            100
+                          }%`,
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="w-full text-center text-gray-500">
+                      No data available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -279,20 +298,26 @@ export default async function AdminPage() {
                 Recent Users
               </h3>
               <div className="space-y-4">
-                {recentUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
+                {recentUsers.length > 0 ? (
+                  recentUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">{user.name}</p>
+                        <p className="text-sm text-gray-500">{user.email}</p>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {formatTimeAgo(user.createdAt)}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {formatTimeAgo(user.createdAt)}
-                    </p>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No recent users
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -302,24 +327,30 @@ export default async function AdminPage() {
                 Recent Posts
               </h3>
               <div className="space-y-4">
-                {recentPosts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {post.organisation.name}
-                      </p>
+                {recentPosts.length > 0 ? (
+                  recentPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {post.organisation.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {post.content.substring(0, 50)}...
+                        </p>
+                      </div>
                       <p className="text-sm text-gray-500">
-                        {post.content.substring(0, 50)}...
+                        {formatTimeAgo(post.scheduledFor)}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {formatTimeAgo(post.scheduledFor)}
-                    </p>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500">
+                    No recent posts
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
