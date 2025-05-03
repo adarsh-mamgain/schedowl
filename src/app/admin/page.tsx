@@ -29,7 +29,8 @@ export default async function AdminPage() {
 
   if (
     !session?.user?.email ||
-    session.user.email !== "work.mamgain@gmail.com"
+    (session.user.email !== "work.mamgain@gmail.com" &&
+      session.user.email !== "mrakshayvm@gmail.com")
   ) {
     redirect("/");
   }
