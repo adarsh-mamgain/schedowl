@@ -81,7 +81,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // If it's an admin route and user is not the admin email, redirect to home
-  if (isAdminRoute && token?.email !== "work.mamgain@gmail.com") {
+  if (
+    isAdminRoute &&
+    token?.email !== "work.mamgain@gmail.com" &&
+    token?.email !== "mrakshayvm@gmail.com"
+  ) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
