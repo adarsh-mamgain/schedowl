@@ -1,5 +1,7 @@
 ## Todo
 
+- add ai with gemini
+
 - Google Signin and emailing for signup
 - dodopayments webhook and features validator
 
