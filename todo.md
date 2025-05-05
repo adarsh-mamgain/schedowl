@@ -2,6 +2,7 @@
 
 - add ai with gemini
 - add brightdata api for analytics
+- add draft section
 
 - Google Signin and emailing for signup
 - dodopayments webhook and features validator
