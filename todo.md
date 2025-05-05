@@ -1,6 +1,7 @@
 ## Todo
 
 - add ai with gemini
+- add brightdata api for analytics
 
 - Google Signin and emailing for signup
 - dodopayments webhook and features validator
