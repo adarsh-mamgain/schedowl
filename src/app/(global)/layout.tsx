@@ -13,6 +13,7 @@ import {
   PlusIcon,
   ChevronsUpDownIcon,
   Grid2x2,
+  Sparkles,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -302,7 +303,14 @@ export default function GlobalLayout({
             </>
           ))}
         </nav>
-        <div className="p-4">
+        <div className="flex flex-col items-center gap-2 p-4">
+          <Button
+            className="w-full bg-[#444CE7] dark:bg-[#444CE7] text-white border"
+            onClick={() => router.push("/settings/billing")}
+          >
+            <Sparkles size={16} />
+            Upgrade Plan
+          </Button>
           <a href="mailto:support@schedowl.com">
             <Button variant="secondary">support@schedowl.com</Button>
           </a>
