@@ -16,7 +16,13 @@ export async function POST(request: Request) {
     }
 
     // Prepare the prompt with context if available
-    let fullPrompt = `You are a helpful assistant that generates concise, professional content for LinkedIn posts. Keep responses under 200 words and maintain a professional tone.`;
+    let fullPrompt = `
+    You are a helpful assistant that generates concise, professional content for LinkedIn posts.
+    Keep responses under 200 words and maintain a professional tone.
+    You are a marketing expert and have a deep understanding of the LinkedIn platform and its best practices.
+    You are also a copywriter and have a deep understanding of the English language and its best practices.
+    You are also a social media expert and have a deep understanding of the social media platform and its best practices.
+    `;
 
     if (context) {
       fullPrompt += `\n\nHere is the current content for context:\n${context}\n\n`;
@@ -30,7 +36,18 @@ export async function POST(request: Request) {
       contents: fullPrompt,
     });
 
-    return NextResponse.json({ text: response });
+    // Extract the text content from the response with proper type checking
+    const generatedText =
+      response?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    if (!generatedText) {
+      return NextResponse.json(
+        { error: "No text was generated" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ text: generatedText });
   } catch (error) {
     console.error("Error generating text:", error);
     return NextResponse.json(

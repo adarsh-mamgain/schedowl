@@ -32,6 +32,7 @@ import {
   Upload,
   Loader2,
   ImagePlusIcon,
+  Sparkles,
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
@@ -65,10 +66,12 @@ const LINKEDIN_UNICODE_SUPPORT = {
 
 interface UnicodeToolbarPluginProps {
   setShowMediaLibrary: (show: boolean) => void;
+  setShowAIModal: (show: boolean) => void;
 }
 
 function UnicodeToolbarPlugin({
   setShowMediaLibrary,
+  setShowAIModal,
 }: UnicodeToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
@@ -198,6 +201,14 @@ function UnicodeToolbarPlugin({
           title="Checkmark"
         >
           ✓
+        </button>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <button
+          onClick={() => setShowAIModal(true)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="AI Generate"
+        >
+          <Sparkles size={16} />
         </button>
       </div>
       <div>
@@ -555,6 +566,112 @@ function MediaLibraryModal({
   );
 }
 
+function AIModal({
+  isOpen,
+  onClose,
+  onInsert,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (text: string) => void;
+}) {
+  const [prompt, setPrompt] = useState("");
+  const [generatedText, setGeneratedText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post("/api/ai/generate", { prompt });
+      console.log(response);
+      setGeneratedText(response.data.text);
+    } catch (error) {
+      toast.error("Failed to generate text");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInsert = () => {
+    if (generatedText) {
+      onInsert(generatedText);
+      onClose();
+      setPrompt("");
+      setGeneratedText("");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl w-[600px] max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-[#ECECED]">
+          <h2 className="text-lg font-semibold">AI Text Generation</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="p-4 flex-1 overflow-auto">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Enter your prompt
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe what you want to generate..."
+                className="w-full h-24 p-2 border border-[#ECECED] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {generatedText && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Generated Text
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg border border-[#ECECED]">
+                  {generatedText}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-[#ECECED] flex justify-end gap-2">
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          {!generatedText ? (
+            <Button
+              onClick={handleGenerate}
+              disabled={isLoading || !prompt.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Generating...
+                </>
+              ) : (
+                "Generate"
+              )}
+            </Button>
+          ) : (
+            <Button onClick={handleInsert}>Insert Text</Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const editorConfig = {
   namespace: "LinkedInUnicodeEditor",
   nodes: [ListNode, ListItemNode],
@@ -613,6 +730,7 @@ function EditorContent({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   useEffect(() => {
     onChange(postContent);
@@ -736,9 +854,21 @@ function EditorContent({
     });
   };
 
+  const handleAITextInsert = (text: string) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (selection) {
+        selection.insertText(text);
+      }
+    });
+  };
+
   return (
     <div className="relative border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
-      <UnicodeToolbarPlugin setShowMediaLibrary={setShowMediaLibrary} />
+      <UnicodeToolbarPlugin
+        setShowMediaLibrary={setShowMediaLibrary}
+        setShowAIModal={setShowAIModal}
+      />
       <RichTextPlugin
         contentEditable={
           <ContentEditable
@@ -848,6 +978,12 @@ function EditorContent({
         onClose={() => setShowMediaLibrary(false)}
         onSelect={handleMediaLibrarySelect}
         selectedMedia={selectedMedia}
+      />
+
+      <AIModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onInsert={handleAITextInsert}
       />
     </div>
   );
