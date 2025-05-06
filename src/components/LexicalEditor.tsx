@@ -585,9 +585,8 @@ function AIModal({
     setIsLoading(true);
     try {
       const response = await axios.post("/api/ai/generate", { prompt });
-      console.log(response);
       setGeneratedText(response.data.text);
-    } catch (error) {
+    } catch {
       toast.error("Failed to generate text");
     } finally {
       setIsLoading(false);
