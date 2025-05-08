@@ -35,7 +35,7 @@ export default function SettingsLayout({
             key={tab.path}
             className={`text-sm font-semibold text-left px-1 py-2 ${
               pathname === tab.path
-                ? "text-[#1570EF] border-b-2 border-b-[#1570EF]"
+                ? "text-[#444CE7] border-b-2 border-b-[#444CE7]"
                 : "text-[#667085]"
             }`}
             onClick={() => router.push(tab.path)}

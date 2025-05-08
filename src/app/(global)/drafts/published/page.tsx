@@ -1,0 +1,184 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import {
+  ColumnDef,
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from "@tanstack/react-table";
+import { Post } from "@prisma/client";
+import { format } from "date-fns";
+import { CheckCircle2, ExternalLink } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Image from "next/image";
+
+interface PostWithRelations extends Post {
+  socialAccount: {
+    name: string;
+    type: string;
+  };
+  createdBy: {
+    name: string;
+    image: string | null;
+  };
+  media: {
+    media: {
+      url: string;
+      type: string;
+    };
+  }[];
+}
+
+export default function PublishedPostsPage() {
+  const [posts, setPosts] = useState<PostWithRelations[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(
+          "/api/posts/by-status?status=PUBLISHED"
+        );
+        setPosts(response.data.posts);
+      } catch {
+        toast.error("Failed to fetch published posts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const columns = useMemo<ColumnDef<PostWithRelations>[]>(
+    () => [
+      {
+        accessorKey: "content",
+        header: "Content",
+        cell: ({ row }) => (
+          <div className="max-w-md truncate">{row.original.content}</div>
+        ),
+      },
+      {
+        accessorKey: "socialAccount",
+        header: "Platform",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <span>{row.original.socialAccount.name}</span>
+            <span className="text-gray-500">
+              ({row.original.socialAccount.type})
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "publishedAt",
+        header: "Published At",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-green-500" />
+            <span>
+              {format(
+                new Date(row.original.publishedAt!),
+                "MMM d, yyyy h:mm a"
+              )}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "createdBy",
+        header: "Created By",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            {row.original.createdBy.image && (
+              <Image
+                src={row.original.createdBy.image}
+                alt={row.original.createdBy.name}
+                width={24}
+                height={24}
+                className="rounded-full"
+              />
+            )}
+            <span>{row.original.createdBy.name}</span>
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const metadata = row.original.metadata as { postUrl?: string };
+          return (
+            <div className="flex items-center gap-4">
+              {metadata?.postUrl && (
+                <a
+                  href={metadata.postUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  <ExternalLink size={16} />
+                </a>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: posts,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+      <table className="w-full text-sm text-left">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr
+              key={headerGroup.id}
+              className="border-b border-b-[#E4E7EC] text-xs"
+            >
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className="px-6 py-3 font-medium text-[#475467]"
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr
+              key={row.id}
+              className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="px-6 py-3 text-[#344054]">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

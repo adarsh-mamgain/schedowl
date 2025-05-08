@@ -606,8 +606,8 @@ function AIModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-[600px] max-h-[80vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-[#ECECED]">
+      <div className="bg-white rounded-xl w-[600px] max-h-[80vh] flex flex-col space-y-4 p-4">
+        <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">AI Text Generation</h2>
           <button
             onClick={onClose}
@@ -617,7 +617,7 @@ function AIModal({
           </button>
         </div>
 
-        <div className="p-4 flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -644,12 +644,13 @@ function AIModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-[#ECECED] flex justify-end gap-2">
-          <Button variant="secondary" onClick={onClose}>
+        <div className="flex justify-end gap-2">
+          <Button size="small" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           {!generatedText ? (
             <Button
+              size="small"
               onClick={handleGenerate}
               disabled={isLoading || !prompt.trim()}
             >
