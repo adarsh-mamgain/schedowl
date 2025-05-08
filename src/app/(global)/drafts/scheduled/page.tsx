@@ -57,7 +57,7 @@ export default function ScheduledPostsPage() {
       await axios.post(`/api/posts/${postId}/cancel`);
       setPosts(posts.filter((post) => post.id !== postId));
       toast.success("Post cancelled successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to cancel post");
     }
   };

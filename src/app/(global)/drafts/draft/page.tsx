@@ -57,7 +57,7 @@ export default function DraftPostsPage() {
       await axios.delete(`/api/posts/${postId}`);
       setPosts(posts.filter((post) => post.id !== postId));
       toast.success("Post deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete post");
     }
   };
