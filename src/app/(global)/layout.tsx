@@ -165,9 +165,9 @@ export default function GlobalLayout({
                 </div>
                 <span className="truncate">{session?.organisation?.name}</span>
               </div>
-              <button className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1 flex-shrink-0">
+              <div className="border border-[#ECECED] rounded-md hover:bg-gray-100 shadow-sm p-1 flex-shrink-0">
                 <ChevronsUpDownIcon size={16} color="#61646C" />
-              </button>
+              </div>
             </button>
             {dropdownOpen && (
               <div className="w-full flex flex-col gap-4 p-4 rounded-lg shadow-[0px_1px_2px_0px_#1018280D,0px_-2px_0px_0px_#1018280D_inset,0px_0px_0px_1px_#1018282E_inset] absolute mt-2 bg-white border border-gray-200 rounded shadow-lg z-50">
@@ -280,14 +280,13 @@ export default function GlobalLayout({
         </div>
         <nav className="flex-1 pt-0 p-4">
           {TABS.map((tab) => (
-            <>
+            <div key={tab.path}>
               <div
                 className={`absolute ${
                   pathname.startsWith(tab.path) ? "bg-[#444CE7]" : "bg-none"
                 } w-1 h-9 rounded-r-lg left-0`}
               ></div>
               <button
-                key={tab.path}
                 className={`w-full flex items-center gap-3 text-sm font-medium text-left p-2 rounded-lg hover:bg-gray-100 mb-2 ${
                   pathname.startsWith(tab.path)
                     ? "bg-[#F5F5F6] text-[#0C111D]"
@@ -302,7 +301,7 @@ export default function GlobalLayout({
                 />
                 <span className="truncate">{tab.title}</span>
               </button>
-            </>
+            </div>
           ))}
         </nav>
         <div className="flex flex-col items-center gap-2 p-4">

@@ -8,7 +8,7 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { Post } from "@prisma/client";
-import { format } from "date-fns";
+import dayjs from "dayjs";
 import { Pencil, Trash2 } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -93,7 +93,7 @@ export default function DraftPostsPage() {
         accessorKey: "createdAt",
         header: "Created At",
         cell: ({ row }) => (
-          <div>{format(new Date(row.original.createdAt), "MMM d, yyyy")}</div>
+          <div>{dayjs(row.original.createdAt).format("MMM D, YYYY")}</div>
         ),
       },
       {
