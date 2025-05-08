@@ -42,7 +42,7 @@ export default function ScheduledPostsPage() {
           "/api/posts/by-status?status=SCHEDULED"
         );
         setPosts(response.data.posts);
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch scheduled posts");
       } finally {
         setLoading(false);
@@ -51,6 +51,16 @@ export default function ScheduledPostsPage() {
 
     fetchPosts();
   }, []);
+
+  const handleCancelPost = async (postId: string) => {
+    try {
+      await axios.post(`/api/posts/${postId}/cancel`);
+      setPosts(posts.filter((post) => post.id !== postId));
+      toast.success("Post cancelled successfully");
+    } catch (error) {
+      toast.error("Failed to cancel post");
+    }
+  };
 
   const columns = useMemo<ColumnDef<PostWithRelations>[]>(
     () => [
@@ -125,18 +135,8 @@ export default function ScheduledPostsPage() {
         ),
       },
     ],
-    []
+    [handleCancelPost]
   );
-
-  const handleCancelPost = async (postId: string) => {
-    try {
-      await axios.post(`/api/posts/${postId}/cancel`);
-      setPosts(posts.filter((post) => post.id !== postId));
-      toast.success("Post cancelled successfully");
-    } catch (error) {
-      toast.error("Failed to cancel post");
-    }
-  };
 
   const table = useReactTable({
     data: posts,

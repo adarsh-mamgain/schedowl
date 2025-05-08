@@ -32,7 +32,7 @@ export default function DraftsLayout({
           scheduled: scheduledRes.data.posts.length,
           published: publishedRes.data.posts.length,
         });
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch post counts");
       }
     };

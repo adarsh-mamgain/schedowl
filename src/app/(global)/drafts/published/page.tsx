@@ -7,12 +7,11 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { Post, PostStatus } from "@prisma/client";
+import { Post } from "@prisma/client";
 import { format } from "date-fns";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
-import Link from "next/link";
 
 interface PostWithRelations extends Post {
   socialAccount: {
@@ -42,7 +41,7 @@ export default function PublishedPostsPage() {
           "/api/posts/by-status?status=PUBLISHED"
         );
         setPosts(response.data.posts);
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch published posts");
       } finally {
         setLoading(false);

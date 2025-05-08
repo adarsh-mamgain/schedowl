@@ -42,7 +42,7 @@ export default function DraftPostsPage() {
       try {
         const response = await axios.get("/api/posts/by-status?status=DRAFT");
         setPosts(response.data.posts);
-      } catch (error) {
+      } catch {
         toast.error("Failed to fetch draft posts");
       } finally {
         setLoading(false);
@@ -51,6 +51,16 @@ export default function DraftPostsPage() {
 
     fetchPosts();
   }, []);
+
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await axios.delete(`/api/posts/${postId}`);
+      setPosts(posts.filter((post) => post.id !== postId));
+      toast.success("Post deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete post");
+    }
+  };
 
   const columns = useMemo<ColumnDef<PostWithRelations>[]>(
     () => [
@@ -117,18 +127,8 @@ export default function DraftPostsPage() {
         ),
       },
     ],
-    []
+    [handleDeletePost]
   );
-
-  const handleDeletePost = async (postId: string) => {
-    try {
-      await axios.delete(`/api/posts/${postId}`);
-      setPosts(posts.filter((post) => post.id !== postId));
-      toast.success("Post deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete post");
-    }
-  };
 
   const table = useReactTable({
     data: posts,
