@@ -1,6 +1,5 @@
 ## Todo
 
-- add ai with gemini
 - add brightdata api for analytics
 - add draft section
 
