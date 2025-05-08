@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 interface PostWithRelations extends Post {
   socialAccount: {
@@ -93,10 +94,12 @@ export default function PublishedPostsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             {row.original.createdBy.image && (
-              <img
+              <Image
                 src={row.original.createdBy.image}
                 alt={row.original.createdBy.name}
-                className="w-6 h-6 rounded-full"
+                width={24}
+                height={24}
+                className="rounded-full"
               />
             )}
             <span>{row.original.createdBy.name}</span>

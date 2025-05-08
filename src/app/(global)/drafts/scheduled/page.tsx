@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   ColumnDef,
   useReactTable,
@@ -13,6 +13,7 @@ import { Pencil, Trash2, Clock } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Link from "next/link";
+import Image from "next/image";
 
 interface PostWithRelations extends Post {
   socialAccount: {
@@ -52,15 +53,18 @@ export default function ScheduledPostsPage() {
     fetchPosts();
   }, []);
 
-  const handleCancelPost = async (postId: string) => {
-    try {
-      await axios.post(`/api/posts/${postId}/cancel`);
-      setPosts(posts.filter((post) => post.id !== postId));
-      toast.success("Post cancelled successfully");
-    } catch {
-      toast.error("Failed to cancel post");
-    }
-  };
+  const handleCancelPost = useCallback(
+    async (postId: string) => {
+      try {
+        await axios.post(`/api/posts/${postId}/cancel`);
+        setPosts(posts.filter((post) => post.id !== postId));
+        toast.success("Post cancelled successfully");
+      } catch {
+        toast.error("Failed to cancel post");
+      }
+    },
+    [posts]
+  );
 
   const columns = useMemo<ColumnDef<PostWithRelations>[]>(
     () => [
@@ -104,10 +108,12 @@ export default function ScheduledPostsPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             {row.original.createdBy.image && (
-              <img
+              <Image
                 src={row.original.createdBy.image}
                 alt={row.original.createdBy.name}
-                className="w-6 h-6 rounded-full"
+                width={24}
+                height={24}
+                className="rounded-full"
               />
             )}
             <span>{row.original.createdBy.name}</span>
