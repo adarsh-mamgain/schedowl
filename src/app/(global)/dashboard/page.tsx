@@ -3,23 +3,28 @@
 import { SocialPlatform } from "@/src/enums/social-platoform";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { LinkIcon, FileTextIcon } from "lucide-react";
-import Button from "@/src/components/Button";
-import AnalyticsLineChart from "@/src/components/AnalyticsLineChart";
 import {
-  BarChart,
-  Bar,
+  LinkIcon,
+  FileTextIcon,
+  TrendingUpIcon,
+  UsersIcon,
+  MessageCircleIcon,
+  HeartIcon,
+  RepeatIcon,
+} from "lucide-react";
+import Button from "@/src/components/Button";
+import {
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 import { format } from "date-fns";
 
@@ -48,12 +53,35 @@ interface LinkedInResponse {
   data: LinkedInPost[];
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+const COLORS = {
+  primary: "#444CE7",
+  secondary: "#7F56D9",
+  success: "#12B76A",
+  warning: "#F79009",
+  error: "#F04438",
+  gray: "#475467",
+  lightGray: "#EAECF0",
+  darkGray: "#101828",
+};
+
+const CHART_COLORS = {
+  line: "#444CE7",
+  area: "rgba(68, 76, 231, 0.1)",
+  bar: "#7F56D9",
+  pie: ["#444CE7", "#7F56D9", "#12B76A", "#F79009", "#F04438"],
+};
 
 export default function DashboardPage() {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<LinkedInResponse | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const checkLinkedInIntegration = async () => {
       try {
         const response = await axios.get(
@@ -70,28 +98,8 @@ export default function DashboardPage() {
         }
       }
     };
-    checkLinkedInIntegration();
-  }, []);
 
-  const handleGetStarted = async () => {
-    try {
-      const response = await axios.get("/api/integrations/linkedin");
-      window.location.href = response.data.url;
-    } catch (error) {
-      console.error("Failed to connect LinkedIn:", error);
-    }
-  };
-
-  const [analyticsData, setAnalyticsData] = useState<LinkedInResponse | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const fetchData = async () => {
+    const fetchAnalytics = async () => {
       try {
         const response = await fetch("/api/analytics/linkedin");
         if (!response.ok) {
@@ -106,33 +114,38 @@ export default function DashboardPage() {
       }
     };
 
-    fetchData();
+    checkLinkedInIntegration();
+    fetchAnalytics();
   }, []);
 
-  // Don't render anything until client-side hydration is complete
-  if (!mounted) {
-    return null;
-  }
+  const handleGetStarted = async () => {
+    try {
+      const response = await axios.get("/api/integrations/linkedin");
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error("Failed to connect LinkedIn:", error);
+    }
+  };
+
+  if (!mounted) return null;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#444CE7]"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-red-500">
+      <div className="flex items-center justify-center min-h-screen text-[#F04438]">
         Error: {error}
       </div>
     );
   }
 
-  if (!analyticsData?.data) {
-    return null;
-  }
+  if (!analyticsData?.data) return null;
 
   const posts = analyticsData.data;
 
@@ -188,19 +201,25 @@ export default function DashboardPage() {
       likes: post.likeCount || 0,
       comments: post.commentsCount || 0,
       reposts: post.repostsCount || 0,
+      total:
+        (post.likeCount || 0) +
+        (post.commentsCount || 0) +
+        (post.repostsCount || 0),
     }));
 
   const reactionDistribution = [
-    { name: "Likes", value: totalLikes },
-    { name: "Comments", value: totalComments },
-    { name: "Reposts", value: totalReposts },
+    { name: "Likes", value: totalLikes, icon: HeartIcon },
+    { name: "Comments", value: totalComments, icon: MessageCircleIcon },
+    { name: "Reposts", value: totalReposts, icon: RepeatIcon },
     {
       name: "Empathy",
       value: posts.reduce((sum, post) => sum + (post.empathyCount || 0), 0),
+      icon: TrendingUpIcon,
     },
     {
       name: "Praise",
       value: posts.reduce((sum, post) => sum + (post.praiseCount || 0), 0),
+      icon: UsersIcon,
     },
   ];
 
@@ -211,6 +230,7 @@ export default function DashboardPage() {
         (post.likeCount || 0) +
         (post.commentsCount || 0) +
         (post.repostsCount || 0),
+      date: format(new Date(post.postedDate), "MMM d, yyyy"),
     }))
     .sort((a, b) => b.engagement - a.engagement)
     .slice(0, 5);
@@ -233,11 +253,7 @@ export default function DashboardPage() {
               <LinkIcon size={16} color={"#444CE7"} />
             </div>
             <div className="flex flex-col">
-              <h2
-                className={`font-semibold ${
-                  true ? "text-[#101828]" : "text-[#475467]"
-                }`}
-              >
+              <h2 className="font-semibold text-[#101828]">
                 Connect your LinkedIn account
               </h2>
               <p className="text-[#475467]">
@@ -251,11 +267,7 @@ export default function DashboardPage() {
               <FileTextIcon size={16} color={"#444CE7"} />
             </div>
             <div className="flex flex-col">
-              <h2
-                className={`font-semibold ${
-                  false ? "text-[#101828]" : "text-[#475467]"
-                }`}
-              >
+              <h2 className="font-semibold text-[#475467]">
                 Publish your first post
               </h2>
               <p className="text-[#475467]">
@@ -272,64 +284,123 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="space-y-6">
-        <div className="rounded-2xl border p-6">
-          <h3 className="text-sm font-medium text-[#475467] mb-1">
-            Followers Growth
-          </h3>
-          <AnalyticsLineChart />
-        </div>
-        <div className="rounded-xl border p-4">
-          <h3 className="text-sm font-medium text-[#475467] mb-1">
-            Reactions Growth
-          </h3>
-          <AnalyticsLineChart />
-        </div>
-      </div>
-
+      {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Posts</h3>
-          <p className="text-3xl font-bold">{totalPosts}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Likes</h3>
-          <p className="text-3xl font-bold">{totalLikes}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Total Comments</h3>
-          <p className="text-3xl font-bold">{totalComments}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-gray-500 text-sm font-medium">Engagement Rate</h3>
-          <p className="text-3xl font-bold">{engagementRate}%</p>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Engagement Over Time */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Engagement Over Time</h2>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={engagementOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="likes" stroke="#8884d8" />
-                <Line type="monotone" dataKey="comments" stroke="#82ca9d" />
-                <Line type="monotone" dataKey="reposts" stroke="#ffc658" />
-              </LineChart>
-            </ResponsiveContainer>
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#F9F5FF]">
+              <FileTextIcon size={20} color={COLORS.secondary} />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-[#475467]">
+                Total Posts
+              </h3>
+              <p className="text-2xl font-semibold text-[#101828]">
+                {totalPosts}
+              </p>
+            </div>
           </div>
         </div>
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#ECFDF3]">
+              <HeartIcon size={20} color={COLORS.success} />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-[#475467]">
+                Total Likes
+              </h3>
+              <p className="text-2xl font-semibold text-[#101828]">
+                {totalLikes}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#FEF3F2]">
+              <MessageCircleIcon size={20} color={COLORS.error} />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-[#475467]">
+                Total Comments
+              </h3>
+              <p className="text-2xl font-semibold text-[#101828]">
+                {totalComments}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#FDF2FA]">
+              <TrendingUpIcon size={20} color={COLORS.primary} />
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-[#475467]">
+                Engagement Rate
+              </h3>
+              <p className="text-2xl font-semibold text-[#101828]">
+                {engagementRate}%
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* Engagement Over Time - Full Width */}
+      <div className="rounded-xl border border-[#EAECF0] p-6 bg-white mb-8">
+        <h2 className="text-sm font-medium text-[#475467] mb-4">
+          Engagement Over Time
+        </h2>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={engagementOverTime}>
+              <defs>
+                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={CHART_COLORS.line}
+                    stopOpacity={0.1}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={CHART_COLORS.line}
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={COLORS.lightGray} />
+              <XAxis dataKey="date" stroke={COLORS.gray} />
+              <YAxis stroke={COLORS.gray} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: `1px solid ${COLORS.lightGray}`,
+                  borderRadius: "8px",
+                  boxShadow: "0px 4px 6px -2px rgba(16, 24, 40, 0.03)",
+                }}
+              />
+              <Legend />
+              <Area
+                type="monotone"
+                dataKey="total"
+                stroke={CHART_COLORS.line}
+                fillOpacity={1}
+                fill="url(#colorTotal)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Reaction Distribution and Top Companies - Split Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Reaction Distribution */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Reaction Distribution</h2>
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <h2 className="text-sm font-medium text-[#475467] mb-4">
+            Reaction Distribution
+          </h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -339,7 +410,7 @@ export default function DashboardPage() {
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill={CHART_COLORS.line}
                   dataKey="value"
                   label={({ name, percent }) =>
                     `${name} ${(percent * 100).toFixed(0)}%`
@@ -348,72 +419,178 @@ export default function DashboardPage() {
                   {reactionDistribution.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={CHART_COLORS.pie[index % CHART_COLORS.pie.length]}
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "white",
+                    border: `1px solid ${COLORS.lightGray}`,
+                    borderRadius: "8px",
+                    boxShadow: "0px 4px 6px -2px rgba(16, 24, 40, 0.03)",
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* Top Companies and Posts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Top Companies */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="rounded-xl border border-[#EAECF0] p-6 bg-white">
+          <h2 className="text-sm font-medium text-[#475467] mb-4">
             Top Mentioned Companies
           </h2>
           <div className="space-y-4">
             {topCompanies.length > 0 ? (
-              topCompanies.map(([company, count]) => (
+              topCompanies.map(([company, count], index) => (
                 <div
                   key={company}
                   className="flex justify-between items-center"
                 >
-                  <span className="font-medium">{company}</span>
-                  <span className="text-gray-500">{count} mentions</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F9F5FF] text-[#7F56D9] font-medium">
+                      {index + 1}
+                    </div>
+                    <span className="font-medium text-[#101828]">
+                      {company}
+                    </span>
+                  </div>
+                  <span className="text-[#475467]">{count} mentions</span>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500">No company mentions found</p>
+              <p className="text-[#475467]">No company mentions found</p>
             )}
-          </div>
-        </div>
-
-        {/* Top Performing Posts */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Top Performing Posts</h2>
-          <div className="space-y-4">
-            {topPerformingPosts.map((post, index) => (
-              <div key={index} className="border-b pb-4 last:border-b-0">
-                <p className="text-sm mb-2">{post.text}</p>
-                <p className="text-gray-500 text-sm">
-                  Engagement: {post.engagement}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* Recent Posts */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Recent Posts</h2>
-        <div className="space-y-6">
-          {posts.slice(0, 5).map((post, index) => (
-            <div key={index} className="border-b pb-4 last:border-b-0">
-              <p className="text-gray-500 text-sm mb-2">{post.postedAt}</p>
-              <p className="mb-4 line-clamp-3">{post.text}</p>
-              <div className="flex gap-4 text-sm text-gray-500">
-                <span>❤️ {post.likeCount || 0} likes</span>
-                <span>💬 {post.commentsCount || 0} comments</span>
-                <span>🔄 {post.repostsCount || 0} reposts</span>
-              </div>
-            </div>
-          ))}
+      {/* Top Performing Posts - Full Width Table */}
+      <div className="rounded-xl border border-[#EAECF0] bg-white mb-8">
+        <div className="p-6 border-b border-[#EAECF0]">
+          <h2 className="text-sm font-medium text-[#475467]">
+            Top Performing Posts
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#EAECF0]">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Post
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Engagement
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Likes
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Comments
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Reposts
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#EAECF0]">
+              {topPerformingPosts.map((post, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#101828] max-w-md truncate">
+                    {post.text}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    {post.date}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    {post.engagement}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <HeartIcon size={16} />
+                      {post.engagement}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <MessageCircleIcon size={16} />
+                      {post.engagement}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <RepeatIcon size={16} />
+                      {post.engagement}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Recent Posts - Full Width Table */}
+      <div className="rounded-xl border border-[#EAECF0] bg-white">
+        <div className="p-6 border-b border-[#EAECF0]">
+          <h2 className="text-sm font-medium text-[#475467]">Recent Posts</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-[#EAECF0]">
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Post
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Posted At
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Likes
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Comments
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#475467] uppercase tracking-wider">
+                  Reposts
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#EAECF0]">
+              {posts.slice(0, 5).map((post, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 text-sm text-[#101828] max-w-md truncate">
+                    {post.text}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    {post.postedAt}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <HeartIcon size={16} />
+                      {post.likeCount || 0}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <MessageCircleIcon size={16} />
+                      {post.commentsCount || 0}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#475467]">
+                    <div className="flex items-center gap-1">
+                      <RepeatIcon size={16} />
+                      {post.repostsCount || 0}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
