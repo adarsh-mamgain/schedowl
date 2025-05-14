@@ -87,7 +87,7 @@ class LinkedInCache {
     }
   }
 
-  private isValidCacheData(data: any): boolean {
+  private isValidCacheData(data: LinkedInCacheData): boolean {
     return (
       data &&
       typeof data === "object" &&
