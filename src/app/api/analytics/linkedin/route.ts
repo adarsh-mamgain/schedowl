@@ -2,10 +2,45 @@ import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
+type LinkedInCacheData = {
+  success: true;
+  message: string;
+  data: [
+    {
+      isBrandPartnership: boolean;
+      text: string;
+      totalReactionCount: number;
+      likeCount: number;
+      empathyCount: number;
+      praiseCount: number;
+      commentsCount: number;
+      repostsCount: number;
+      postedAt: string;
+      postedDate: string;
+      postedDateTimestamp: number;
+      mentions: [
+        {
+          firstName: string;
+          lastName: string;
+        },
+        {
+          firstName: string;
+          lastName: string;
+        }
+      ];
+      companyMentions: [
+        {
+          name: string;
+        }
+      ];
+    }
+  ];
+};
+
 // Singleton class to handle cache data
 class LinkedInCache {
   private static instance: LinkedInCache;
-  private cacheData: any = null;
+  private cacheData: LinkedInCacheData | null = null;
   private lastModified: number = 0;
   private readonly CACHE_FILE_PATH: string;
   private readonly CACHE_REFRESH_INTERVAL: number = 24 * 60 * 60 * 1000; // 1 day
