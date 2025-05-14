@@ -11,6 +11,7 @@ import {
   MessageCircleIcon,
   HeartIcon,
   RepeatIcon,
+  SearchIcon,
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import {
@@ -79,6 +80,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [searchUsername, setSearchUsername] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -99,11 +101,9 @@ export default function DashboardPage() {
       }
     };
 
-    const fetchAnalytics = async () => {
+    const fetchDefaultAnalytics = async () => {
       try {
-        const response = await fetch(
-          "/api/analytics/linkedin?username=adarsh-mamgain"
-        );
+        const response = await fetch("/api/analytics/linkedin");
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
         }
@@ -117,8 +117,29 @@ export default function DashboardPage() {
     };
 
     checkLinkedInIntegration();
-    fetchAnalytics();
+    fetchDefaultAnalytics();
   }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchUsername.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/analytics/linkedin?username=${encodeURIComponent(searchUsername)}`
+      );
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`);
+      }
+      const data = await response.json();
+      setAnalyticsData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGetStarted = async () => {
     try {
@@ -247,6 +268,30 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Search Form */}
+      <form onSubmit={handleSearch} className="mb-6">
+        <div className="flex gap-2 max-w-md">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <SearchIcon className="h-5 w-5 text-[#475467]" />
+            </div>
+            <input
+              type="text"
+              value={searchUsername}
+              onChange={(e) => setSearchUsername(e.target.value)}
+              placeholder="Search by LinkedIn username"
+              className="block w-full pl-10 pr-3 py-2 border border-[#EAECF0] rounded-lg text-sm text-[#101828] placeholder-[#475467] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:border-transparent"
+            />
+          </div>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-medium hover:bg-[#3730A3] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:ring-offset-2"
+          >
+            Search
+          </button>
+        </div>
+      </form>
 
       {!linkedInConnected && (
         <div className="flex flex-col gap-2 border border-[#EAECF0] rounded-[16px] p-4 text-sm mb-6">
