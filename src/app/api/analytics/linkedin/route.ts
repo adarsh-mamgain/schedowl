@@ -88,7 +88,7 @@ class LinkedInCache {
     }
   }
 
-  private isValidCacheData(data: any): boolean {
+  private isValidCacheData(data: LinkedInCacheData): boolean {
     return (
       data &&
       typeof data === "object" &&
@@ -103,7 +103,7 @@ class LinkedInCache {
     return Date.now() - this.lastModified > this.CACHE_REFRESH_INTERVAL;
   }
 
-  public getCacheData(): any {
+  public getCacheData(): LinkedInCacheData | null {
     if (this.shouldRefreshCache()) {
       this.loadCache();
     }
