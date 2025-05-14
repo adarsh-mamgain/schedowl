@@ -3,38 +3,33 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
 type LinkedInCacheData = {
-  success: true;
+  success: boolean;
   message: string;
-  data: [
-    {
-      isBrandPartnership: boolean;
-      text: string;
-      totalReactionCount: number;
-      likeCount: number;
-      empathyCount: number;
-      praiseCount: number;
-      commentsCount: number;
-      repostsCount: number;
-      postedAt: string;
-      postedDate: string;
-      postedDateTimestamp: number;
-      mentions: [
-        {
-          firstName: string;
-          lastName: string;
-        },
-        {
-          firstName: string;
-          lastName: string;
-        }
-      ];
-      companyMentions: [
-        {
-          name: string;
-        }
-      ];
-    }
-  ];
+  data: Array<{
+    isBrandPartnership: boolean;
+    text: string;
+    totalReactionCount: number;
+    likeCount: number;
+    empathyCount: number;
+    praiseCount: number;
+    commentsCount: number;
+    repostsCount: number;
+    postedAt: string;
+    postedDate: string;
+    postedDateTimestamp: number;
+    mentions: Array<{
+      firstName: string;
+      lastName: string;
+    }>;
+    companyMentions?: Array<{
+      name: string;
+    }>;
+  }>;
+  metadata?: {
+    source: "cache" | "api";
+    username?: string;
+    isDefault?: boolean;
+  };
 };
 
 // Singleton class to handle cache data
@@ -44,9 +39,9 @@ class LinkedInCache {
   private lastModified: number = 0;
   private readonly CACHE_FILE_PATH: string;
   private readonly CACHE_REFRESH_INTERVAL: number = 24 * 60 * 60 * 1000; // 1 day
+  private readonly DEFAULT_USERNAME = "adarsh-mamgain";
 
   private constructor() {
-    // Use src directory as base path
     this.CACHE_FILE_PATH = path.join(
       process.cwd(),
       "src/app/api/analytics/linkedin/cache.json"
@@ -63,7 +58,6 @@ class LinkedInCache {
 
   private loadCache(): void {
     try {
-      // Check if file exists before trying to read it
       if (!fs.existsSync(this.CACHE_FILE_PATH)) {
         console.warn(
           `Cache file not found at ${this.CACHE_FILE_PATH}, using default cache data`
@@ -76,19 +70,24 @@ class LinkedInCache {
       const fileContent = fs.readFileSync(this.CACHE_FILE_PATH, "utf8");
       const parsedData = JSON.parse(fileContent);
 
-      // Validate cache data structure
       if (this.isValidCacheData(parsedData)) {
-        this.cacheData = parsedData;
+        this.cacheData = {
+          ...parsedData,
+          metadata: {
+            source: "cache",
+            username: this.DEFAULT_USERNAME,
+            isDefault: true,
+          },
+        };
       } else {
         console.warn("Invalid cache data structure, using default cache data");
       }
     } catch (error) {
       console.error("Error loading cache:", error);
-      // Keep using default cache data
     }
   }
 
-  private isValidCacheData(data: LinkedInCacheData): boolean {
+  private isValidCacheData(data: any): boolean {
     return (
       data &&
       typeof data === "object" &&
@@ -134,14 +133,61 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       // If API fails, return cache data as fallback
       console.warn("LinkedIn API failed, using cache data as fallback");
-      return NextResponse.json(cache.getCacheData());
+      const cacheData = cache.getCacheData();
+      if (cacheData) {
+        return NextResponse.json({
+          ...cacheData,
+          metadata: {
+            source: "cache",
+            username: username,
+            isDefault: true,
+          },
+        });
+      }
+      return NextResponse.json({
+        success: false,
+        message: "Failed to fetch data and no cache available",
+        data: [],
+        metadata: {
+          source: "api",
+          username: username,
+          isDefault: false,
+        },
+      });
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({
+      ...data,
+      metadata: {
+        source: "api",
+        username: username,
+        isDefault: false,
+      },
+    });
   } catch (error) {
     // If any error occurs, return cache data as fallback
     console.error("Error fetching LinkedIn data:", error);
-    return NextResponse.json(cache.getCacheData());
+    const cacheData = cache.getCacheData();
+    if (cacheData) {
+      return NextResponse.json({
+        ...cacheData,
+        metadata: {
+          source: "cache",
+          username: username,
+          isDefault: true,
+        },
+      });
+    }
+    return NextResponse.json({
+      success: false,
+      message: "Failed to fetch data and no cache available",
+      data: [],
+      metadata: {
+        source: "api",
+        username: username,
+        isDefault: false,
+      },
+    });
   }
 }

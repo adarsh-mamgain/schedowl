@@ -51,7 +51,13 @@ interface LinkedInPost {
 
 interface LinkedInResponse {
   success: boolean;
+  message: string;
   data: LinkedInPost[];
+  metadata?: {
+    source: "cache" | "api";
+    username?: string;
+    isDefault?: boolean;
+  };
 }
 
 const COLORS = {
@@ -266,6 +272,26 @@ export default function DashboardPage() {
           <p className="text-sm text-[#475467]">
             Track your top-performing content and optimize your social strategy
           </p>
+          {analyticsData?.metadata && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-sm text-[#475467]">
+                Showing data for:{" "}
+                <span className="font-medium text-[#101828]">
+                  {analyticsData.metadata.username}
+                </span>
+              </span>
+              <span className="px-2 py-1 text-xs rounded-full bg-[#F9F5FF] text-[#7F56D9]">
+                {analyticsData.metadata.isDefault
+                  ? "Default Data"
+                  : "Live Data"}
+              </span>
+              {analyticsData.metadata.source === "cache" && (
+                <span className="px-2 py-1 text-xs rounded-full bg-[#ECFDF3] text-[#12B76A]">
+                  From Cache
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -292,6 +318,14 @@ export default function DashboardPage() {
           </button>
         </div>
       </form>
+
+      {!analyticsData?.success && (
+        <div className="mb-6 p-4 border border-[#F04438] rounded-lg bg-[#FEF3F2]">
+          <p className="text-sm text-[#F04438]">
+            {analyticsData?.message || "Failed to load analytics data"}
+          </p>
+        </div>
+      )}
 
       {!linkedInConnected && (
         <div className="flex flex-col gap-2 border border-[#EAECF0] rounded-[16px] p-4 text-sm mb-6">
