@@ -121,10 +121,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const response = await fetch(
-      `https://linkedin-data-api.p.rapidapi.com/get-profile-posts?username=${username}`,
+      `https://linkedin-api8.p.rapidapi.com/get-profile-posts?username=${username}`,
       {
         headers: {
-          "x-rapidapi-host": "linkedin-data-api.p.rapidapi.com",
+          "x-rapidapi-host": "linkedin-api8.p.rapidapi.com",
           "x-rapidapi-key": process.env.RAPID_API_KEY!,
         },
       }
