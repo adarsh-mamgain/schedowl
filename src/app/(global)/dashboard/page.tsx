@@ -101,7 +101,9 @@ export default function DashboardPage() {
 
     const fetchAnalytics = async () => {
       try {
-        const response = await fetch("/api/analytics/linkedin");
+        const response = await fetch(
+          "/api/analytics/linkedin?username=adarsh-mamgain"
+        );
         if (!response.ok) {
           throw new Error(`API responded with status: ${response.status}`);
         }
