@@ -1,7 +1,11 @@
 ## Todo
 
-- add brightdata api for analytics
-- add draft section
+- payment webhook complete
+- allow organisation to be created by owner
+- allow organisation switch
+- allow the members to accept the scheduled posts
+- put account billing type restrictions
+- allow editing the post by clicking on the post
 
 - Google Signin and emailing for signup
 - dodopayments webhook and features validator
