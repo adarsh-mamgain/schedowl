@@ -205,7 +205,7 @@ function UnicodeToolbarPlugin({
         <div className="h-4 w-px bg-gray-300 mx-1" />
         <button
           onClick={() => setShowAIModal(true)}
-          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 text-white transition-all duration-300"
           title="AI Generate"
         >
           <Sparkles size={16} />
