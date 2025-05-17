@@ -146,7 +146,7 @@ export default function GlobalLayout({
           <div className="relative">
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
-              className="bg-[#FAFAFA] w-full flex items-center justify-between rounded-lg p-2"
+              className="hover:bg-[#FAFAFA] border border-[#ECECED] w-full flex items-center justify-between rounded-lg p-2"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <div className="w-8 h-8 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200">
@@ -312,8 +312,8 @@ export default function GlobalLayout({
             <Sparkles size={16} />
             Upgrade Plan
           </Button>
-          <a href="mailto:support@schedowl.com">
-            <Button variant="secondary">support@schedowl.com</Button>
+          <a href="mailto:adarsh@schedowl.com">
+            <Button variant="secondary">adarsh@schedowl.com</Button>
           </a>
         </div>
       </aside>
