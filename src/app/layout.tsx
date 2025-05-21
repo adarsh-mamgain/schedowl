@@ -96,6 +96,12 @@ export default async function RootLayout({
           async
           src="https://scripts.simpleanalyticscdn.com/latest.js"
         ></script>
+        {/* ahrefs.com */}
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="dn7Sd63W3+gJlSIWtMe9ag"
+          async
+        ></script>
       </body>
     </html>
   );
