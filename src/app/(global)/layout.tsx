@@ -318,6 +318,7 @@ export default function GlobalLayout({
           </Button>
           <Button
             className="w-full bg-[#444CE7] dark:bg-[#444CE7] text-white border"
+            size="small"
             onClick={() => router.push("/settings/billing")}
           >
             <Sparkles size={16} />

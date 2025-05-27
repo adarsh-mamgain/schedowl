@@ -99,6 +99,7 @@ export default function BillingPage() {
       },
       product_id: "",
       quantity: 1,
+      discount_code: null,
     },
   });
 
@@ -117,6 +118,7 @@ export default function BillingPage() {
       ...data,
       product_id: selectedPlan?.id,
       quantity: 1,
+      discount_code: data.discount_code?.trim() || null,
     };
 
     try {
@@ -133,8 +135,10 @@ export default function BillingPage() {
       }
 
       router.push(responseData.payment_link);
-    } catch {
-      toast.error("Failed to create subscription");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create subscription"
+      );
     } finally {
       setIsLoading(false);
       setShowSubscriptionForm(false);
@@ -197,32 +201,19 @@ export default function BillingPage() {
                   Popular
                 </div>
               )}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center border border-[#EAECF0] rounded-lg shadow overflow-hidden">
-                  <Image
-                    src={plan.image.src}
-                    alt={plan.title}
-                    width={80}
-                    height={80}
-                    priority
-                  />
-                </div>
-                <div>
-                  <h3 className="text-[#101828] text-2xl font-semibold">
-                    {plan.title}
-                  </h3>
-                  <div className="text-[#475467]">
-                    <span className="text-[#101828] text-xl font-semibold">
-                      ${plan.price}
-                    </span>
-                    /{isMonthly ? "month" : "year"}
-                    {!isMonthly && (
-                      <div className="text-green-600 text-sm font-medium">
-                        ${((plan.price / 10) * 2).toFixed(2)} saved per year!
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center mb-4">
+                <h3 className="text-[#101828] text-lg">{plan.title}</h3>
+                <p className="text-[#475467]">
+                  <span className="text-[#101828] text-4xl font-bold">
+                    ${plan.price}
+                  </span>
+                  /{isMonthly ? "month" : "year"}
+                  {!isMonthly && (
+                    <p className="text-green-600 text-sm font-medium">
+                      ${((plan.price / 10) * 2).toFixed(2)} saved per year!
+                    </p>
+                  )}
+                </p>
               </div>
 
               <div className="flex-grow mb-4">
@@ -466,6 +457,25 @@ export default function BillingPage() {
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="discount_code"
+                  className="text-[#344054] font-medium"
+                >
+                  Discount Code
+                </label>
+                <input
+                  type="text"
+                  {...register("discount_code")}
+                  className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Enter discount code (optional)"
+                />
+                {errors.discount_code && (
+                  <p className="text-red-500 text-xs">
+                    {errors.discount_code.message}
+                  </p>
+                )}
               </div>
 
               <Button type="submit" size="small" disabled={isLoading}>
