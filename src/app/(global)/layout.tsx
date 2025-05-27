@@ -1,5 +1,6 @@
 "use client";
 
+import { AppSumoRedeemModal } from "@/src/components/AppSumoRedeemModal";
 import Button from "@/src/components/Button";
 import PostModal from "@/src/components/PostModal";
 import Toaster from "@/src/components/ui/Toaster";
@@ -15,6 +16,7 @@ import {
   Grid2x2,
   Sparkles,
   SquarePen,
+  GiftIcon,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -52,6 +54,7 @@ export default function GlobalLayout({
     UserOrganisation[]
   >([]);
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
+  const [appSumoModalOpen, setAppSumoModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserOrganisations = async () => {
@@ -306,6 +309,14 @@ export default function GlobalLayout({
         </nav>
         <div className="flex flex-col items-center gap-2 p-4">
           <Button
+            variant="secondary"
+            size="small"
+            className="w-full"
+            onClick={() => setAppSumoModalOpen((prev) => !prev)}
+          >
+            Redeem AppSumo Code
+          </Button>
+          <Button
             className="w-full bg-[#444CE7] dark:bg-[#444CE7] text-white border"
             onClick={() => router.push("/settings/billing")}
           >
@@ -323,6 +334,10 @@ export default function GlobalLayout({
           {children}
           <Toaster />
           {postModalOpen && <PostModal setPostModalOpen={setPostModalOpen} />}
+          <AppSumoRedeemModal
+            isOpen={appSumoModalOpen}
+            onClose={() => setAppSumoModalOpen(false)}
+          />
         </div>
       </main>
     </div>
