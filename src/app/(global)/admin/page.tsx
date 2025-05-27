@@ -155,11 +155,20 @@ export default async function AdminPage() {
         : 0;
 
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">
-            Admin Dashboard
-          </h1>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h2 className="text-[#101828] text-sm font-semibold">
+                  Admin Dashboard
+                </h2>
+              </div>
+              <p className="text-sm text-[#475467]">
+                Manage your admin dashboard here.
+              </p>
+            </div>
+          </div>
 
           {/* Overview Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

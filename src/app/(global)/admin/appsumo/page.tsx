@@ -141,35 +141,26 @@ export default function AppSumoAdmin() {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white border border-[#E4E7EC] rounded-lg p-6">
-          <h3 className="text-sm font-medium text-[#475467] mb-4">
-            Create New Codes
-          </h3>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="codes" className="text-[#344054] font-medium">
-                Codes
-              </label>
-              <textarea
-                id="codes"
-                placeholder="Enter codes (one per line)"
-                value={newCodes}
-                onChange={(e) => setNewCodes(e.target.value)}
-                className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D] min-h-[100px]"
-              />
-            </div>
-            <Button
-              size="small"
-              onClick={handleCreateCodes}
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating..." : "Create Codes"}
-            </Button>
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="codes" className="text-[#344054] font-medium">
+              Create new codes
+            </label>
+            <textarea
+              id="codes"
+              placeholder="Enter codes (one per line)"
+              value={newCodes}
+              onChange={(e) => setNewCodes(e.target.value)}
+              className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D] min-h-[100px]"
+            />
           </div>
+          <Button size="small" onClick={handleCreateCodes} disabled={isLoading}>
+            {isLoading ? "Creating..." : "Create Codes"}
+          </Button>
         </div>
 
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold mb-4">Existing Codes</h2>
+          <h2 className="font-medium">Existing Codes</h2>
           <Button variant="danger" size="small" onClick={handleDeleteCodes}>
             Delete All Codes
           </Button>
