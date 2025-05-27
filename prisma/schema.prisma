@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   features      Json      @default("{\"maxWorkspaces\":1,\"maxSocialAccounts\":1,\"aiTokens\":200,\"canSchedule\":true,\"canUseAI\":false,\"canUseAnalytics\":false}")
   payments      Payment[]
+  appsumoCodes  AppSumoCode[]
 
   // Relations
   organisations OrganisationRole[]
@@ -275,4 +276,27 @@ model Payment {
   @@index([subscriptionId])
   @@index([paymentId])
   @@map("payments")
+}
+
+// Represents a code used to redeem a product from AppSumo
+enum AppSumoCodeStatus {
+  ACTIVE
+  REDEEMED
+  REVOKED
+}
+
+// Represents a code used to redeem a product from AppSumo
+model AppSumoCode {
+  id         String            @id @default(cuid())
+  code       String            @unique
+  status     AppSumoCodeStatus @default(ACTIVE)
+  userId     String? // The user who redeemed this code
+  user       User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  redeemedAt DateTime? // When the code was redeemed
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([code])
+  @@index([userId])
+  @@map("appsumo_codes")
 }
