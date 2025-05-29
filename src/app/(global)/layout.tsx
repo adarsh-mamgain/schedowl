@@ -269,7 +269,7 @@ export default function GlobalLayout({
             )}
           </div>
         </div>
-        <div className="px-4 py-6">
+        <div className="p-4">
           {canManagePosts && (
             <Button
               size="small"
