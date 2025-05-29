@@ -5,7 +5,6 @@ import {
   MONTHLY_SUBSCRIPTION_PLANS,
   YEARLY_SUBSCRIPTION_PLANS,
 } from "@/src/constants/products";
-import Image from "next/image";
 import Button from "@/src/components/Button";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -18,6 +17,7 @@ import { FlagImage } from "react-international-phone";
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
 
 // Register the English locale
 countries.registerLocale(enLocale);
@@ -25,6 +25,7 @@ countries.registerLocale(enLocale);
 type FormValues = z.infer<typeof CreateSubscriptionSchema>;
 
 export default function BillingPage() {
+  const { data: session } = useSession();
   const [isMonthly, setIsMonthly] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
@@ -87,8 +88,8 @@ export default function BillingPage() {
     resolver: zodResolver(CreateSubscriptionSchema),
     defaultValues: {
       customer: {
-        name: "",
-        email: "",
+        name: session?.user?.name || "",
+        email: session?.user?.email || "",
       },
       billing: {
         country: "",
@@ -273,6 +274,8 @@ export default function BillingPage() {
                   type="text"
                   {...register("customer.name")}
                   className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Your name"
+                  disabled
                 />
                 {errors.customer?.name && (
                   <p className="text-red-500 text-xs">
@@ -288,6 +291,8 @@ export default function BillingPage() {
                   type="email"
                   {...register("customer.email")}
                   className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Your email"
+                  disabled
                 />
                 {errors.customer?.email && (
                   <p className="text-red-500 text-xs">
