@@ -8,6 +8,7 @@ import { SocialAccount } from "@prisma/client";
 import Image from "next/image";
 import axios from "axios";
 import ConfirmationDialog from "@/src/components/ui/ConfirmationDialog";
+import { useSession } from "next-auth/react";
 
 export default function IntegrationsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
@@ -16,6 +17,10 @@ export default function IntegrationsPage() {
   const [accountToDelete, setAccountToDelete] = useState<SocialAccount | null>(
     null
   );
+
+  const { data: session } = useSession();
+  const maxSocialAccounts = session?.user.features.maxSocialAccounts ?? 1;
+  const socialLimitReached = accounts.length >= maxSocialAccounts;
 
   useEffect(() => {
     fetchAccounts();
@@ -114,7 +119,11 @@ export default function IntegrationsPage() {
             </div>
           </div>
           <div className="grow-1">
-            <Button size="small" onClick={addLinkedInIntegration}>
+            <Button
+              size="small"
+              onClick={addLinkedInIntegration}
+              disabled={socialLimitReached}
+            >
               <Plus size={20} />
             </Button>
           </div>

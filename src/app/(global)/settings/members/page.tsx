@@ -63,6 +63,9 @@ export default function MembersPage() {
     resolver: zodResolver(schema),
   });
 
+  const maxMembers = session?.user.features.maxMembers ?? 3;
+  const memberLimitReached = members.length + invitations.length >= maxMembers;
+
   useEffect(() => {
     const getMembers = async () => {
       try {
@@ -347,7 +350,11 @@ export default function MembersPage() {
         </div>
         {(canManageUsers || canAssignUsers) && (
           <div>
-            <Button size="small" onClick={() => setShowInviteForm(true)}>
+            <Button
+              size="small"
+              onClick={() => setShowInviteForm(true)}
+              disabled={memberLimitReached}
+            >
               <PlusIcon size={20} />
               Add user
             </Button>
