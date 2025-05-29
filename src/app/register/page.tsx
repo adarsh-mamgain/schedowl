@@ -40,7 +40,7 @@ function RegisterForm() {
         throw new Error(error.error || "Registration failed");
       }
 
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Registration failed");
     }
@@ -61,14 +61,13 @@ function RegisterForm() {
           <Image
             src="/SchedOwl Logo.svg"
             alt="SchedOwl Logo"
-            width={48}
-            height={48}
-            className="mb-4"
+            width={80}
+            height={80}
           />
           <h1 className="text-2xl font-semibold text-[#101828]">
             Create an account
           </h1>
-          <p className="text-[#475467] mt-2">Start your 30-day free trial</p>
+          <p className="text-[#475467] mt-1">Start your 30-day free trial</p>
         </div>
 
         <div className="space-y-6">
@@ -180,7 +179,7 @@ function RegisterForm() {
             <p>
               Already have an account?{" "}
               <Link
-                href="/login"
+                href="/"
                 className="font-semibold underline hover:text-[#475467] hover:no-underline"
               >
                 Login
@@ -198,7 +197,7 @@ export default function Register() {
     <Suspense
       fallback={
         <div className="w-full h-full flex flex-col items-center justify-center">
-          <div className="border-t-4 border-[#1570EF] rounded-full w-16 h-16 animate-spin mb-3"></div>
+          <div className="border-t-4 border-[#444CE7] rounded-full w-16 h-16 animate-spin mb-3"></div>
           <div className="text-[#101828]">Loading...</div>
         </div>
       }

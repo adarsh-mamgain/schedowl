@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -16,6 +16,8 @@ import {
   FORMAT_TEXT_COMMAND,
   COMMAND_PRIORITY_LOW,
   $getRoot,
+  $createParagraphNode,
+  $createTextNode,
 } from "lexical";
 import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
 import {
@@ -27,9 +29,10 @@ import {
   Plus,
   SendHorizonal,
   X,
-  Image as ImageIcon,
   Upload,
   Loader2,
+  ImagePlusIcon,
+  Sparkles,
 } from "lucide-react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
@@ -61,7 +64,15 @@ const LINKEDIN_UNICODE_SUPPORT = {
   calendar: "\u{1F4C5}", // Calendar
 };
 
-function UnicodeToolbarPlugin() {
+interface UnicodeToolbarPluginProps {
+  setShowMediaLibrary: (show: boolean) => void;
+  setShowAIModal: (show: boolean) => void;
+}
+
+function UnicodeToolbarPlugin({
+  setShowMediaLibrary,
+  setShowAIModal,
+}: UnicodeToolbarPluginProps) {
   const [editor] = useLexicalComposerContext();
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
@@ -120,76 +131,95 @@ function UnicodeToolbarPlugin() {
   };
 
   return (
-    <div className="flex items-center space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-xl">
-      <button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        className={`p-2 hover:bg-gray-100 rounded ${
-          isBold ? "text-blue-500" : "text-[#98A2B3]"
-        }`}
-        title="Bold"
-      >
-        <Bold size={16} strokeWidth={4} />
-      </button>
-      <button
-        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        className={`p-2 hover:bg-gray-100 rounded ${
-          isItalic ? "text-blue-500" : "text-[#98A2B3]"
-        }`}
-        title="Italic"
-      >
-        <Italic size={16} strokeWidth={4} />
-      </button>
-      <button
-        onClick={() =>
-          editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
-        }
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Bullet List"
-      >
-        <List size={16} strokeWidth={4} />
-      </button>
-      <div className="relative" ref={pickerRef}>
+    <div className="flex items-center justify-between space-x-1 p-1 border-y border-y-[#EAECF0] rounded-t-xl">
+      <div className="flex items-center space-x-1">
         <button
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="text-xs text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-          title="Insert Emoji"
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+          className={`p-2 hover:bg-gray-100 rounded ${
+            isBold ? "text-blue-500" : "text-[#98A2B3]"
+          }`}
+          title="Bold"
         >
-          😀
+          <Bold size={16} strokeWidth={4} />
         </button>
-        {showEmojiPicker && (
-          <div className="absolute z-10 top-full left-0 mt-1">
-            <Picker
-              data={data}
-              onEmojiSelect={insertEmoji}
-              theme="light"
-              emojiSize={20}
-              emojiButtonSize={28}
-            />
-          </div>
-        )}
+        <button
+          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
+          className={`p-2 hover:bg-gray-100 rounded ${
+            isItalic ? "text-blue-500" : "text-[#98A2B3]"
+          }`}
+          title="Italic"
+        >
+          <Italic size={16} strokeWidth={4} />
+        </button>
+        <button
+          onClick={() =>
+            editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+          }
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Bullet List"
+        >
+          <List size={16} strokeWidth={4} />
+        </button>
+        <div className="relative" ref={pickerRef}>
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="text-xs text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+            title="Insert Emoji"
+          >
+            😀
+          </button>
+          {showEmojiPicker && (
+            <div className="absolute z-10 top-full left-0 mt-1">
+              <Picker
+                data={data}
+                onEmojiSelect={insertEmoji}
+                theme="light"
+                emojiSize={20}
+                emojiButtonSize={28}
+              />
+            </div>
+          )}
+        </div>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Bullet Point"
+        >
+          •
+        </button>
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Arrow"
+        >
+          →
+        </button>
+        <button
+          onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="Checkmark"
+        >
+          ✓
+        </button>
+        <div className="h-4 w-px bg-gray-300 mx-1" />
+        <button
+          onClick={() => setShowAIModal(true)}
+          className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
+          title="AI Generate"
+        >
+          <Sparkles size={16} />
+        </button>
       </div>
-      <div className="h-4 w-px bg-gray-300 mx-1" />
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.bullet)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Bullet Point"
-      >
-        •
-      </button>
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.arrow)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Arrow"
-      >
-        →
-      </button>
-      <button
-        onClick={() => insertUnicode(LINKEDIN_UNICODE_SUPPORT.checkmark)}
-        className="text-[#98A2B3] p-2 hover:bg-gray-100 rounded"
-        title="Checkmark"
-      >
-        ✓
-      </button>
+      <div>
+        <button
+          onClick={() => setShowMediaLibrary(true)}
+          className="p-2 hover:bg-gray-100 rounded text-[#98A2B3]"
+          title="Add Media"
+        >
+          <ImagePlusIcon size={16} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -257,9 +287,15 @@ function InlineAccountSelect({
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const toggleAccount = (accountId: string) => {
     const newSelected = selectedAccounts.includes(accountId)
@@ -277,12 +313,12 @@ function InlineAccountSelect({
   );
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1" ref={dropdownRef}>
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Account:</span>
 
         {/* Selected account chips */}
-        <div className="flex items-center gap-2 flex-wrap" ref={dropdownRef}>
+        <div className="flex items-center gap-2 flex-wrap">
           {selectedAccounts.map((accountId) => {
             const account = accounts.find((a) => a.id === accountId);
             if (!account) return null;
@@ -379,47 +415,43 @@ function MediaLibraryModal({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchMediaLibrary = async () => {
-      try {
-        const response = await axios.get("/api/media");
-        const items = response.data.map((item: MediaLibraryItem) => ({
-          ...item,
-          selected: selectedMedia.some((selected) => selected.id === item.id),
-        }));
-        setMediaItems(items);
-      } catch {
-        toast.error("Failed to fetch media library");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchMediaLibrary = useCallback(async () => {
+    try {
+      const response = await axios.get("/api/media");
+      const items = response.data.map((item: MediaLibraryItem) => ({
+        ...item,
+        selected: selectedMedia.some((selected) => selected.id === item.id),
+      }));
+      setMediaItems(items);
+    } catch {
+      toast.error("Failed to fetch media library");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedMedia]);
 
+  useEffect(() => {
     if (isOpen) {
       fetchMediaLibrary();
     }
-  }, [isOpen, selectedMedia]);
+  }, [isOpen, fetchMediaLibrary]);
 
   const handleMediaUpload = async (files: FileList) => {
     setUploading(true);
     const formData = new FormData();
     Array.from(files).forEach((file) => {
-      formData.append("files", file);
+      formData.append("file", file);
     });
 
     try {
-      const response = await axios.post("/api/media/upload", formData, {
+      await axios.post("/api/media/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      const newMedia = response.data.map((media: MediaLibraryItem) => ({
-        ...media,
-        selected: false,
-      }));
-
-      setMediaItems((prev) => [...prev, ...newMedia]);
+      // Fetch media again after successful upload
+      await fetchMediaLibrary();
       toast.success("Media uploaded successfully!");
     } catch {
       toast.error("Failed to upload media");
@@ -534,6 +566,112 @@ function MediaLibraryModal({
   );
 }
 
+function AIModal({
+  isOpen,
+  onClose,
+  onInsert,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onInsert: (text: string) => void;
+}) {
+  const [prompt, setPrompt] = useState("");
+  const [generatedText, setGeneratedText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+
+    setIsLoading(true);
+    try {
+      const response = await axios.post("/api/ai/generate", { prompt });
+      setGeneratedText(response.data.text);
+    } catch {
+      toast.error("Failed to generate text");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInsert = () => {
+    if (generatedText) {
+      onInsert(generatedText);
+      onClose();
+      setPrompt("");
+      setGeneratedText("");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl w-[600px] max-h-[80vh] flex flex-col space-y-4 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">AI Text Generation</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-auto">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Enter your prompt
+              </label>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe what you want to generate..."
+                className="w-full h-24 p-2 border border-[#ECECED] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {generatedText && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Generated Text
+                </label>
+                <div className="p-3 bg-gray-50 rounded-lg border border-[#ECECED]">
+                  {generatedText}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button size="small" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          {!generatedText ? (
+            <Button
+              size="small"
+              onClick={handleGenerate}
+              disabled={isLoading || !prompt.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={16} />
+                  Generating...
+                </>
+              ) : (
+                "Generate"
+              )}
+            </Button>
+          ) : (
+            <Button onClick={handleInsert}>Insert Text</Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const editorConfig = {
   namespace: "LinkedInUnicodeEditor",
   nodes: [ListNode, ListItemNode],
@@ -561,6 +699,7 @@ interface LexicalEditorProps {
   initialPost?: Post;
   onDraftSave?: (post: Post) => Promise<void>;
   requireApproval?: boolean;
+  initialContent?: string;
 }
 
 function EditorContent({
@@ -572,6 +711,7 @@ function EditorContent({
   initialPost,
   onDraftSave,
   requireApproval = false,
+  initialContent,
 }: LexicalEditorProps) {
   const [editor] = useLexicalComposerContext();
   const [postContent, setPostContent] = useState(initialPost?.content || "");
@@ -588,13 +728,25 @@ function EditorContent({
       preview: "",
     })) || []
   );
-  // const [isDraft, setIsDraft] = useState(initialPost?.status === "DRAFT");
   const [isLoading, setIsLoading] = useState(false);
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
 
   useEffect(() => {
     onChange(postContent);
   }, [postContent, onChange]);
+
+  useEffect(() => {
+    if (initialContent) {
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+        const paragraph = $createParagraphNode();
+        paragraph.append($createTextNode(initialContent));
+        root.append(paragraph);
+      });
+    }
+  }, [initialContent, editor]);
 
   const handleDraftSave = async () => {
     if (!onDraftSave) return;
@@ -607,7 +759,6 @@ function EditorContent({
         socialAccountIds: selectedAccounts,
         mediaIds: selectedMedia.map((media) => media.id),
       });
-      // setIsDraft(true);
       toast.success("Draft saved successfully!");
     } catch {
       toast.error("Failed to save draft");
@@ -647,7 +798,6 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        // setIsDraft(true);
       } else {
         await onPost({
           content: postContent,
@@ -656,7 +806,6 @@ function EditorContent({
           socialAccountIds: selectedAccounts,
           mediaIds: selectedMedia.map((media) => media.id),
         });
-        // setIsDraft(false);
       }
 
       // Clear the editor
@@ -705,15 +854,32 @@ function EditorContent({
     });
   };
 
+  const handleAITextInsert = (text: string) => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if (selection) {
+        selection.insertText(text);
+      }
+    });
+  };
+
   return (
-    <div className="border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
-      <UnicodeToolbarPlugin />
+    <div className="relative border-x border-x-[#EAECF0] rounded-l-xl rounded-r-xl">
+      <UnicodeToolbarPlugin
+        setShowMediaLibrary={setShowMediaLibrary}
+        setShowAIModal={setShowAIModal}
+      />
       <RichTextPlugin
         contentEditable={
           <ContentEditable
-            className="outline-none border-none p-4 min-h-[350px]"
+            className="outline-none border-none p-4 h-[350px] overflow-scroll"
             aria-label="Post content"
           />
+        }
+        placeholder={
+          <div className="absolute top-16 left-4 text-gray-400 pointer-events-none">
+            Write something...
+          </div>
         }
         ErrorBoundary={LexicalErrorBoundary}
       />
@@ -722,6 +888,34 @@ function EditorContent({
       <AutoFocusPlugin />
       <ListPlugin />
 
+      {/* Media Preview Section */}
+      {selectedMedia.length > 0 && (
+        <div className="p-4">
+          <div className="flex flex-wrap gap-4">
+            {selectedMedia.map((media, index) => (
+              <div key={media.id} className="relative group">
+                <div className="w-32 h-32 rounded-lg overflow-hidden border border-[#EAECF0]">
+                  <Image
+                    src={media.preview || media.url}
+                    alt={media.filename}
+                    // className="object-contain w-full h-full"
+                    className="object-cover w-full h-full"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+                <button
+                  onClick={() => handleRemoveMedia(index)}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Account Selection */}
       <div className="flex items-center p-2 border-t border-t-[#EAECF0] text-sm">
         <InlineAccountSelect
@@ -729,45 +923,6 @@ function EditorContent({
           selectedAccounts={selectedAccounts}
           onChange={onAccountsChange}
         />
-      </div>
-
-      {/* Media Section */}
-      <div className="p-2 border-t border-t-[#EAECF0]">
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => setShowMediaLibrary(true)}
-            >
-              <ImageIcon size={16} />
-              Media Library
-            </Button>
-          </div>
-          <div className="flex">
-            {selectedMedia.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedMedia.map((media, index) => (
-                  <div key={media.id} className="relative group">
-                    <Image
-                      src={media.preview || media.url}
-                      alt={media.filename}
-                      className="rounded"
-                      width={80}
-                      height={80}
-                    />
-                    <button
-                      onClick={() => handleRemoveMedia(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Action Buttons */}
@@ -823,6 +978,12 @@ function EditorContent({
         onClose={() => setShowMediaLibrary(false)}
         onSelect={handleMediaLibrarySelect}
         selectedMedia={selectedMedia}
+      />
+
+      <AIModal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        onInsert={handleAITextInsert}
       />
     </div>
   );

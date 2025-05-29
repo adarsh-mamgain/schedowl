@@ -7,10 +7,15 @@ import { toast } from "react-toastify";
 import { SocialAccount } from "@prisma/client";
 import Image from "next/image";
 import axios from "axios";
+import ConfirmationDialog from "@/src/components/ui/ConfirmationDialog";
 
 export default function IntegrationsPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<SocialAccount | null>(
+    null
+  );
 
   useEffect(() => {
     fetchAccounts();
@@ -38,10 +43,23 @@ export default function IntegrationsPage() {
   };
 
   const handleDisconnect = async (accountId: string) => {
+    const account = accounts.find((a) => a.id === accountId);
+    if (account) {
+      setAccountToDelete(account);
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!accountToDelete) return;
+
     try {
-      const response = await fetch(`/api/social-accounts/${accountId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/social-accounts/${accountToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to disconnect account");
@@ -51,6 +69,9 @@ export default function IntegrationsPage() {
       fetchAccounts();
     } catch {
       toast.error("Failed to disconnect account");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setAccountToDelete(null);
     }
   };
 
@@ -229,6 +250,18 @@ export default function IntegrationsPage() {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setAccountToDelete(null);
+        }}
+        onConfirm={handleDelete}
+        title="Disconnect Account"
+        description={`Are you sure you want to disconnect "${accountToDelete?.name}"? This action cannot be undone.`}
+      />
     </div>
   );
 }

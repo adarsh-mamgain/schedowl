@@ -66,10 +66,28 @@ const securityHeaders = {
 export async function middleware(request: NextRequest) {
   const token = (await getToken({ req: request })) as CustomToken;
   const isAuthPage =
-    request.nextUrl.pathname.startsWith("/login") ||
+    request.nextUrl.pathname === "/" ||
     request.nextUrl.pathname.startsWith("/register");
   const isInvitationPage = request.nextUrl.pathname.startsWith("/invitations");
   const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+
+  // If it's an admin route and user is not authenticated, redirect to login
+  if (isAdminRoute && !token) {
+    const url = new URL("/login", request.url);
+    url.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // If it's an admin route and user is not the admin email, redirect to home
+  if (
+    isAdminRoute &&
+    token?.email !== "work.mamgain@gmail.com" &&
+    token?.email !== "mrakshayvm@gmail.com"
+  ) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 
   let response: NextResponse;
 
@@ -82,7 +100,7 @@ export async function middleware(request: NextRequest) {
   } else if (isInvitationPage) {
     response = NextResponse.next();
   } else if (!token && !isApiRoute) {
-    response = NextResponse.redirect(new URL("/login", request.url));
+    response = NextResponse.redirect(new URL("/", request.url));
   } else {
     // Check API route permissions
     if (isApiRoute && token) {
@@ -133,7 +151,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
-    "/login",
+    "/",
     "/register",
     "/api/:path*",
     "/invitations/:path*",

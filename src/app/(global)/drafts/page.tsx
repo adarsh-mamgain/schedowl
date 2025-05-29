@@ -7,7 +7,7 @@ export default function SettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/settings/profile");
+    router.push("/drafts/draft");
   }, [router]);
 
   return (

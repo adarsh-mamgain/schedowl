@@ -156,10 +156,8 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <hr color="#E4E7EC" />
-
-      <div className="">
-        <div className="flex justify-center p-8 mb-1">
+      <div>
+        <div className="flex justify-center mb-8">
           <div className="inline-flex items-center p-1 bg-gray-100 rounded-lg">
             <button
               className={`px-4 py-2 text-sm font-medium rounded-md focus:outline-none ${

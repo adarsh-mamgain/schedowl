@@ -12,8 +12,71 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Schedowl",
-  description: "An all-in-one LinkedIn content management solution",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_BASE_URL || "https://app.schedowl.com"
+  ),
+  title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
+  description:
+    "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
+  icons: [
+    {
+      rel: "icon",
+      url: "https://app.schedowl.com/favicon-light.svg",
+      media: "(prefers-color-scheme: light)",
+    },
+    {
+      rel: "icon",
+      url: "https://app.schedowl.com/favicon-dark.svg",
+      media: "(prefers-color-scheme: dark)",
+    },
+  ],
+  keywords: [
+    "writing assistant",
+    "AI writing",
+    "essay writing",
+    "research papers",
+    "citation management",
+    "academic writing",
+    "free writing tools",
+  ],
+  authors: [{ name: "SchedOwl" }],
+  creator: "SchedOwl",
+  publisher: "SchedOwl",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://schedowl.com",
+    title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
+    description:
+      "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
+    siteName: "SchedOwl",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SchedOwl: AI-Powered LinkedIn Content Creation & Scheduling Tool",
+    description:
+      "Boost your LinkedIn brand with SchedOwl - the all-in-one AI tool for content creation, scheduling, engagement, and analytics. Save time, stay authentic, grow faster.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default async function RootLayout({
@@ -28,6 +91,11 @@ export default async function RootLayout({
         <SessionProvider session={session}>
           <PostHogProvider>{children}</PostHogProvider>
         </SessionProvider>
+        {/* simpleanalytics.com */}
+        <script
+          async
+          src="https://scripts.simpleanalyticscdn.com/latest.js"
+        ></script>
       </body>
     </html>
   );

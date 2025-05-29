@@ -18,6 +18,7 @@ type EmailType =
   | "SUBSCRIPTION_ACTIVE"
   | "SUBSCRIPTION_RENEWED"
   | "SUBSCRIPTION_CANCELLED"
+  | "SUBSCRIPTION_FAILED"
   | "PAYMENT_SUCCESS"
   | "PAYMENT_FAILED"
   | "TRIAL_ENDING"
@@ -117,7 +118,7 @@ const BASE_TEMPLATE = (content: string) => `
   </div>
   <div class="footer">
     <p>© ${new Date().getFullYear()} SchedOwl. All rights reserved.</p>
-    <p>If you have any questions, please contact support@schedowl.com</p>
+    <p>If you have any questions, please contact <a href="mailto:support@schedowl.com">support@schedowl.com</a></p>
   </div>
 </body>
 </html>
@@ -136,7 +137,7 @@ export const templates = {
   WELCOME_EMAIL: () =>
     BASE_TEMPLATE(`
     <h2>Welcome to SchedOwl</h2>
-    <p>Thank you for signing up. We're excited to have you on board.</p>
+    <p>We're excited to have you on board</p>
   `),
   INVITATION_EMAIL: (context: InvitationContext) =>
     BASE_TEMPLATE(`
@@ -221,6 +222,15 @@ export async function sendSubscriptionEmail(data: EmailData) {
         <a href="${
           process.env.NEXT_PUBLIC_BASE_URL
         }/settings/billing" target="_blank" class="button">Manage Subscription</a>
+      `),
+    },
+    SUBSCRIPTION_FAILED: {
+      subject: "Subscription Failed - SchedOwl",
+      html: BASE_TEMPLATE(`
+        <h2>Subscription Failed</h2>
+        <p>We were unable to process your subscription for your SchedOwl subscription.</p>
+        <p>Please contact support@schedowl.com for assistance.</p>
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL}/settings/billing" target="_blank" class="button">Contact Support</a>
       `),
     },
     PAYMENT_SUCCESS: {

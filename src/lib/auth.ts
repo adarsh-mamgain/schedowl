@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   pages: {
-    signIn: "/login",
+    signIn: "/",
   },
   providers: [
     GoogleProvider({
@@ -131,6 +131,20 @@ export const authOptions: NextAuthOptions = {
           user.id = result.id;
         } else {
           user.id = existingUser.id;
+        }
+      } else if (account?.provider === "credentials") {
+        // Send welcome email for credentials signup
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+        });
+
+        if (existingUser) {
+          // Send welcome back email
+          await sendEmail({
+            to: existingUser.email,
+            subject: "Welcome back to SchedOwl",
+            html: templates.WELCOME_EMAIL(),
+          });
         }
       }
 

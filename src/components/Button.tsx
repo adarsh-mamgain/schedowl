@@ -28,7 +28,7 @@ const Button: FC<ButtonProps> = ({
   loading = false,
   ...props
 }) => {
-  //   box-shadow: 0px 0px 0px 2px #98A2B324;
+  // box-shadow: 0px 0px 0px 2px #98A2B324;
 
   // box-shadow: 0px 1px 1px 0px #1018280D;
 
