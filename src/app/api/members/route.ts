@@ -3,13 +3,30 @@ import prisma from "@/src/lib/prisma";
 import logger from "@/src/services/logger";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
 
 export async function GET(request: NextRequest) {
   logger.info(`${request.method} ${request.nextUrl.pathname}`);
   const session = await getServerSession(authOptions);
 
-  if (!session?.organisation.id) {
+  if (!session?.user || !session.organisation?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Enforce maxMembers using dynamic features
+  const features = await getOrgOwnerFeatures(session.organisation.id);
+  const maxMembers = features.maxMembers ?? 1;
+  const memberCount = await prisma.organisationRole.count({
+    where: { organisationId: session.organisation.id },
+  });
+  if (memberCount >= maxMembers) {
+    return NextResponse.json(
+      {
+        error:
+          "Member limit reached for your plan. Upgrade to invite more members.",
+      },
+      { status: 403 }
+    );
   }
 
   // Get existing members
