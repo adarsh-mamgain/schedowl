@@ -18,11 +18,50 @@ import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import { format } from "date-fns";
 
 // Register the English locale
 countries.registerLocale(enLocale);
 
 type FormValues = z.infer<typeof CreateSubscriptionSchema>;
+
+interface Payment {
+  id: string;
+  paymentId: string;
+  status: "SUCCEEDED" | "FAILED" | "PROCESSING" | "CANCELLED";
+  createdAt: string;
+  payload: {
+    total_amount: number;
+    currency: string;
+  };
+}
+
+interface Subscription {
+  id: string;
+  subscriptionId: string;
+  subscriptionStatus:
+    | "ACTIVE"
+    | "RENEWED"
+    | "ON_HOLD"
+    | "PAUSED"
+    | "CANCELLED"
+    | "FAILED"
+    | "EXPIRED";
+  nextBillingDate: string;
+  createdAt: string;
+  payload: {
+    type: string;
+    plan?: string;
+  };
+}
+
+interface AppSumoCode {
+  id: string;
+  code: string;
+  status: "ACTIVE" | "REDEEMED" | "REVOKED";
+  redeemedAt: string | null;
+  createdAt: string;
+}
 
 export default function BillingPage() {
   const { data: session } = useSession();
@@ -40,6 +79,45 @@ export default function BillingPage() {
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [hasActiveBilling, setHasActiveBilling] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [appSumoCodes, setAppSumoCodes] = useState<AppSumoCode[]>([]);
+  const [isLoadingBilling, setIsLoadingBilling] = useState(true);
+
+  useEffect(() => {
+    const fetchBillingData = async () => {
+      try {
+        // Fetch billing status
+        const billingResponse = await fetch("/api/organisations/billing");
+        if (!billingResponse.ok)
+          throw new Error("Failed to fetch billing status");
+        const billingData = await billingResponse.json();
+        setHasActiveBilling(billingData.hasActiveBilling);
+
+        // Fetch subscriptions and payments
+        const subscriptionResponse = await fetch(
+          "/api/organisations/subscriptions"
+        );
+        if (!subscriptionResponse.ok)
+          throw new Error("Failed to fetch subscription data");
+        const subscriptionData = await subscriptionResponse.json();
+
+        setSubscriptions(subscriptionData.subscriptions);
+        setPayments(subscriptionData.payments);
+        setAppSumoCodes(subscriptionData.appSumoCodes || []);
+      } catch (error) {
+        console.error("Error fetching billing data:", error);
+        toast.error("Failed to load billing information");
+      } finally {
+        setIsLoadingBilling(false);
+      }
+    };
+
+    if (session?.organisation?.id) {
+      fetchBillingData();
+    }
+  }, [session?.organisation?.id]);
 
   useEffect(() => {
     const fetchSupportedCountries = async () => {
@@ -145,6 +223,198 @@ export default function BillingPage() {
       setShowSubscriptionForm(false);
     }
   };
+
+  if (isLoadingBilling) {
+    return <div>Loading...</div>;
+  }
+
+  if (hasActiveBilling) {
+    return (
+      <div className="space-y-8">
+        {appSumoCodes.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">AppSumo Codes</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Code
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Redeemed At
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Created At
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appSumoCodes.map((code) => (
+                    <tr
+                      key={code.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">{code.code}</td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              code.status === "ACTIVE"
+                                ? "bg-green-500"
+                                : code.status === "REDEEMED"
+                                ? "bg-blue-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{code.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {code.redeemedAt
+                          ? format(new Date(code.redeemedAt), "MMM d, yyyy")
+                          : "-"}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(new Date(code.createdAt), "MMM d, yyyy")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {subscriptions.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Active Subscriptions</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Subscription ID
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Plan
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Next Billing Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions.map((subscription) => (
+                    <tr
+                      key={subscription.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">
+                        {subscription.subscriptionId}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              ["ACTIVE", "RENEWED"].includes(
+                                subscription.subscriptionStatus
+                              )
+                                ? "bg-green-500"
+                                : ["ON_HOLD", "PAUSED"].includes(
+                                    subscription.subscriptionStatus
+                                  )
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{subscription.subscriptionStatus}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {subscription.payload.plan || subscription.payload.type}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(
+                          new Date(subscription.nextBillingDate),
+                          "MMM d, yyyy"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {payments.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Payment History</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Payment ID
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">
+                        {payment.paymentId}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              payment.status === "SUCCEEDED"
+                                ? "bg-green-500"
+                                : payment.status === "PROCESSING"
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{payment.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {payment.payload.total_amount / 100}{" "}
+                        {payment.payload.currency}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(new Date(payment.createdAt), "MMM d, yyyy")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
