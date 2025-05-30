@@ -132,12 +132,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Update user features
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { features },
-    });
-
     return NextResponse.json({
       message: "Redemption complete.",
       results,
