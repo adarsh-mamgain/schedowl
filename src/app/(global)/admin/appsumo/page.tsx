@@ -5,6 +5,7 @@ import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import axios from "axios";
 
 interface AppSumoCode {
   id: string;
@@ -195,8 +196,8 @@ export default function AppSumoAdmin() {
       setSelectedUser(null);
       setManualRedeemCodes("");
       fetchCodes();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to redeem codes");
+    } catch {
+      toast.error("Failed to redeem codes");
     } finally {
       setIsRedeeming(false);
     }
