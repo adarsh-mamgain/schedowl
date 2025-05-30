@@ -79,31 +79,6 @@ export async function POST(req: Request) {
             redeemedAt: new Date(),
           },
         });
-        // Create a lifetime subscription for the user
-        const subscription = await tx.subscription.create({
-          data: {
-            subscriptionId: `appsumo-${appSumoCode.id}`,
-            subscriptionStatus: "ACTIVE",
-            nextBillingDate: new Date("2099-12-31"),
-            payload: {
-              type: "appsumo",
-              code: appSumoCode.code,
-            },
-          },
-        });
-        // Create payment record after subscription exists
-        await tx.payment.create({
-          data: {
-            paymentId: `appsumo-${appSumoCode.id}`,
-            subscriptionId: subscription.subscriptionId,
-            status: "SUCCEEDED",
-            payload: {
-              type: "appsumo",
-              code: appSumoCode.code,
-            },
-            userId: session.user.id,
-          },
-        });
         results.push({
           code,
           status: "success",

@@ -2,6 +2,7 @@ import prisma from "@/src/lib/prisma";
 import {
   PRODUCT_FEATURES,
   DEFAULT_FEATURES,
+  APPSUMO_STACK_FEATURES,
 } from "@/src/constants/productFeatures";
 
 function extractProductId(payload: unknown): string | undefined {
@@ -28,7 +29,9 @@ export async function getOrgOwnerFeatures(organisationId: string) {
     where: { id: organisationId },
     select: { ownerId: true, owner: { select: { id: true, email: true } } },
   });
-  if (!org) return DEFAULT_FEATURES;
+  if (!org) {
+    return DEFAULT_FEATURES;
+  }
 
   // Check for active/renewed subscription for the owner
   const activeSub = await prisma.subscription.findFirst({
@@ -61,14 +64,11 @@ export async function getOrgOwnerFeatures(organisationId: string) {
     where: { userId: org.ownerId, status: "REDEEMED" },
   });
   if (appsumoCount > 0) {
-    // Map count to a plan (e.g., 1=basic, 2=pro, 3+=super)
-    let plan = "basic";
-    if (appsumoCount === 3) plan = "pro";
-    if (appsumoCount >= 5) plan = "super";
-    // Assume PRODUCT_FEATURES keys: basic, pro, super
-    if (PRODUCT_FEATURES[plan]) return PRODUCT_FEATURES[plan];
+    // Map count to a plan (e.g., 1=basic, 3=pro, 5+=super)
+    if (appsumoCount === 1) return APPSUMO_STACK_FEATURES[1];
+    if (appsumoCount === 3) return APPSUMO_STACK_FEATURES[3];
+    if (appsumoCount >= 5) return APPSUMO_STACK_FEATURES[5];
   }
 
-  // Default (free/trial) features
   return DEFAULT_FEATURES;
 }

@@ -54,6 +54,7 @@ export default function GlobalLayout({
   >([]);
   const [isLoadingOrgs, setIsLoadingOrgs] = useState(false);
   const [appSumoModalOpen, setAppSumoModalOpen] = useState(false);
+  const [hasActiveBilling, setHasActiveBilling] = useState(false);
 
   useEffect(() => {
     const fetchUserOrganisations = async () => {
@@ -73,6 +74,23 @@ export default function GlobalLayout({
 
     fetchUserOrganisations();
   }, []);
+
+  useEffect(() => {
+    const checkBillingStatus = async () => {
+      try {
+        const response = await fetch("/api/organisations/billing");
+        if (!response.ok) throw new Error("Failed to fetch billing info");
+        const data = await response.json();
+        setHasActiveBilling(data.hasActiveBilling);
+      } catch {
+        toast.error("Failed to load billing information");
+      }
+    };
+
+    if (session?.organisation?.id) {
+      checkBillingStatus();
+    }
+  }, [session?.organisation?.id]);
 
   const switchOrganisation = async (orgId: string) => {
     try {
@@ -307,22 +325,26 @@ export default function GlobalLayout({
           ))}
         </nav>
         <div className="flex flex-col items-center gap-2 p-4">
-          <Button
-            variant="secondary"
-            size="small"
-            className="w-full"
-            onClick={() => setAppSumoModalOpen((prev) => !prev)}
-          >
-            Redeem AppSumo Code
-          </Button>
-          <Button
-            className="w-full bg-[#444CE7] dark:bg-[#444CE7] text-white border"
-            size="small"
-            onClick={() => router.push("/settings/billing")}
-          >
-            <Sparkles size={16} />
-            Upgrade Plan
-          </Button>
+          {!hasActiveBilling && (
+            <>
+              <Button
+                variant="secondary"
+                size="small"
+                className="w-full"
+                onClick={() => setAppSumoModalOpen((prev) => !prev)}
+              >
+                Redeem AppSumo Code
+              </Button>
+              <Button
+                className="w-full bg-[#444CE7] dark:bg-[#444CE7] text-white border"
+                size="small"
+                onClick={() => router.push("/settings/billing")}
+              >
+                <Sparkles size={16} />
+                Upgrade Plan
+              </Button>
+            </>
+          )}
           <a href="mailto:adarsh@schedowl.com">
             <Button variant="secondary">adarsh@schedowl.com</Button>
           </a>
