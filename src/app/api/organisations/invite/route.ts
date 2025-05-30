@@ -5,6 +5,7 @@ import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
 import crypto from "crypto";
 import { sendEmail, templates } from "@/src/services/email";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -14,8 +15,24 @@ const inviteSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.organisation.id) {
+    if (!session?.user || !session.organisation?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const orgId = session.organisation.id;
+    const features = await getOrgOwnerFeatures(orgId);
+    const maxMembers = features.maxMembers ?? 1;
+    const memberCount = await prisma.organisationRole.count({
+      where: { organisationId: orgId },
+    });
+    if (memberCount >= maxMembers) {
+      return NextResponse.json(
+        {
+          error:
+            "Member limit reached for your plan. Upgrade to invite more members.",
+        },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();

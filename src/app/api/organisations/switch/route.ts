@@ -21,6 +21,16 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { organisationId } = switchSchema.parse(body);
 
+    const organisation = await prisma.organisation.findUnique({
+      where: { id: organisationId },
+    });
+    if (!organisation) {
+      return NextResponse.json(
+        { error: "Organisation not found" },
+        { status: 404 }
+      );
+    }
+
     // Verify user has access to the organization
     const organisationRole = await prisma.organisationRole.findFirst({
       where: {
