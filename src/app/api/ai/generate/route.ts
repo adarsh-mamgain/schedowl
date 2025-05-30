@@ -1,10 +1,62 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import prisma from "@/src/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
+import { DEFAULT_FEATURES } from "@/src/constants/productFeatures";
+import { addDays, isAfter, isSameDay } from "date-fns";
 
 // Initialize the Google Generative AI client
 const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY || "" });
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !session.organisation?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Enforce AI usage restrictions
+  const features = await getOrgOwnerFeatures(session.organisation.id);
+  if (features === DEFAULT_FEATURES) {
+    // Check if trial expired
+    const org = await prisma.organisation.findUnique({
+      where: { id: session.organisation.id },
+      select: { owner: { select: { createdAt: true } } },
+    });
+    if (org?.owner?.createdAt) {
+      const trialEnd = addDays(org.owner.createdAt, 14);
+      if (isAfter(new Date(), trialEnd)) {
+        return NextResponse.json(
+          {
+            error:
+              "Your 14-day trial has expired. Please upgrade to use AI features.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
+  // Enforce aiTokens limit (per day)
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { aiUsageToday: true, aiUsageDate: true },
+  });
+  let aiUsageToday = user?.aiUsageToday ?? 0;
+  let aiUsageDate = user?.aiUsageDate;
+  if (!aiUsageDate || !isSameDay(new Date(), aiUsageDate)) {
+    aiUsageToday = 0;
+  }
+  if (aiUsageToday >= features.aiTokens) {
+    return NextResponse.json(
+      {
+        error: "AI usage limit reached for today. Please upgrade your plan.",
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const { prompt, context } = await request.json();
 
@@ -80,6 +132,24 @@ export async function POST(request: Request) {
         { error: "No text was generated" },
         { status: 500 }
       );
+    }
+
+    if (aiUsageToday) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          aiUsageToday: aiUsageToday + 1,
+          aiUsageDate: new Date(),
+        },
+      });
+    } else {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          aiUsageToday: 1,
+          aiUsageDate: new Date(),
+        },
+      });
     }
 
     return NextResponse.json({ text: generatedText });
