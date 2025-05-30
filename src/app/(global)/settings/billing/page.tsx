@@ -5,7 +5,6 @@ import {
   MONTHLY_SUBSCRIPTION_PLANS,
   YEARLY_SUBSCRIPTION_PLANS,
 } from "@/src/constants/products";
-import Image from "next/image";
 import Button from "@/src/components/Button";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -18,13 +17,54 @@ import { FlagImage } from "react-international-phone";
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { format } from "date-fns";
 
 // Register the English locale
 countries.registerLocale(enLocale);
 
 type FormValues = z.infer<typeof CreateSubscriptionSchema>;
 
+interface Payment {
+  id: string;
+  paymentId: string;
+  status: "SUCCEEDED" | "FAILED" | "PROCESSING" | "CANCELLED";
+  createdAt: string;
+  payload: {
+    total_amount: number;
+    currency: string;
+  };
+}
+
+interface Subscription {
+  id: string;
+  subscriptionId: string;
+  subscriptionStatus:
+    | "ACTIVE"
+    | "RENEWED"
+    | "ON_HOLD"
+    | "PAUSED"
+    | "CANCELLED"
+    | "FAILED"
+    | "EXPIRED";
+  nextBillingDate: string;
+  createdAt: string;
+  payload: {
+    type: string;
+    plan?: string;
+  };
+}
+
+interface AppSumoCode {
+  id: string;
+  code: string;
+  status: "ACTIVE" | "REDEEMED" | "REVOKED";
+  redeemedAt: string | null;
+  createdAt: string;
+}
+
 export default function BillingPage() {
+  const { data: session } = useSession();
   const [isMonthly, setIsMonthly] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
@@ -39,6 +79,45 @@ export default function BillingPage() {
   const [selectedCountry, setSelectedCountry] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [hasActiveBilling, setHasActiveBilling] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [appSumoCodes, setAppSumoCodes] = useState<AppSumoCode[]>([]);
+  const [isLoadingBilling, setIsLoadingBilling] = useState(true);
+
+  useEffect(() => {
+    const fetchBillingData = async () => {
+      try {
+        // Fetch billing status
+        const billingResponse = await fetch("/api/organisations/billing");
+        if (!billingResponse.ok)
+          throw new Error("Failed to fetch billing status");
+        const billingData = await billingResponse.json();
+        setHasActiveBilling(billingData.hasActiveBilling);
+
+        // Fetch subscriptions and payments
+        const subscriptionResponse = await fetch(
+          "/api/organisations/subscriptions"
+        );
+        if (!subscriptionResponse.ok)
+          throw new Error("Failed to fetch subscription data");
+        const subscriptionData = await subscriptionResponse.json();
+
+        setSubscriptions(subscriptionData.subscriptions);
+        setPayments(subscriptionData.payments);
+        setAppSumoCodes(subscriptionData.appSumoCodes || []);
+      } catch (error) {
+        console.error("Error fetching billing data:", error);
+        toast.error("Failed to load billing information");
+      } finally {
+        setIsLoadingBilling(false);
+      }
+    };
+
+    if (session?.organisation?.id) {
+      fetchBillingData();
+    }
+  }, [session?.organisation?.id]);
 
   useEffect(() => {
     const fetchSupportedCountries = async () => {
@@ -87,8 +166,8 @@ export default function BillingPage() {
     resolver: zodResolver(CreateSubscriptionSchema),
     defaultValues: {
       customer: {
-        name: "",
-        email: "",
+        name: session?.user?.name || "",
+        email: session?.user?.email || "",
       },
       billing: {
         country: "",
@@ -99,6 +178,7 @@ export default function BillingPage() {
       },
       product_id: "",
       quantity: 1,
+      discount_code: null,
     },
   });
 
@@ -117,6 +197,7 @@ export default function BillingPage() {
       ...data,
       product_id: selectedPlan?.id,
       quantity: 1,
+      discount_code: data.discount_code?.trim() || null,
     };
 
     try {
@@ -133,13 +214,207 @@ export default function BillingPage() {
       }
 
       router.push(responseData.payment_link);
-    } catch {
-      toast.error("Failed to create subscription");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create subscription"
+      );
     } finally {
       setIsLoading(false);
       setShowSubscriptionForm(false);
     }
   };
+
+  if (isLoadingBilling) {
+    return <div>Loading...</div>;
+  }
+
+  if (hasActiveBilling) {
+    return (
+      <div className="space-y-8">
+        {appSumoCodes.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">AppSumo Codes</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Code
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Redeemed At
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Created At
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appSumoCodes.map((code) => (
+                    <tr
+                      key={code.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">{code.code}</td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              code.status === "ACTIVE"
+                                ? "bg-green-500"
+                                : code.status === "REDEEMED"
+                                ? "bg-blue-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{code.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {code.redeemedAt
+                          ? format(new Date(code.redeemedAt), "MMM d, yyyy")
+                          : "-"}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(new Date(code.createdAt), "MMM d, yyyy")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {subscriptions.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Active Subscriptions</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Subscription ID
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Plan
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Next Billing Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions.map((subscription) => (
+                    <tr
+                      key={subscription.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">
+                        {subscription.subscriptionId}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              ["ACTIVE", "RENEWED"].includes(
+                                subscription.subscriptionStatus
+                              )
+                                ? "bg-green-500"
+                                : ["ON_HOLD", "PAUSED"].includes(
+                                    subscription.subscriptionStatus
+                                  )
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{subscription.subscriptionStatus}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {subscription.payload.plan || subscription.payload.type}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(
+                          new Date(subscription.nextBillingDate),
+                          "MMM d, yyyy"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {payments.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Payment History</h2>
+            <div className="bg-white border border-[#E4E7EC] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-b-[#E4E7EC] text-xs">
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Payment ID
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 font-medium text-[#475467]">
+                      Date
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr
+                      key={payment.id}
+                      className="border-b border-b-[#E4E7EC] hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-3 text-[#344054]">
+                        {payment.paymentId}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              payment.status === "SUCCEEDED"
+                                ? "bg-green-500"
+                                : payment.status === "PROCESSING"
+                                ? "bg-yellow-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span>{payment.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {payment.payload.total_amount / 100}{" "}
+                        {payment.payload.currency}
+                      </td>
+                      <td className="px-6 py-3 text-[#344054]">
+                        {format(new Date(payment.createdAt), "MMM d, yyyy")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -197,32 +472,19 @@ export default function BillingPage() {
                   Popular
                 </div>
               )}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center border border-[#EAECF0] rounded-lg shadow overflow-hidden">
-                  <Image
-                    src={plan.image.src}
-                    alt={plan.title}
-                    width={80}
-                    height={80}
-                    priority
-                  />
-                </div>
-                <div>
-                  <h3 className="text-[#101828] text-2xl font-semibold">
-                    {plan.title}
-                  </h3>
-                  <div className="text-[#475467]">
-                    <span className="text-[#101828] text-xl font-semibold">
-                      ${plan.price}
-                    </span>
-                    /{isMonthly ? "month" : "year"}
-                    {!isMonthly && (
-                      <div className="text-green-600 text-sm font-medium">
-                        ${((plan.price / 10) * 2).toFixed(2)} saved per year!
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center mb-4">
+                <h3 className="text-[#101828] text-lg">{plan.title}</h3>
+                <p className="text-[#475467]">
+                  <span className="text-[#101828] text-4xl font-bold">
+                    ${plan.price}
+                  </span>
+                  /{isMonthly ? "month" : "year"}
+                  {!isMonthly && (
+                    <p className="text-green-600 text-sm font-medium">
+                      ${((plan.price / 10) * 2).toFixed(2)} saved per year!
+                    </p>
+                  )}
+                </p>
               </div>
 
               <div className="flex-grow mb-4">
@@ -282,6 +544,8 @@ export default function BillingPage() {
                   type="text"
                   {...register("customer.name")}
                   className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Your name"
+                  disabled
                 />
                 {errors.customer?.name && (
                   <p className="text-red-500 text-xs">
@@ -297,6 +561,8 @@ export default function BillingPage() {
                   type="email"
                   {...register("customer.email")}
                   className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Your email"
+                  disabled
                 />
                 {errors.customer?.email && (
                   <p className="text-red-500 text-xs">
@@ -466,6 +732,25 @@ export default function BillingPage() {
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="discount_code"
+                  className="text-[#344054] font-medium"
+                >
+                  Discount Code
+                </label>
+                <input
+                  type="text"
+                  {...register("discount_code")}
+                  className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D]"
+                  placeholder="Enter discount code (optional)"
+                />
+                {errors.discount_code && (
+                  <p className="text-red-500 text-xs">
+                    {errors.discount_code.message}
+                  </p>
+                )}
               </div>
 
               <Button type="submit" size="small" disabled={isLoading}>

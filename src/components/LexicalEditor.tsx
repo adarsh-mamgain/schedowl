@@ -19,7 +19,10 @@ import {
   $createParagraphNode,
   $createTextNode,
 } from "lexical";
-import { INSERT_UNORDERED_LIST_COMMAND } from "@lexical/list";
+import {
+  INSERT_UNORDERED_LIST_COMMAND,
+  $createListItemNode,
+} from "@lexical/list";
 import {
   Bold,
   Calendar,
@@ -857,8 +860,40 @@ function EditorContent({
   const handleAITextInsert = (text: string) => {
     editor.update(() => {
       const selection = $getSelection();
-      if (selection) {
-        selection.insertText(text);
+      if ($isRangeSelection(selection)) {
+        // Split the text by newlines to handle paragraphs and lists
+        const lines = text.split("\n");
+
+        // Clear the current selection
+        selection.removeText();
+
+        // Process each line
+        lines.forEach((line, index) => {
+          // Add a paragraph node for each line
+          const paragraph = $createParagraphNode();
+
+          // Check if the line starts with a bullet point
+          if (line.trim().startsWith("•")) {
+            // Create a list item
+            const listItem = $createListItemNode();
+            const textNode = $createTextNode(line.trim().substring(1).trim());
+            listItem.append(textNode);
+            paragraph.append(listItem);
+          } else {
+            // Regular text
+            const textNode = $createTextNode(line);
+            paragraph.append(textNode);
+          }
+
+          // Append the paragraph to the root
+          $getRoot().append(paragraph);
+
+          // Add a line break after each line except the last one
+          if (index < lines.length - 1) {
+            const breakNode = $createParagraphNode();
+            $getRoot().append(breakNode);
+          }
+        });
       }
     });
   };

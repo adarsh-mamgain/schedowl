@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/_next/", "/admin"],
+      disallow: ["/api/", "/_next/", "/admin", "/admin/appsumo"],
     },
     sitemap: "https://app.schedowl.com/sitemap.xml",
     host: "https://app.schedowl.com",

@@ -6,6 +6,8 @@ import prisma from "@/src/lib/prisma";
 import bcrypt from "bcryptjs";
 import { generateUniqueSlug } from "@/src/lib/common";
 import { sendEmail, templates } from "../services/email";
+import { DEFAULT_FEATURES } from "@/src/constants/productFeatures";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -165,6 +167,14 @@ export const authOptions: NextAuthOptions = {
           id: string;
           role: string;
         };
+        // Always resolve features dynamically for the current organisation
+        if (session.organisation?.id) {
+          session.user.features = await getOrgOwnerFeatures(
+            session.organisation.id
+          );
+        } else {
+          session.user.features = DEFAULT_FEATURES;
+        }
       }
       return session;
     },

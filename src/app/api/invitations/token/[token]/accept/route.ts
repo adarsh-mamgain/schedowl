@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import prisma from "@/src/lib/prisma";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
 
 export async function POST(
   request: NextRequest,
@@ -38,6 +39,22 @@ export async function POST(
       return NextResponse.json(
         { error: "Invitation has already been accepted" },
         { status: 400 }
+      );
+    }
+
+    // Before accepting invitation
+    const features = await getOrgOwnerFeatures(invitation.orgId);
+    const maxMembers = features.maxMembers ?? 1;
+    const memberCount = await prisma.organisationRole.count({
+      where: { organisationId: invitation.orgId },
+    });
+    if (memberCount >= maxMembers) {
+      return NextResponse.json(
+        {
+          error:
+            "Member limit reached for your plan. Upgrade to invite more members.",
+        },
+        { status: 403 }
       );
     }
 

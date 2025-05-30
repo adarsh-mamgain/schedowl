@@ -4,6 +4,7 @@ import { MediaAttachment, SocialAccount, Post } from "@prisma/client";
 import { PostStatus } from "@prisma/client";
 import logger from "@/src/services/logger";
 import { sendEmail, templates } from "@/src/services/email";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
 
 const LINKEDIN_API_URL = "https://api.linkedin.com/v2";
 
@@ -316,6 +317,18 @@ export class LinkedInService {
     });
 
     const user = userinfo.data;
+
+    // Enforce social account limit
+    const features = await getOrgOwnerFeatures(state);
+    const maxSocialAccounts = features.maxSocialAccounts ?? 1;
+    const socialCount = await prisma.socialAccount.count({
+      where: { organisationId: state },
+    });
+    if (socialCount >= maxSocialAccounts) {
+      throw new Error(
+        "LinkedIn account limit reached for your plan. Upgrade to connect more accounts."
+      );
+    }
 
     try {
       await prisma.socialAccount.create({

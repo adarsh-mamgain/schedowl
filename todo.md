@@ -1,5 +1,10 @@
 ## Todo
 
+- billing to default trial plan
+- create gemini api key from kanika's google account
+- create org button
+- approve member/admin requirement
+
 - payment webhook complete
 - allow organisation to be created by owner
 - allow organisation switch
@@ -28,7 +33,7 @@
 - allow PDF for media
 - remove unwanted UIs while loading
 - change the LinkedIn product APIs
-- support@schedowl.com
+- adarsh@schedowl.com
 
 I have a doc from my CEO stating what all needs to be done.
 

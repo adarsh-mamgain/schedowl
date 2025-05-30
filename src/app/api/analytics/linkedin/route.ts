@@ -1,6 +1,12 @@
 import fs from "fs";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
+import prisma from "@/src/lib/prisma";
+import { getOrgOwnerFeatures } from "@/src/lib/features";
+import { DEFAULT_FEATURES } from "@/src/constants/productFeatures";
+import { addDays, isAfter } from "date-fns";
 
 type LinkedInCacheData = {
   success: boolean;
@@ -111,6 +117,39 @@ class LinkedInCache {
 }
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || !session.organisation?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Enforce analytics access
+  const features = await getOrgOwnerFeatures(session.organisation.id);
+  if (!features.canUseAnalytics) {
+    return NextResponse.json(
+      { error: "Your plan does not allow analytics access. Please upgrade." },
+      { status: 403 }
+    );
+  }
+  if (features === DEFAULT_FEATURES) {
+    // Check if trial expired
+    const org = await prisma.organisation.findUnique({
+      where: { id: session.organisation.id },
+      select: { owner: { select: { createdAt: true } } },
+    });
+    if (org?.owner?.createdAt) {
+      const trialEnd = addDays(org.owner.createdAt, 14);
+      if (isAfter(new Date(), trialEnd)) {
+        return NextResponse.json(
+          {
+            error:
+              "Your 14-day trial has expired. Please upgrade to access analytics.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
   const username = request.nextUrl.searchParams.get("username");
   const cache = LinkedInCache.getInstance();
 

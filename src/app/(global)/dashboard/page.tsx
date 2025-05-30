@@ -28,6 +28,7 @@ import {
   Area,
 } from "recharts";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react";
 
 interface LinkedInPost {
   text: string;
@@ -87,6 +88,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [searchUsername, setSearchUsername] = useState("");
+
+  const { data: session } = useSession();
+  const canUseAnalytics = session?.user.features?.canUseAnalytics;
 
   useEffect(() => {
     setMounted(true);
@@ -296,28 +300,31 @@ export default function DashboardPage() {
       </div>
 
       {/* Search Form */}
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex gap-2 max-w-md">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="h-5 w-5 text-[#475467]" />
+
+      {!canUseAnalytics && (
+        <form onSubmit={handleSearch} className="mb-6">
+          <div className="flex gap-2 max-w-md">
+            <div className="relative flex-1">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <SearchIcon className="h-5 w-5 text-[#475467]" />
+              </div>
+              <input
+                type="text"
+                value={searchUsername}
+                onChange={(e) => setSearchUsername(e.target.value)}
+                placeholder="Search by LinkedIn username"
+                className="block w-full pl-10 pr-3 py-2 border border-[#EAECF0] rounded-lg text-sm text-[#101828] placeholder-[#475467] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:border-transparent"
+              />
             </div>
-            <input
-              type="text"
-              value={searchUsername}
-              onChange={(e) => setSearchUsername(e.target.value)}
-              placeholder="Search by LinkedIn username"
-              className="block w-full pl-10 pr-3 py-2 border border-[#EAECF0] rounded-lg text-sm text-[#101828] placeholder-[#475467] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:border-transparent"
-            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-medium hover:bg-[#3730A3] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:ring-offset-2"
+            >
+              Search
+            </button>
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-[#444CE7] text-white rounded-lg text-sm font-medium hover:bg-[#3730A3] focus:outline-none focus:ring-2 focus:ring-[#444CE7] focus:ring-offset-2"
-          >
-            Search
-          </button>
-        </div>
-      </form>
+        </form>
+      )}
 
       {!analyticsData?.success && (
         <div className="mb-6 p-4 border border-[#F04438] rounded-lg bg-[#FEF3F2]">
