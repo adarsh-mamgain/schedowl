@@ -13,10 +13,21 @@ interface AppSumoCode {
   createdAt: string;
 }
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export default function AppSumoAdmin() {
   const [codes, setCodes] = useState<AppSumoCode[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [manualRedeemCodes, setManualRedeemCodes] = useState("");
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const fetchCodes = async () => {
     try {
@@ -29,8 +40,23 @@ export default function AppSumoAdmin() {
     }
   };
 
+  const fetchUsers = async () => {
+    setIsLoadingUsers(true);
+    try {
+      const response = await fetch("/api/admin/users");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setUsers(data);
+    } catch {
+      toast.error("Failed to fetch users");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
   useEffect(() => {
     fetchCodes();
+    fetchUsers();
   }, []);
 
   const handleCreateCodes = async () => {
@@ -122,6 +148,49 @@ export default function AppSumoAdmin() {
     }
   };
 
+  const handleManualRedeem = async () => {
+    if (!selectedUser) {
+      toast.error("Please select a user");
+      return;
+    }
+
+    if (!manualRedeemCodes.trim()) {
+      toast.error("Please enter codes");
+      return;
+    }
+
+    setIsRedeeming(true);
+    try {
+      const codeList = manualRedeemCodes
+        .split("\n")
+        .map((code) => code.trim())
+        .filter(Boolean);
+
+      const response = await fetch("/api/admin/appsumo/manual-redeem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: selectedUser.email,
+          codes: codeList,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      toast.success(`Redeemed ${data.results.length} codes successfully`);
+      setSelectedUser(null);
+      setManualRedeemCodes("");
+      fetchCodes();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to redeem codes");
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
   return (
     <div className="relative">
       <div className="flex justify-between items-center mb-6">
@@ -156,6 +225,55 @@ export default function AppSumoAdmin() {
           </div>
           <Button size="small" onClick={handleCreateCodes} disabled={isLoading}>
             {isLoading ? "Creating..." : "Create Codes"}
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <label
+              htmlFor="manualRedeem"
+              className="text-[#344054] font-medium"
+            >
+              Manually Redeem Codes
+            </label>
+            <div className="relative">
+              <select
+                id="manualRedeemUser"
+                value={selectedUser?.id || ""}
+                onChange={(e) => {
+                  const user = users.find((u) => u.id === e.target.value);
+                  setSelectedUser(user || null);
+                }}
+                className="w-full text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D] appearance-none bg-white"
+                disabled={isLoadingUsers}
+              >
+                <option value="">Select a user</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </option>
+                ))}
+              </select>
+              {isLoadingUsers && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                </div>
+              )}
+            </div>
+            <textarea
+              id="manualRedeemCodes"
+              placeholder="Enter codes to redeem (one per line)"
+              value={manualRedeemCodes}
+              onChange={(e) => setManualRedeemCodes(e.target.value)}
+              className="text-[#667085] px-2.5 py-2 border border-[#D0D5DD] rounded-lg shadow-[0px_1px_2px_0px_#1018280D] min-h-[100px]"
+            />
+          </div>
+          <Button
+            size="small"
+            onClick={handleManualRedeem}
+            disabled={isRedeeming || !selectedUser}
+          >
+            {isRedeeming ? "Redeeming..." : "Redeem Codes"}
           </Button>
         </div>
 
