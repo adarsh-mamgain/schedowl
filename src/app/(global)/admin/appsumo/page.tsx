@@ -5,7 +5,6 @@ import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import axios from "axios";
 
 interface AppSumoCode {
   id: string;
