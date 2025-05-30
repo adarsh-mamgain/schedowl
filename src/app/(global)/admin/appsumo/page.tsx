@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 interface AppSumoCode {
   id: string;
@@ -20,6 +22,15 @@ interface User {
 }
 
 export default function AppSumoAdmin() {
+  const { data: session } = useSession();
+
+  if (
+    !session?.user?.email ||
+    (session.user.email !== "work.mamgain@gmail.com" &&
+      session.user.email !== "mrakshayvm@gmail.com")
+  ) {
+    redirect("/");
+  }
   const [codes, setCodes] = useState<AppSumoCode[]>([]);
   const [newCodes, setNewCodes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
