@@ -167,7 +167,7 @@ export const authOptions: NextAuthOptions = {
           id: string;
           role: string;
         };
-        // Fetch features from org owner for all members
+        // Always resolve features dynamically for the current organisation
         if (session.organisation?.id) {
           session.user.features = await getOrgOwnerFeatures(
             session.organisation.id

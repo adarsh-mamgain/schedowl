@@ -1,4 +1,5 @@
 import "next-auth";
+import type { FeatureSet } from "@/src/constants/productFeatures";
 
 declare module "next-auth" {
   interface Session {
@@ -7,6 +8,7 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      features: FeatureSet;
     };
     organisation: {
       id: string;
