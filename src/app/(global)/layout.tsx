@@ -16,7 +16,6 @@ import {
   Grid2x2,
   Sparkles,
   SquarePen,
-  GiftIcon,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";

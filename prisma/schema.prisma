@@ -21,6 +21,7 @@ model User {
   image         String?   @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  features      Json      @default("{\"maxWorkspaces\":1,\"maxSocialAccounts\":1,\"aiTokens\":200,\"canSchedule\":true,\"canUseAI\":false,\"canUseAnalytics\":false}")
   payments      Payment[]
   appsumoCodes  AppSumoCode[]
   aiUsageToday Int      @default(100)
