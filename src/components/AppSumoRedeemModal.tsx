@@ -5,6 +5,12 @@ import Button from "@/src/components/Button";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 
+interface RedeemResult {
+  code: string;
+  status: "success" | "error";
+  message: string;
+}
+
 interface AppSumoRedeemModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,11 +22,7 @@ export function AppSumoRedeemModal({
 }: AppSumoRedeemModalProps) {
   const [codesInput, setCodesInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<null | Array<{
-    code: string;
-    status: string;
-    message: string;
-  }>>(null);
+  const [results, setResults] = useState<RedeemResult[] | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +65,7 @@ export function AppSumoRedeemModal({
       setResults(data.results);
       // Show a summary toast
       const successCount = data.results.filter(
-        (r: any) => r.status === "success"
+        (r: RedeemResult) => r.status === "success"
       ).length;
       if (successCount > 0) {
         toast.success(
@@ -76,8 +78,8 @@ export function AppSumoRedeemModal({
       if (successCount < data.results.length) {
         toast.error(
           data.results
-            .filter((r: any) => r.status === "error")
-            .map((r: any) => `${r.code}: ${r.message}`)
+            .filter((r: RedeemResult) => r.status === "error")
+            .map((r: RedeemResult) => `${r.code}: ${r.message}`)
             .join("\n")
         );
       }

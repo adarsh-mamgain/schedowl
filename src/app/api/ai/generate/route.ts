@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     select: { aiUsageToday: true, aiUsageDate: true },
   });
   let aiUsageToday = user?.aiUsageToday ?? 0;
-  let aiUsageDate = user?.aiUsageDate;
+  const aiUsageDate = user?.aiUsageDate;
   if (!aiUsageDate || !isSameDay(new Date(), aiUsageDate)) {
     aiUsageToday = 0;
   }

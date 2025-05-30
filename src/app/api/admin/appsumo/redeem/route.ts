@@ -45,7 +45,6 @@ export async function POST(req: Request) {
       status: "success" | "error";
       message: string;
     }> = [];
-    let redeemedCount = 0;
 
     // Use a transaction for all successful redemptions
     await prisma.$transaction(async (tx) => {
@@ -110,7 +109,6 @@ export async function POST(req: Request) {
           status: "success",
           message: "Redeemed successfully.",
         });
-        redeemedCount++;
       }
     });
 

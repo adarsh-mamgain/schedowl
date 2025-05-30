@@ -4,13 +4,15 @@ import {
   DEFAULT_FEATURES,
 } from "@/src/constants/productFeatures";
 
-function extractProductId(payload: any): string | undefined {
-  if (payload && typeof payload === "object" && "data" in payload) {
-    const data = payload.data;
-    if (data && typeof data === "object" && "product_id" in data) {
-      return data.product_id;
-    }
+function extractProductId(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+
+  // Check for nested data structure with product_id
+  if ("data" in payload && payload.data && typeof payload.data === "object") {
+    const data = payload.data as { product_id?: string };
+    return data.product_id;
   }
+
   return undefined;
 }
 
