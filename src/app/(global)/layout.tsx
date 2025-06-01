@@ -21,6 +21,7 @@ import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
+import Script from "next/script";
 
 interface UserOrganisation {
   id: string;
@@ -362,6 +363,9 @@ export default function GlobalLayout({
           />
         </div>
       </main>
+      <Script id="crisp-chat" strategy="afterInteractive">
+        {`window.$crisp=[];window.CRISP_WEBSITE_ID="f37622d2-adc3-4d1b-a21e-f1d929bf5550";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();`}
+      </Script>
     </div>
   );
 }
