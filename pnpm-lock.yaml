@@ -47,6 +47,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
+      crisp-sdk-web:
+        specifier: ^1.0.25
+        version: 1.0.25
       cron:
         specifier: ^4.1.3
         version: 4.1.3
@@ -1043,6 +1046,9 @@ packages:
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
+
+  crisp-sdk-web@1.0.25:
+    resolution: {integrity: sha512-CWTHFFeHRV0oqiXoPh/aIAKhFs6xcIM4NenGPnClAMCZUDQgQsF1OWmZWmnVNjJriXUmWRgDfeUxcxygS0dCRA==}
 
   cron@4.1.3:
     resolution: {integrity: sha512-HETm5kgivcdfboOmBIzq0cfC9c5bRilWZ1p7PWwnOMmbWviwIU6mPgZbeqbj5i0AzNan6P68WDTDEDezhKjOng==}
@@ -3961,6 +3967,8 @@ snapshots:
   core-js@3.41.0: {}
 
   create-require@1.1.1: {}
+
+  crisp-sdk-web@1.0.25: {}
 
   cron@4.1.3:
     dependencies:
