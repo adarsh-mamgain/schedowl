@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { SessionProvider } from "@/src/components/SessionProvider";
 import { PostHogProvider } from "./providers";
+import dynamic from "next/dynamic";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -85,8 +87,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
+  const CrispWithNoSSR = dynamic(() => import("@/src/components/CrispChat"));
   return (
     <html lang="en">
+      <CrispWithNoSSR />
       <body className={`${inter.variable} antialiased`}>
         <SessionProvider session={session}>
           <PostHogProvider>{children}</PostHogProvider>
@@ -96,6 +100,14 @@ export default async function RootLayout({
           async
           src="https://scripts.simpleanalyticscdn.com/latest.js"
         ></script>
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            defer
+            src="https://api.pirsch.io/pa.js"
+            id="pianjs"
+            data-code="IXIp8b0Hm0MqamfuowHc1Yq645iaro55"
+          />
+        )}
       </body>
     </html>
   );
