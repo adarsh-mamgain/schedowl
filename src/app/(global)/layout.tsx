@@ -345,9 +345,6 @@ export default function GlobalLayout({
               </Button>
             </>
           )}
-          <a href="mailto:adarsh@schedowl.com">
-            <Button variant="secondary">adarsh@schedowl.com</Button>
-          </a>
         </div>
       </aside>
 
