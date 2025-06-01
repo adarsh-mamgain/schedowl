@@ -24,28 +24,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: `
-              default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://scripts.simpleanalyticscdn.com https://static.cloudflareinsights.com https://client.crisp.chat https://us-assets.i.posthog.com;
-              connect-src 'self' https://us.i.posthog.com https://us-assets.i.posthog.com;
-              img-src 'self' data: https:;
-              style-src 'self' 'unsafe-inline';
-              frame-src 'self';
-            `
-              .replace(/\s+/g, " ")
-              .trim(),
-          },
-        ],
-      },
-    ];
-  },
 };
 
 export default nextConfig;
