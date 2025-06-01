@@ -21,7 +21,6 @@ import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import Script from "next/script";
 
 interface UserOrganisation {
   id: string;
