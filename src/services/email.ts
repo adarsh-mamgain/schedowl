@@ -142,7 +142,8 @@ export const templates = {
   INVITATION_EMAIL: (context: InvitationContext) =>
     BASE_TEMPLATE(`
     <h2>Invitation to SchedOwl</h2>
-    <p>You've been invited to join ${context.organisationName} as a ${context.organisationRole}. Click the link below to accept the invitation.</p>
+    <p>You've been invited to join ${context.organisationName} as a ${context.organisationRole}.</p>
+    <p>Click the link below to accept the invitation.</p>
     <a href="${context.invitationLink}" target="_blank" class="button">Accept Invitation</a>
   `),
 };
