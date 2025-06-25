@@ -86,7 +86,7 @@ _Schedule, publish, and analyze your social media content with AI-powered insigh
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/schedowl.git
+   git clone https://github.com/adarsh-mamgain/schedowl.git
    cd schedowl
    ```
 
@@ -226,9 +226,8 @@ The MIT License is a permissive license that allows you to:
 
 ### Community Support
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/schedowl/issues)
-- **Discussions**: [Join community discussions](https://github.com/yourusername/schedowl/discussions)
-- **Documentation**: [Read the docs](https://docs.schedowl.com)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/adarsh-mamgain/schedowl/issues)
+- **Discussions**: [Join community discussions](https://github.com/adarsh-mamgain/schedowl/discussions)
 
 ### Commercial Support
 
@@ -258,6 +257,6 @@ For enterprise users and commercial support, please contact us at support@schedo
 
 **Made with ❤️ by the SchedOwl Community**
 
-[Star on GitHub](https://github.com/yourusername/schedowl) • [Report Bug](https://github.com/yourusername/schedowl/issues) • [Request Feature](https://github.com/yourusername/schedowl/issues)
+[Star on GitHub](https://github.com/adarsh-mamgain/schedowl) • [Report Bug](https://github.com/adarsh-mamgain/schedowl/issues) • [Request Feature](https://github.com/adarsh-mamgain/schedowl/issues)
 
 </div>
