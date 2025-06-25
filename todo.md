@@ -26,14 +26,11 @@
 - also show the preview of the media inside the Sidebar Preview like the LinkedIn post.
 
 - company page scheduling
-- ⁠basic analytics in dashboard page
-- add ELK
 - input field, buttons colors
 - forgot password
 - allow PDF for media
 - remove unwanted UIs while loading
 - change the LinkedIn product APIs
-- adarsh@schedowl.com
 
 I have a doc from my CEO stating what all needs to be done.
 
