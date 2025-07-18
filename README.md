@@ -246,10 +246,10 @@ For enterprise users and commercial support, please contact us at support@schedo
 
 ## 📊 Project Status
 
-![GitHub stars](https://img.shields.io/github/stars/yourusername/schedowl)
-![GitHub forks](https://img.shields.io/github/forks/yourusername/schedowl)
-![GitHub issues](https://img.shields.io/github/issues/yourusername/schedowl)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/schedowl)
+![GitHub stars](https://img.shields.io/github/stars/adarsh-mamgain/schedowl)
+![GitHub forks](https://img.shields.io/github/forks/adarsh-mamgain/schedowl)
+![GitHub issues](https://img.shields.io/github/issues/adarsh-mamgain/schedowl)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/adarsh-mamgain/schedowl)
 
 ---
 
